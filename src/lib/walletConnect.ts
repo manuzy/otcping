@@ -147,13 +147,38 @@ class WalletConnectService {
   }
 }
 
-// Create a singleton instance
-export const walletConnectService = new WalletConnectService({
-  projectId: '8091c0243978a61f761f5c2a82ad83d8', // You'll need to get this from WalletConnect Cloud
-  metadata: {
-    name: 'OTC Trades',
-    description: 'Secure OTC cryptocurrency trading platform',
-    url: window.location.origin,
-    icons: [`${window.location.origin}/favicon.ico`],
-  },
-});
+// Create a singleton instance that will be initialized with the project ID from Supabase
+export let walletConnectService: WalletConnectService;
+
+// Initialize the service with project ID from Supabase
+export const initializeWalletConnectService = async (): Promise<WalletConnectService> => {
+  try {
+    const response = await fetch('/functions/v1/walletconnect-config', {
+      headers: {
+        'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBlcXFlZnZvaGplbXhodXl2emJnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMzNjM1NjAsImV4cCI6MjA2ODkzOTU2MH0.YPJYJrYziXv8b3oy3kyDKnIuK4Gknl_iTP95I4OAO9o`,
+        'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBlcXFlZnZvaGplbXhodXl2emJnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMzNjM1NjAsImV4cCI6MjA2ODkzOTU2MH0.YPJYJrYziXv8b3oy3kyDKnIuK4Gknl_iTP95I4OAO9o'
+      }
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to get WalletConnect configuration');
+    }
+    
+    const { projectId } = await response.json();
+    
+    walletConnectService = new WalletConnectService({
+      projectId,
+      metadata: {
+        name: 'OTC Trades',
+        description: 'Secure OTC cryptocurrency trading platform',
+        url: window.location.origin,
+        icons: [`${window.location.origin}/favicon.ico`],
+      },
+    });
+    
+    return walletConnectService;
+  } catch (error) {
+    console.error('Failed to initialize WalletConnect service:', error);
+    throw error;
+  }
+};
