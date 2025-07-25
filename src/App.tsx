@@ -10,6 +10,7 @@ import PublicChats from "./pages/PublicChats";
 import PublicUsers from "./pages/PublicUsers";
 import Settings from "./pages/Settings";
 import { BottomTabs } from "./components/navigation/BottomTabs";
+import { Header } from "./components/navigation/Header";
 
 const queryClient = new QueryClient();
 
@@ -20,6 +21,7 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <div className="relative">
+          <Header />
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/contacts" element={<Contacts />} />
