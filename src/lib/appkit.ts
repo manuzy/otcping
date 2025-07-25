@@ -3,7 +3,7 @@ import { WagmiAdapter } from '@reown/appkit-adapter-wagmi'
 import { mainnet } from '@reown/appkit/networks'
 
 // Replace with your actual Reown Project ID from https://dashboard.reown.com
-const projectId = 'YOUR_PROJECT_ID_HERE' // TODO: Replace this with your actual project ID
+const projectId = '8091c0243978a61f761f5c2a82ad83d8'
 
 // Metadata for your app
 const metadata = {
