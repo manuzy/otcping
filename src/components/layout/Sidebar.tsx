@@ -35,30 +35,15 @@ export const Sidebar = ({ selectedChat, onChatSelect, onClose }: SidebarProps) =
     <div className="flex flex-col h-full">
       {/* Header */}
       <div className="p-4 border-b border-border">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <Avatar className="h-10 w-10">
-              <AvatarImage src={currentUser.avatar} />
-              <AvatarFallback>{currentUser.displayName.split(' ').map(n => n[0]).join('')}</AvatarFallback>
-            </Avatar>
-            <div className="flex-1 min-w-0">
-              <h2 className="font-semibold text-sm truncate">{currentUser.displayName}</h2>
-              <p className="text-xs text-muted-foreground truncate">{currentUser.walletAddress}</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" className="h-8 w-8">
-              <MoreVertical className="h-4 w-4" />
-            </Button>
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="h-8 w-8 md:hidden"
-              onClick={onClose}
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
+        <div className="flex items-center justify-end mb-4">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="h-8 w-8 md:hidden"
+            onClick={onClose}
+          >
+            <X className="h-4 w-4" />
+          </Button>
         </div>
 
 
