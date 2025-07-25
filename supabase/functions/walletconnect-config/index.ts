@@ -13,9 +13,14 @@ serve(async (req) => {
   try {
     const projectId = Deno.env.get('WALLETCONNECT_PROJECT_ID')
     
+    console.log('WalletConnect Project ID from env:', projectId ? 'Found' : 'Not found')
+    
     if (!projectId) {
+      console.error('WALLETCONNECT_PROJECT_ID environment variable not set')
       return new Response(
-        JSON.stringify({ error: 'WalletConnect Project ID not configured' }), 
+        JSON.stringify({ 
+          error: 'WalletConnect Project ID not configured. Please add WALLETCONNECT_PROJECT_ID to Supabase secrets.' 
+        }), 
         { 
           status: 500, 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
@@ -23,6 +28,7 @@ serve(async (req) => {
       )
     }
 
+    console.log('Returning project ID:', projectId.slice(0, 8) + '...')
     return new Response(
       JSON.stringify({ projectId }), 
       { 
