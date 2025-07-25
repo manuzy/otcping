@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -17,6 +18,7 @@ interface SidebarProps {
 export const Sidebar = ({ selectedChat, onChatSelect, onClose }: SidebarProps) => {
   const [searchQuery, setSearchQuery] = useState("");
   const { currentUser, isConnected, walletAddress } = useWallet();
+  const navigate = useNavigate();
   
   const filteredChats = mockChats.filter(chat =>
     chat.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -58,7 +60,7 @@ export const Sidebar = ({ selectedChat, onChatSelect, onClose }: SidebarProps) =
               className="pl-9"
             />
           </div>
-          <Button className="w-full" size="sm">
+          <Button className="w-full" size="sm" onClick={() => navigate("/create-trade")}>
             <Plus className="h-4 w-4 mr-2" />
             New Trade
           </Button>
