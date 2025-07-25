@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { initializeWalletConnectService } from '@/lib/walletConnect';
+import { walletConnectService } from '@/lib/walletConnect';
 import { walletAuthService } from '@/lib/walletAuth';
 import { useToast } from '@/hooks/use-toast';
 
@@ -29,7 +29,6 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [currentUser, setCurrentUser] = useState<any | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
   const [chainId, setChainId] = useState<number | null>(null);
-  const [walletConnectService, setWalletConnectService] = useState<any | null>(null);
   const { toast } = useToast();
 
   // Real WalletConnect integration
@@ -38,14 +37,10 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     try {
       console.log('Starting wallet connection process...');
       
-      // Initialize WalletConnect service if not already done
-      if (!walletConnectService) {
-        const service = await initializeWalletConnectService();
-        setWalletConnectService(service);
-        const initialized = await service.initialize();
-        if (!initialized) {
-          throw new Error('Failed to initialize WalletConnect. Check console for details.');
-        }
+      // Initialize WalletConnect if not already done
+      const initialized = await walletConnectService.initialize();
+      if (!initialized) {
+        throw new Error('Failed to initialize WalletConnect. Check console for details.');
       }
       
       console.log('WalletConnect initialized, attempting connection...');
@@ -123,9 +118,7 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       if (walletAddress) {
         await walletAuthService.deleteWalletSession(walletAddress);
       }
-      if (walletConnectService) {
-        await walletConnectService.disconnect();
-      }
+      await walletConnectService.disconnect();
       
       setIsConnected(false);
       setWalletAddress(null);
@@ -145,35 +138,29 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   useEffect(() => {
     const initializeWallet = async () => {
       try {
-        // Initialize WalletConnect service if not already done
-        if (!walletConnectService) {
-          const service = await initializeWalletConnectService();
-          setWalletConnectService(service);
-          await service.initialize();
-        }
+        // Initialize WalletConnect
+        await walletConnectService.initialize();
         
-        // Check for active sessions only if service is available
-        if (walletConnectService) {
-          const activeSessions = walletConnectService.getActiveSessions();
-          if (activeSessions.length > 0) {
-            const session = activeSessions[0];
-            const accounts = session.namespaces.eip155?.accounts || [];
+        // Check for active sessions
+        const activeSessions = walletConnectService.getActiveSessions();
+        if (activeSessions.length > 0) {
+          const session = activeSessions[0];
+          const accounts = session.namespaces.eip155?.accounts || [];
+          
+          if (accounts.length > 0) {
+            const accountData = accounts[0].split(':');
+            const chainId = parseInt(accountData[1]);
+            const address = accountData[2];
             
-            if (accounts.length > 0) {
-              const accountData = accounts[0].split(':');
-              const chainId = parseInt(accountData[1]);
-              const address = accountData[2];
+            // Verify we have a valid auth session
+            const authSession = await walletAuthService.getWalletSession(address);
+            if (authSession) {
+              setWalletAddress(address);
+              setChainId(chainId);
+              setIsConnected(true);
               
-              // Verify we have a valid auth session
-              const authSession = await walletAuthService.getWalletSession(address);
-              if (authSession) {
-                setWalletAddress(address);
-                setChainId(chainId);
-                setIsConnected(true);
-                
-                const profile = await walletAuthService.getOrCreateProfile(address);
-                setCurrentUser(profile);
-              }
+              const profile = await walletAuthService.getOrCreateProfile(address);
+              setCurrentUser(profile);
             }
           }
         }
@@ -186,7 +173,7 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     };
 
     initializeWallet();
-  }, [walletConnectService]);
+  }, []);
 
   const value: WalletContextType = {
     isConnected,

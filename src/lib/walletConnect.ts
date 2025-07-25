@@ -147,46 +147,16 @@ class WalletConnectService {
   }
 }
 
-// Create a singleton instance that will be initialized with the project ID from Supabase
-export let walletConnectService: WalletConnectService;
+// Create a temporary solution for WalletConnect Project ID
+const TEMP_PROJECT_ID = prompt('Enter your WalletConnect Project ID from https://cloud.walletconnect.com:') || '8091c0243978a61f761f5c2a82ad83d8';
 
-// Initialize the service with project ID from Supabase
-export const initializeWalletConnectService = async (): Promise<WalletConnectService> => {
-  try {
-    console.log('Fetching WalletConnect config from edge function...');
-    const response = await fetch('https://peqqefvohjemxhuyvzbg.supabase.co/functions/v1/walletconnect-config', {
-      headers: {
-        'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBlcXFlZnZvaGplbXhodXl2emJnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMzNjM1NjAsImV4cCI6MjA2ODkzOTU2MH0.YPJYJrYziXv8b3oy3kyDKnIuK4Gknl_iTP95I4OAO9o`,
-        'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBlcXFlZnZvaGplbXhodXl2emJnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMzNjM1NjAsImV4cCI6MjA2ODkzOTU2MH0.YPJYJrYziXv8b3oy3kyDKnIuK4Gknl_iTP95I4OAO9o'
-      }
-    });
-    
-    console.log('Edge function response status:', response.status);
-    
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Edge function error:', errorText);
-      throw new Error(`Failed to get WalletConnect configuration: ${errorText}`);
-    }
-    
-    const responseData = await response.json();
-    console.log('Edge function response:', responseData);
-    
-    const { projectId } = responseData;
-    
-    walletConnectService = new WalletConnectService({
-      projectId,
-      metadata: {
-        name: 'OTC Trades',
-        description: 'Secure OTC cryptocurrency trading platform',
-        url: window.location.origin,
-        icons: [`${window.location.origin}/favicon.ico`],
-      },
-    });
-    
-    return walletConnectService;
-  } catch (error) {
-    console.error('Failed to initialize WalletConnect service:', error);
-    throw error;
-  }
-};
+// Create a singleton instance
+export const walletConnectService = new WalletConnectService({
+  projectId: TEMP_PROJECT_ID,
+  metadata: {
+    name: 'OTC Trades',
+    description: 'Secure OTC cryptocurrency trading platform',
+    url: window.location.origin,
+    icons: [`${window.location.origin}/favicon.ico`],
+  },
+});
