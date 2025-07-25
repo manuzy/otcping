@@ -14,7 +14,247 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      chat_participants: {
+        Row: {
+          chat_id: string
+          id: string
+          joined_at: string
+          unread_count: number
+          user_id: string
+        }
+        Insert: {
+          chat_id: string
+          id?: string
+          joined_at?: string
+          unread_count?: number
+          user_id: string
+        }
+        Update: {
+          chat_id?: string
+          id?: string
+          joined_at?: string
+          unread_count?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_participants_chat_id_fkey"
+            columns: ["chat_id"]
+            isOneToOne: false
+            referencedRelation: "chats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_participants_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chats: {
+        Row: {
+          created_at: string
+          id: string
+          is_public: boolean
+          name: string
+          trade_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_public?: boolean
+          name: string
+          trade_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_public?: boolean
+          name?: string
+          trade_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chats_trade_id_fkey"
+            columns: ["trade_id"]
+            isOneToOne: false
+            referencedRelation: "trades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contacts: {
+        Row: {
+          contact_id: string
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          contact_id: string
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          contact_id?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contacts_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contacts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      messages: {
+        Row: {
+          chat_id: string
+          content: string
+          created_at: string
+          id: string
+          sender_id: string
+          type: Database["public"]["Enums"]["message_type"]
+        }
+        Insert: {
+          chat_id: string
+          content: string
+          created_at?: string
+          id?: string
+          sender_id: string
+          type?: Database["public"]["Enums"]["message_type"]
+        }
+        Update: {
+          chat_id?: string
+          content?: string
+          created_at?: string
+          id?: string
+          sender_id?: string
+          type?: Database["public"]["Enums"]["message_type"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_chat_id_fkey"
+            columns: ["chat_id"]
+            isOneToOne: false
+            referencedRelation: "chats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar: string | null
+          created_at: string
+          description: string | null
+          display_name: string
+          id: string
+          is_public: boolean
+          reputation: number
+          successful_trades: number
+          total_trades: number
+          updated_at: string
+          wallet_address: string | null
+        }
+        Insert: {
+          avatar?: string | null
+          created_at?: string
+          description?: string | null
+          display_name: string
+          id: string
+          is_public?: boolean
+          reputation?: number
+          successful_trades?: number
+          total_trades?: number
+          updated_at?: string
+          wallet_address?: string | null
+        }
+        Update: {
+          avatar?: string | null
+          created_at?: string
+          description?: string | null
+          display_name?: string
+          id?: string
+          is_public?: boolean
+          reputation?: number
+          successful_trades?: number
+          total_trades?: number
+          updated_at?: string
+          wallet_address?: string | null
+        }
+        Relationships: []
+      }
+      trades: {
+        Row: {
+          chain: string
+          created_at: string
+          created_by: string
+          id: string
+          pair: string
+          price: string
+          size: string
+          status: Database["public"]["Enums"]["trade_status"]
+          type: Database["public"]["Enums"]["trade_type"]
+          updated_at: string
+        }
+        Insert: {
+          chain: string
+          created_at?: string
+          created_by: string
+          id?: string
+          pair: string
+          price: string
+          size: string
+          status?: Database["public"]["Enums"]["trade_status"]
+          type: Database["public"]["Enums"]["trade_type"]
+          updated_at?: string
+        }
+        Update: {
+          chain?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          pair?: string
+          price?: string
+          size?: string
+          status?: Database["public"]["Enums"]["trade_status"]
+          type?: Database["public"]["Enums"]["trade_type"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trades_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +263,9 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      message_type: "message" | "trade_action" | "system"
+      trade_status: "active" | "completed" | "cancelled"
+      trade_type: "buy" | "sell"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +392,10 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      message_type: ["message", "trade_action", "system"],
+      trade_status: ["active", "completed", "cancelled"],
+      trade_type: ["buy", "sell"],
+    },
   },
 } as const
