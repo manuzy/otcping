@@ -3,7 +3,7 @@ import { User, Chat, Trade, Message } from "@/types";
 export const mockUsers: User[] = [
   {
     id: "1",
-    walletAddress: "0x1234...5678",
+    walletAddress: "0x742d35Cc6634C0532925a3b8D1eC6824f26E1Bfd",
     displayName: "Alice Cooper",
     avatar: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=150&h=150&fit=crop&crop=face",
     isOnline: true,
@@ -17,7 +17,7 @@ export const mockUsers: User[] = [
   },
   {
     id: "2",
-    walletAddress: "0x8765...4321",
+    walletAddress: "0x8ba1f109551bD432803012645Hac136c43E8e1E7c",
     displayName: "Bob Smith",
     avatar: "https://images.unsplash.com/photo-1581092795360-fd1ca04f0952?w=150&h=150&fit=crop&crop=face",
     isOnline: false,
@@ -31,7 +31,7 @@ export const mockUsers: User[] = [
   },
   {
     id: "3",
-    walletAddress: "0xabcd...efgh",
+    walletAddress: "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045",
     displayName: "Charlie Brown",
     avatar: "https://images.unsplash.com/photo-1581090464777-f3220bbe1b8b?w=150&h=150&fit=crop&crop=face",
     isOnline: true,
@@ -45,7 +45,7 @@ export const mockUsers: User[] = [
   },
   {
     id: "4",
-    walletAddress: "0x4567...8901",
+    walletAddress: "0x3fC91A3afd70395Cd496C647d5a6CC9D4B2b7FAD",
     displayName: "Diana Prince", 
     avatar: "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150&h=150&fit=crop&crop=face",
     isOnline: false,
@@ -59,7 +59,7 @@ export const mockUsers: User[] = [
   },
   {
     id: "5",
-    walletAddress: "0x5678...9012",
+    walletAddress: "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
     displayName: "Eve Thompson",
     avatar: "https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=150&h=150&fit=crop&crop=face",
     isOnline: true,
@@ -73,7 +73,7 @@ export const mockUsers: User[] = [
   },
   {
     id: "6",
-    walletAddress: "0x6789...0123",
+    walletAddress: "0x90F79bf6EB2c4f870365E785982E1f101E93b906",
     displayName: "Current User",
     avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop&crop=face",
     isOnline: true,
