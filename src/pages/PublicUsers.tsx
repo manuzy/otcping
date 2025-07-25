@@ -122,7 +122,7 @@ export default function PublicUsers() {
                       {user.description || "No description provided"}
                     </p>
                     
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-3 text-sm">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3 text-sm">
                       <div>
                         <p className="text-xs text-muted-foreground">Total Trades</p>
                         <p className="font-semibold">{user.totalTrades}</p>
@@ -138,6 +138,17 @@ export default function PublicUsers() {
                         <p className="font-semibold">
                           {formatDistanceToNow(user.joinedAt, { addSuffix: true })}
                         </p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground">Wallet Address</p>
+                        <a 
+                          href={`https://etherscan.io/address/${user.walletAddress}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="font-mono text-xs text-primary hover:underline"
+                        >
+                          {user.walletAddress.slice(0, 6)}...{user.walletAddress.slice(-4)}
+                        </a>
                       </div>
                     </div>
                     
