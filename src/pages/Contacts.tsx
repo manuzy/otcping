@@ -30,7 +30,7 @@ export default function Contacts() {
       {/* Header */}
       <div className="border-b border-border p-4">
         <div className="flex items-center justify-between mb-4">
-          <h1 className="text-2xl font-bold">Contacts</h1>
+          <h1 className="text-2xl font-bold">My Contacts</h1>
           <Button size="sm" className="gap-2">
             <UserPlus className="h-4 w-4" />
             Add Contact
