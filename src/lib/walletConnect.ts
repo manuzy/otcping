@@ -153,6 +153,7 @@ export let walletConnectService: WalletConnectService;
 // Initialize the service with project ID from Supabase
 export const initializeWalletConnectService = async (): Promise<WalletConnectService> => {
   try {
+    console.log('Fetching WalletConnect config from edge function...');
     const response = await fetch('https://peqqefvohjemxhuyvzbg.supabase.co/functions/v1/walletconnect-config', {
       headers: {
         'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBlcXFlZnZvaGplbXhodXl2emJnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMzNjM1NjAsImV4cCI6MjA2ODkzOTU2MH0.YPJYJrYziXv8b3oy3kyDKnIuK4Gknl_iTP95I4OAO9o`,
@@ -160,11 +161,18 @@ export const initializeWalletConnectService = async (): Promise<WalletConnectSer
       }
     });
     
+    console.log('Edge function response status:', response.status);
+    
     if (!response.ok) {
-      throw new Error('Failed to get WalletConnect configuration');
+      const errorText = await response.text();
+      console.error('Edge function error:', errorText);
+      throw new Error(`Failed to get WalletConnect configuration: ${errorText}`);
     }
     
-    const { projectId } = await response.json();
+    const responseData = await response.json();
+    console.log('Edge function response:', responseData);
+    
+    const { projectId } = responseData;
     
     walletConnectService = new WalletConnectService({
       projectId,
