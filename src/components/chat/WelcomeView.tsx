@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Menu, Plus, MessageSquare, Wallet } from "lucide-react";
 import { useWallet } from "@/hooks/useWallet";
+import { useNavigate } from "react-router-dom";
 
 interface WelcomeViewProps {
   onMenuClick: () => void;
@@ -8,6 +9,7 @@ interface WelcomeViewProps {
 
 export const WelcomeView = ({ onMenuClick }: WelcomeViewProps) => {
   const { isConnected, currentUser, connect, isConnecting } = useWallet();
+  const navigate = useNavigate();
 
   return (
     <div className="flex flex-col h-full">
@@ -53,7 +55,7 @@ export const WelcomeView = ({ onMenuClick }: WelcomeViewProps) => {
               </div>
               
               <div className="space-y-3">
-                <Button className="w-full" size="lg">
+                <Button className="w-full" size="lg" onClick={() => navigate("/create-trade")}>
                   <Plus className="h-5 w-5 mr-2" />
                   Create New Trade
                 </Button>
