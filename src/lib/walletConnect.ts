@@ -133,7 +133,7 @@ class WalletConnectService {
 
 // Create a singleton instance
 export const walletConnectService = new WalletConnectService({
-  projectId: '2d3d32d3f2e5f4a5b6c7d8e9f0a1b2c3', // You'll need to get this from WalletConnect Cloud
+  projectId: '8091c0243978a61f761f5c2a82ad83d8', // You'll need to get this from WalletConnect Cloud
   metadata: {
     name: 'OTC Trades',
     description: 'Secure OTC cryptocurrency trading platform',
