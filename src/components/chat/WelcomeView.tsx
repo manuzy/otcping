@@ -1,14 +1,16 @@
 import { Button } from "@/components/ui/button";
 import { Menu, Plus, MessageSquare, Wallet } from "lucide-react";
-import { useWallet } from "@/hooks/useWallet";
 import { useNavigate } from "react-router-dom";
+import ReownConnectButton from "@/components/wallet/ReownConnectButton";
+import { useAppKit, useAppKitAccount } from '@reown/appkit/react';
 
 interface WelcomeViewProps {
   onMenuClick: () => void;
 }
 
 export const WelcomeView = ({ onMenuClick }: WelcomeViewProps) => {
-  const { isConnected, currentUser, connect, isConnecting } = useWallet();
+  const { open } = useAppKit();
+  const { address, isConnected } = useAppKitAccount();
   const navigate = useNavigate();
 
   return (
@@ -25,31 +27,16 @@ export const WelcomeView = ({ onMenuClick }: WelcomeViewProps) => {
       <div className="flex-1 flex items-center justify-center p-8">
         <div className="text-center max-w-md">
           {!isConnected ? (
-            <>
-              <div className="mb-6">
-                <Wallet className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
-                <h2 className="text-2xl font-bold mb-2">Connect Your Wallet</h2>
-                <p className="text-muted-foreground">
-                  Connect your wallet to start trading cryptocurrency with peers through our secure chat interface.
-                </p>
-              </div>
-              
-              <Button 
-                className="w-full" 
-                size="lg" 
-                onClick={connect}
-                disabled={isConnecting}
-              >
-                <Wallet className="h-5 w-5 mr-2" />
-                {isConnecting ? "Connecting..." : "Connect Wallet"}
-              </Button>
-            </>
+            <ReownConnectButton />
           ) : (
             <>
               <div className="mb-6">
                 <MessageSquare className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
-                <h2 className="text-2xl font-bold mb-2">Welcome back, {currentUser?.displayName}!</h2>
+                <h2 className="text-2xl font-bold mb-2">Welcome back!</h2>
                 <p className="text-muted-foreground">
+                  Connected with {address?.slice(0, 6)}...{address?.slice(-4)}
+                </p>
+                <p className="text-muted-foreground mt-2">
                   Start by creating a new trade or selecting an existing chat from the sidebar.
                 </p>
               </div>
