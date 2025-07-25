@@ -2,17 +2,8 @@ import { createAppKit } from '@reown/appkit/react'
 import { WagmiAdapter } from '@reown/appkit-adapter-wagmi'
 import { mainnet } from '@reown/appkit/networks'
 
-// Get projectId from your environment or use a temporary prompt
-const getProjectId = () => {
-  // In production, this should come from your environment
-  const projectId = prompt('Enter your Reown Project ID from https://dashboard.reown.com:') || '';
-  if (!projectId) {
-    throw new Error('Project ID is required');
-  }
-  return projectId;
-};
-
-const projectId = getProjectId();
+// Replace with your actual Reown Project ID from https://dashboard.reown.com
+const projectId = 'YOUR_PROJECT_ID_HERE' // TODO: Replace this with your actual project ID
 
 // Metadata for your app
 const metadata = {
