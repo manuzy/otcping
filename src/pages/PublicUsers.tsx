@@ -125,7 +125,7 @@ export default function PublicUsers() {
                         rel="noopener noreferrer"
                         className="font-mono text-xs text-primary hover:underline"
                       >
-                        {user.walletAddress.slice(0, 6)}...{user.walletAddress.slice(-4)}
+                        {user.walletAddress}
                       </a>
                     </div>
                     
