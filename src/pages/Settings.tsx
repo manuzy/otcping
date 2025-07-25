@@ -103,19 +103,6 @@ export default function Settings() {
               />
             </div>
 
-            {/* Public Profile Toggle */}
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label>Public Profile</Label>
-                <p className="text-sm text-muted-foreground">
-                  Allow others to see your profile in public listings
-                </p>
-              </div>
-              <Switch
-                checked={profileData.isPublic}
-                onCheckedChange={(checked) => setProfileData(prev => ({ ...prev, isPublic: checked }))}
-              />
-            </div>
 
             <Button onClick={handleSaveProfile} className="w-full">
               Save Profile Changes
@@ -274,6 +261,19 @@ export default function Settings() {
                 </p>
               </div>
               <Switch defaultChecked />
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label>Public Profile</Label>
+                <p className="text-sm text-muted-foreground">
+                  Allow others to see your profile in public listings
+                </p>
+              </div>
+              <Switch
+                checked={profileData.isPublic}
+                onCheckedChange={(checked) => setProfileData(prev => ({ ...prev, isPublic: checked }))}
+              />
             </div>
           </CardContent>
         </Card>
