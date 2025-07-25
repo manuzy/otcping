@@ -1,6 +1,6 @@
 import { MessageCircle, TrendingUp, Users, UserPlus, Settings } from "lucide-react";
 import { NavLink } from "react-router-dom";
-import { useWallet } from "@/hooks/useWallet";
+import { useAppKitAccount } from '@reown/appkit/react';
 import { cn } from "@/lib/utils";
 
 const tabs = [
@@ -12,7 +12,7 @@ const tabs = [
 ];
 
 export const BottomTabs = () => {
-  const { isConnected } = useWallet();
+  const { isConnected } = useAppKitAccount();
 
   // Only show bottom tabs if wallet is connected
   if (!isConnected) {

@@ -1,7 +1,7 @@
 import { MessageCircle, TrendingUp, Users, UserPlus, Settings, Wallet, ChevronDown } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { useWallet } from "@/hooks/useWallet";
+import { useAppKit, useAppKitAccount } from '@reown/appkit/react';
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -21,7 +21,8 @@ const navItems = [
 ];
 
 export const Header = () => {
-  const { isConnected, currentUser, connect, disconnect, isConnecting, walletAddress } = useWallet();
+  const { open } = useAppKit();
+  const { address, isConnected } = useAppKitAccount();
 
   const formatWalletAddress = (address: string) => {
     return `${address.slice(0, 6)}...${address.slice(-4)}`;
@@ -61,18 +62,17 @@ export const Header = () => {
           </div>
 
           <div className="flex items-center space-x-4">
-            {isConnected && currentUser ? (
+            {isConnected && address ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="flex items-center gap-2 px-2">
                     <Avatar className="h-8 w-8">
-                      <AvatarImage src={currentUser.avatar} alt={currentUser.displayName} />
-                      <AvatarFallback>{currentUser.displayName.charAt(0)}</AvatarFallback>
+                      <AvatarFallback>{address.slice(0, 2).toUpperCase()}</AvatarFallback>
                     </Avatar>
                     <div className="flex flex-col items-start">
-                      <span className="text-sm font-medium">{currentUser.displayName}</span>
+                      <span className="text-sm font-medium">User</span>
                       <span className="text-xs text-muted-foreground">
-                        {formatWalletAddress(walletAddress!)}
+                        {formatWalletAddress(address)}
                       </span>
                     </div>
                     <ChevronDown className="h-4 w-4" />
@@ -86,20 +86,19 @@ export const Header = () => {
                     </NavLink>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={disconnect} className="text-red-600">
+                  <DropdownMenuItem onClick={() => open()} className="text-red-600">
                     <Wallet className="h-4 w-4 mr-2" />
-                    Disconnect Wallet
+                    Manage Wallet
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
               <Button 
-                onClick={connect} 
-                disabled={isConnecting}
+                onClick={() => open()} 
                 className="flex items-center gap-2"
               >
                 <Wallet className="h-4 w-4" />
-                {isConnecting ? "Connecting..." : "Connect Wallet"}
+                Connect Wallet
               </Button>
             )}
           </div>

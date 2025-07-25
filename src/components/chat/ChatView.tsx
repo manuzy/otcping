@@ -7,7 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Menu, Send, MoreVertical } from "lucide-react";
 import { Chat, Message } from "@/types";
 import { mockMessages } from "@/data/mockData";
-import { useWallet } from "@/hooks/useWallet";
+import { useAppKitAccount } from '@reown/appkit/react';
 
 interface ChatViewProps {
   chat: Chat;
@@ -19,7 +19,7 @@ export const ChatView = ({ chat, onMenuClick }: ChatViewProps) => {
   const [messages] = useState<Message[]>(
     mockMessages.filter(msg => msg.chatId === chat.id)
   );
-  const { currentUser } = useWallet();
+  const { address } = useAppKitAccount();
 
   const handleSendMessage = () => {
     if (!message.trim()) return;
@@ -33,7 +33,7 @@ export const ChatView = ({ chat, onMenuClick }: ChatViewProps) => {
   };
 
   const renderMessage = (msg: Message) => {
-    const isOwnMessage = msg.senderId === currentUser?.id;
+    const isOwnMessage = msg.senderId === address;
     const isSystemMessage = msg.type === 'system' || msg.type === 'trade_action';
 
     if (isSystemMessage) {

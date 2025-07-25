@@ -7,19 +7,19 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { mockUsers } from "@/data/mockData";
-import { useWallet } from "@/hooks/useWallet";
+import { useAppKitAccount } from '@reown/appkit/react';
 import { formatDistanceToNow } from "date-fns";
 
 export default function PublicUsers() {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState<string>("reputation");
 
-  const { currentUser } = useWallet();
+  const { address } = useAppKitAccount();
 
   // Filter public users (excluding current user)
   const publicUsers = mockUsers.filter(user => 
     user.isPublic && 
-    user.id !== currentUser?.id &&
+    user.walletAddress !== address &&
     user.displayName.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -49,7 +49,7 @@ export default function PublicUsers() {
     return Math.round((successful / total) * 100);
   };
 
-  const isContact = (userId: string) => currentUser?.contacts.includes(userId) || false;
+  const isContact = (userId: string) => false; // Simplified for demo
 
   return (
     <div className="flex flex-col h-screen bg-background">

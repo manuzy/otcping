@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Search, Plus, MoreVertical, X } from "lucide-react";
 import { Chat } from "@/types";
 import { mockChats } from "@/data/mockData";
-import { useWallet } from "@/hooks/useWallet";
+import { useAppKitAccount } from '@reown/appkit/react';
 
 interface SidebarProps {
   selectedChat: Chat | null;
@@ -17,7 +17,7 @@ interface SidebarProps {
 
 export const Sidebar = ({ selectedChat, onChatSelect, onClose }: SidebarProps) => {
   const [searchQuery, setSearchQuery] = useState("");
-  const { currentUser, isConnected, walletAddress } = useWallet();
+  const { address, isConnected } = useAppKitAccount();
   const navigate = useNavigate();
   
   const filteredChats = mockChats.filter(chat =>
@@ -29,7 +29,7 @@ export const Sidebar = ({ selectedChat, onChatSelect, onClose }: SidebarProps) =
   };
 
   // Don't render sidebar if wallet not connected
-  if (!isConnected || !currentUser) {
+  if (!isConnected || !address) {
     return null;
   }
 

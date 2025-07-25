@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ArrowLeft, Check } from "lucide-react";
-import { useWallet } from "@/hooks/useWallet";
+import { useAppKitAccount } from '@reown/appkit/react';
 import { mockUsers } from "@/data/mockData";
 import { User, Trade, Chat, Message } from "@/types";
 
@@ -38,7 +38,7 @@ interface TradeFormData {
 
 const CreateTrade = () => {
   const navigate = useNavigate();
-  const { currentUser } = useWallet();
+  const { address } = useAppKitAccount();
   const [currentStep, setCurrentStep] = useState(1);
   const [isPublicChat, setIsPublicChat] = useState(true);
   const [selectedContacts, setSelectedContacts] = useState<string[]>([]);
@@ -50,8 +50,8 @@ const CreateTrade = () => {
     expectedExecutionTimestamp: ""
   });
 
-  // Get user's contacts
-  const userContacts = currentUser?.contacts || [];
+  // Simplified for demo - in real app you'd have proper user/contact management
+  const userContacts: string[] = [];
   const availableContacts = mockUsers.filter(u => userContacts.includes(u.id));
 
   const handleInputChange = (field: keyof TradeFormData, value: string) => {
@@ -81,7 +81,7 @@ const CreateTrade = () => {
   };
 
   const handlePublish = () => {
-    if (!currentUser) return;
+    if (!address) return;
 
     // Create new trade
     const newTrade: Trade = {
@@ -93,11 +93,24 @@ const CreateTrade = () => {
       type: "sell",
       status: "active",
       createdAt: new Date(),
-      createdBy: currentUser.id
+      createdBy: address
     };
 
-    // Create chat participants
-    const participants: User[] = [currentUser];
+    // Create chat participants (simplified)
+    const participants: User[] = [{
+      id: address,
+      displayName: 'User',
+      avatar: '',
+      walletAddress: address,
+      isOnline: true,
+      isPublic: true,
+      reputation: 0,
+      description: '',
+      successfulTrades: 0,
+      totalTrades: 0,
+      contacts: [],
+      joinedAt: new Date()
+    }];
     if (!isPublicChat) {
       const contactUsers = mockUsers.filter(u => selectedContacts.includes(u.id));
       participants.push(...contactUsers);

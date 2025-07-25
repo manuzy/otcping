@@ -6,16 +6,15 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { mockUsers } from "@/data/mockData";
-import { useWallet } from "@/hooks/useWallet";
+import { useAppKitAccount } from '@reown/appkit/react';
 import { User } from "@/types";
 
 export default function Contacts() {
   const [searchQuery, setSearchQuery] = useState("");
-  const { currentUser } = useWallet();
+  const { address } = useAppKitAccount();
   
-  // Filter users that are in current user's contacts
+  // Filter users that are in current user's contacts (simplified for now)
   const contacts = mockUsers.filter(user => 
-    currentUser?.contacts.includes(user.id) && 
     user.displayName.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
