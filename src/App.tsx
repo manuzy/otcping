@@ -10,6 +10,7 @@ import PublicChats from "./pages/PublicChats";
 import PublicUsers from "./pages/PublicUsers";
 import Settings from "./pages/Settings";
 import CreateTrade from "./pages/CreateTrade";
+import Auth from "./pages/Auth";
 import { BottomTabs } from "./components/navigation/BottomTabs";
 import { Header } from "./components/navigation/Header";
 import { WalletProvider } from "./contexts/WalletContext";
@@ -32,6 +33,7 @@ const App = () => (
               <Route path="/users" element={<PublicUsers />} />
               <Route path="/settings" element={<Settings />} />
               <Route path="/create-trade" element={<CreateTrade />} />
+              <Route path="/auth" element={<Auth />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

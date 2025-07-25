@@ -8,7 +8,7 @@ interface WelcomeViewProps {
 }
 
 export const WelcomeView = ({ onMenuClick }: WelcomeViewProps) => {
-  const { isConnected, currentUser, connect, isConnecting } = useWallet();
+  const { isAuthenticated, isWalletConnected, currentUser, connectWallet, isConnecting } = useWallet();
   const navigate = useNavigate();
 
   return (
@@ -24,20 +24,38 @@ export const WelcomeView = ({ onMenuClick }: WelcomeViewProps) => {
       {/* Welcome Content */}
       <div className="flex-1 flex items-center justify-center p-8">
         <div className="text-center max-w-md">
-          {!isConnected ? (
+          {!isAuthenticated ? (
             <>
               <div className="mb-6">
                 <Wallet className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
-                <h2 className="text-2xl font-bold mb-2">Connect Your Wallet</h2>
+                <h2 className="text-2xl font-bold mb-2">Welcome to Terminal</h2>
                 <p className="text-muted-foreground">
-                  Connect your wallet to start trading cryptocurrency with peers through our secure chat interface.
+                  Sign up or log in to start trading cryptocurrency with peers through our secure chat interface.
                 </p>
               </div>
               
               <Button 
                 className="w-full" 
                 size="lg" 
-                onClick={connect}
+                onClick={() => navigate("/auth")}
+              >
+                Get Started
+              </Button>
+            </>
+          ) : !isWalletConnected ? (
+            <>
+              <div className="mb-6">
+                <Wallet className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
+                <h2 className="text-2xl font-bold mb-2">Connect Your Wallet</h2>
+                <p className="text-muted-foreground">
+                  Connect your crypto wallet to enable trading features.
+                </p>
+              </div>
+              
+              <Button 
+                className="w-full" 
+                size="lg" 
+                onClick={connectWallet}
                 disabled={isConnecting}
               >
                 <Wallet className="h-5 w-5 mr-2" />
@@ -48,7 +66,7 @@ export const WelcomeView = ({ onMenuClick }: WelcomeViewProps) => {
             <>
               <div className="mb-6">
                 <MessageSquare className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
-                <h2 className="text-2xl font-bold mb-2">Welcome back, {currentUser?.displayName}!</h2>
+                <h2 className="text-2xl font-bold mb-2">Welcome back, {currentUser?.display_name}!</h2>
                 <p className="text-muted-foreground">
                   Start by creating a new trade or selecting an existing chat from the sidebar.
                 </p>
