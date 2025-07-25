@@ -255,6 +255,36 @@ export type Database = {
           },
         ]
       }
+      wallet_sessions: {
+        Row: {
+          created_at: string
+          expires_at: string
+          id: string
+          message: string
+          nonce: string
+          signature: string
+          wallet_address: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at: string
+          id?: string
+          message: string
+          nonce: string
+          signature: string
+          wallet_address: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          message?: string
+          nonce?: string
+          signature?: string
+          wallet_address?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

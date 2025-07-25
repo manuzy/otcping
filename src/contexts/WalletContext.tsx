@@ -1,14 +1,16 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { User } from '@/types';
-import { mockUsers } from '@/data/mockData';
+import { walletConnectService } from '@/lib/walletConnect';
+import { walletAuthService } from '@/lib/walletAuth';
+import { useToast } from '@/hooks/use-toast';
 
 interface WalletContextType {
   isConnected: boolean;
   walletAddress: string | null;
-  currentUser: User | null;
+  currentUser: any | null;
   connect: () => Promise<void>;
   disconnect: () => void;
   isConnecting: boolean;
+  chainId: number | null;
 }
 
 const WalletContext = createContext<WalletContextType | undefined>(undefined);
@@ -24,51 +26,149 @@ export const useWallet = () => {
 export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isConnected, setIsConnected] = useState(false);
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [currentUser, setCurrentUser] = useState<any | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
+  const [chainId, setChainId] = useState<number | null>(null);
+  const { toast } = useToast();
 
-  // Simulate wallet connection
+  // Real WalletConnect integration
   const connect = async () => {
     setIsConnecting(true);
     try {
-      // Simulate wallet connection delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Mock wallet address - in real app this would come from wallet
-      const mockWalletAddress = "0x1234567890123456789012345678901234567890";
-      setWalletAddress(mockWalletAddress);
-      setIsConnected(true);
-      
-      // Find or create user for this wallet address
-      let user = mockUsers.find(u => u.walletAddress === mockWalletAddress);
-      if (!user) {
-        // Create new user for this wallet
-        user = {
-          ...mockUsers[0], // Use first user as template
-          id: `user_${Date.now()}`,
-          walletAddress: mockWalletAddress,
-          displayName: `User ${mockWalletAddress.slice(-4)}`,
-          contacts: [],
-        };
+      // Initialize WalletConnect if not already done
+      const initialized = await walletConnectService.initialize();
+      if (!initialized) {
+        throw new Error('Failed to initialize WalletConnect');
       }
-      setCurrentUser(user);
+
+      // Connect to wallet
+      const connection = await walletConnectService.connect();
+      if (!connection) {
+        throw new Error('Failed to connect wallet');
+      }
+
+      const { address, chainId: connectedChainId } = connection;
+      
+      // Check for existing session
+      const existingSession = await walletAuthService.getWalletSession(address);
+      
+      if (existingSession) {
+        // Use existing session
+        setWalletAddress(address);
+        setChainId(connectedChainId);
+        setIsConnected(true);
+        
+        // Get user profile
+        const profile = await walletAuthService.getOrCreateProfile(address);
+        setCurrentUser(profile);
+        
+        toast({
+          title: "Wallet Connected",
+          description: `Connected to ${address.slice(0, 6)}...${address.slice(-4)}`,
+        });
+      } else {
+        // Create new authentication session
+        const nonce = walletAuthService.generateNonce();
+        const message = walletAuthService.createSignInMessage(address, nonce);
+        
+        // Request signature
+        const signature = await walletConnectService.signMessage(message, address);
+        if (!signature) {
+          throw new Error('Failed to sign authentication message');
+        }
+
+        // Create wallet session
+        const session = await walletAuthService.createWalletSession(address, signature, message, nonce);
+        if (!session) {
+          throw new Error('Failed to create authentication session');
+        }
+
+        // Set connection state
+        setWalletAddress(address);
+        setChainId(connectedChainId);
+        setIsConnected(true);
+        
+        // Get or create user profile
+        const profile = await walletAuthService.getOrCreateProfile(address);
+        setCurrentUser(profile);
+
+        toast({
+          title: "Wallet Connected & Authenticated",
+          description: `Successfully connected ${address.slice(0, 6)}...${address.slice(-4)}`,
+        });
+      }
     } catch (error) {
       console.error('Failed to connect wallet:', error);
+      toast({
+        title: "Connection Failed",
+        description: error instanceof Error ? error.message : "Failed to connect wallet",
+        variant: "destructive",
+      });
     } finally {
       setIsConnecting(false);
     }
   };
 
-  const disconnect = () => {
-    setIsConnected(false);
-    setWalletAddress(null);
-    setCurrentUser(null);
+  const disconnect = async () => {
+    try {
+      if (walletAddress) {
+        await walletAuthService.deleteWalletSession(walletAddress);
+      }
+      await walletConnectService.disconnect();
+      
+      setIsConnected(false);
+      setWalletAddress(null);
+      setCurrentUser(null);
+      setChainId(null);
+
+      toast({
+        title: "Wallet Disconnected",
+        description: "Successfully disconnected from wallet",
+      });
+    } catch (error) {
+      console.error('Failed to disconnect wallet:', error);
+    }
   };
 
-  // Check for existing connection on mount
+  // Initialize and check for existing connection on mount
   useEffect(() => {
-    // In real app, check if wallet is already connected
-    // For now, start disconnected
+    const initializeWallet = async () => {
+      try {
+        // Initialize WalletConnect
+        await walletConnectService.initialize();
+        
+        // Check for active sessions
+        const activeSessions = walletConnectService.getActiveSessions();
+        if (activeSessions.length > 0) {
+          const session = activeSessions[0];
+          const accounts = session.namespaces.eip155?.accounts || [];
+          
+          if (accounts.length > 0) {
+            const accountData = accounts[0].split(':');
+            const chainId = parseInt(accountData[1]);
+            const address = accountData[2];
+            
+            // Verify we have a valid auth session
+            const authSession = await walletAuthService.getWalletSession(address);
+            if (authSession) {
+              setWalletAddress(address);
+              setChainId(chainId);
+              setIsConnected(true);
+              
+              const profile = await walletAuthService.getOrCreateProfile(address);
+              setCurrentUser(profile);
+            }
+          }
+        }
+        
+        // Clean up expired sessions
+        await walletAuthService.clearExpiredSessions();
+      } catch (error) {
+        console.error('Failed to initialize wallet context:', error);
+      }
+    };
+
+    initializeWallet();
   }, []);
 
   const value: WalletContextType = {
@@ -78,6 +178,7 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     connect,
     disconnect,
     isConnecting,
+    chainId,
   };
 
   return (

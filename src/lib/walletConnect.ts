@@ -1,0 +1,143 @@
+import { SignClient } from '@walletconnect/sign-client';
+import { WalletConnectModal } from '@walletconnect/modal';
+
+interface WalletConnectConfig {
+  projectId: string;
+  metadata: {
+    name: string;
+    description: string;
+    url: string;
+    icons: string[];
+  };
+}
+
+class WalletConnectService {
+  private signClient: InstanceType<typeof SignClient> | null = null;
+  private modal: WalletConnectModal | null = null;
+  private config: WalletConnectConfig;
+
+  constructor(config: WalletConnectConfig) {
+    this.config = config;
+  }
+
+  async initialize() {
+    try {
+      this.signClient = await SignClient.init({
+        projectId: this.config.projectId,
+        metadata: this.config.metadata,
+      });
+
+      this.modal = new WalletConnectModal({
+        projectId: this.config.projectId,
+        chains: ['eip155:1', 'eip155:137'], // Ethereum and Polygon
+      });
+
+      return true;
+    } catch (error) {
+      console.error('Failed to initialize WalletConnect:', error);
+      return false;
+    }
+  }
+
+  async connect(): Promise<{ address: string; chainId: number } | null> {
+    if (!this.signClient || !this.modal) {
+      throw new Error('WalletConnect not initialized');
+    }
+
+    try {
+      const { uri, approval } = await this.signClient.connect({
+        requiredNamespaces: {
+          eip155: {
+            methods: ['eth_sendTransaction', 'personal_sign', 'eth_sign'],
+            chains: ['eip155:1', 'eip155:137'],
+            events: ['accountsChanged', 'chainChanged'],
+          },
+        },
+      });
+
+      if (uri) {
+        this.modal.openModal({ uri });
+        const session = await approval();
+        this.modal.closeModal();
+
+        const accounts = session.namespaces.eip155?.accounts || [];
+        if (accounts.length > 0) {
+          const accountData = accounts[0].split(':');
+          const chainId = parseInt(accountData[1]);
+          const address = accountData[2];
+          
+          return { address, chainId };
+        }
+      }
+
+      return null;
+    } catch (error) {
+      console.error('Failed to connect wallet:', error);
+      this.modal?.closeModal();
+      return null;
+    }
+  }
+
+  async signMessage(message: string, address: string): Promise<string | null> {
+    if (!this.signClient) {
+      throw new Error('WalletConnect not initialized');
+    }
+
+    try {
+      const sessions = this.signClient.session.getAll();
+      const session = sessions.find(s => 
+        s.namespaces.eip155?.accounts.some(acc => acc.includes(address))
+      );
+
+      if (!session) {
+        throw new Error('No active session found for this address');
+      }
+
+      const result = await this.signClient.request({
+        topic: session.topic,
+        chainId: 'eip155:1',
+        request: {
+          method: 'personal_sign',
+          params: [message, address],
+        },
+      });
+
+      return result as string;
+    } catch (error) {
+      console.error('Failed to sign message:', error);
+      return null;
+    }
+  }
+
+  async disconnect() {
+    if (this.signClient) {
+      const sessions = this.signClient.session.getAll();
+      await Promise.all(
+        sessions.map(session =>
+          this.signClient?.disconnect({
+            topic: session.topic,
+            reason: {
+              code: 6000,
+              message: 'User disconnected',
+            },
+          })
+        )
+      );
+    }
+  }
+
+  getActiveSessions() {
+    return this.signClient?.session.getAll() || [];
+  }
+}
+
+// Create a singleton instance
+export const walletConnectService = new WalletConnectService({
+  projectId: '2d3d32d3f2e5f4a5b6c7d8e9f0a1b2c3', // You'll need to get this from WalletConnect Cloud
+  metadata: {
+    name: 'OTC Trades',
+    description: 'Secure OTC cryptocurrency trading platform',
+    url: window.location.origin,
+    icons: [`${window.location.origin}/favicon.ico`],
+  },
+});
