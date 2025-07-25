@@ -290,7 +290,19 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      authenticate_wallet: {
+        Args: {
+          wallet_addr: string
+          signature_msg: string
+          user_signature: string
+          nonce_value: string
+        }
+        Returns: Json
+      }
+      create_wallet_challenge: {
+        Args: { wallet_addr: string }
+        Returns: Json
+      }
     }
     Enums: {
       message_type: "message" | "trade_action" | "system"
