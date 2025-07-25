@@ -1,5 +1,6 @@
 import { MessageCircle, TrendingUp, Users, UserPlus, Settings } from "lucide-react";
 import { NavLink } from "react-router-dom";
+import { useWallet } from "@/hooks/useWallet";
 import { cn } from "@/lib/utils";
 
 const tabs = [
@@ -11,6 +12,13 @@ const tabs = [
 ];
 
 export const BottomTabs = () => {
+  const { isConnected } = useWallet();
+
+  // Only show bottom tabs if wallet is connected
+  if (!isConnected) {
+    return null;
+  }
+
   return (
     <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-card border-t border-border">
       <div className="flex">

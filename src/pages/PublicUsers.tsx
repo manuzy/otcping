@@ -6,17 +6,20 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { mockUsers, currentUser } from "@/data/mockData";
+import { mockUsers } from "@/data/mockData";
+import { useWallet } from "@/hooks/useWallet";
 import { formatDistanceToNow } from "date-fns";
 
 export default function PublicUsers() {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState<string>("reputation");
 
+  const { currentUser } = useWallet();
+
   // Filter public users (excluding current user)
   const publicUsers = mockUsers.filter(user => 
     user.isPublic && 
-    user.id !== currentUser.id &&
+    user.id !== currentUser?.id &&
     user.displayName.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -46,7 +49,7 @@ export default function PublicUsers() {
     return Math.round((successful / total) * 100);
   };
 
-  const isContact = (userId: string) => currentUser.contacts.includes(userId);
+  const isContact = (userId: string) => currentUser?.contacts.includes(userId) || false;
 
   return (
     <div className="flex flex-col h-screen bg-background">

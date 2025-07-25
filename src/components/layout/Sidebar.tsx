@@ -5,8 +5,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Search, Plus, MoreVertical, X } from "lucide-react";
 import { Chat } from "@/types";
-import { mockChats, currentUser } from "@/data/mockData";
-import { WalletConnection } from "../wallet/WalletConnection";
+import { mockChats } from "@/data/mockData";
+import { useWallet } from "@/hooks/useWallet";
 
 interface SidebarProps {
   selectedChat: Chat | null;
@@ -16,6 +16,7 @@ interface SidebarProps {
 
 export const Sidebar = ({ selectedChat, onChatSelect, onClose }: SidebarProps) => {
   const [searchQuery, setSearchQuery] = useState("");
+  const { currentUser, isConnected, walletAddress } = useWallet();
   
   const filteredChats = mockChats.filter(chat =>
     chat.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -24,6 +25,11 @@ export const Sidebar = ({ selectedChat, onChatSelect, onClose }: SidebarProps) =
   const formatTime = (date: Date) => {
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
+
+  // Don't render sidebar if wallet not connected
+  if (!isConnected || !currentUser) {
+    return null;
+  }
 
   return (
     <div className="flex flex-col h-full">
@@ -55,8 +61,6 @@ export const Sidebar = ({ selectedChat, onChatSelect, onClose }: SidebarProps) =
           </div>
         </div>
 
-        {/* Wallet Connection */}
-        <WalletConnection />
 
         {/* Search and New Trade */}
         <div className="space-y-2 mt-4">

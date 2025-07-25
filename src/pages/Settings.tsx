@@ -8,15 +8,17 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
-import { currentUser } from "@/data/mockData";
+import { useWallet } from "@/hooks/useWallet";
 import { useToast } from "@/hooks/use-toast";
 
 export default function Settings() {
   const { toast } = useToast();
+  const { currentUser } = useWallet();
+  
   const [profileData, setProfileData] = useState({
-    displayName: currentUser.displayName,
-    description: currentUser.description || "",
-    isPublic: currentUser.isPublic,
+    displayName: currentUser?.displayName || "",
+    description: currentUser?.description || "",
+    isPublic: currentUser?.isPublic || false,
   });
 
   const [notifications, setNotifications] = useState({
@@ -69,8 +71,8 @@ export default function Settings() {
             {/* Avatar */}
             <div className="flex items-center gap-4">
               <Avatar className="h-20 w-20">
-                <AvatarImage src={currentUser.avatar} alt={currentUser.displayName} />
-                <AvatarFallback>{currentUser.displayName.charAt(0)}</AvatarFallback>
+                <AvatarImage src={currentUser?.avatar} alt={currentUser?.displayName} />
+                <AvatarFallback>{currentUser?.displayName.charAt(0)}</AvatarFallback>
               </Avatar>
               <Button variant="outline" className="gap-2">
                 <Camera className="h-4 w-4" />

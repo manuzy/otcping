@@ -253,4 +253,5 @@ export const mockChats: Chat[] = [
   },
 ];
 
-export const currentUser = mockUsers[5]; // Using the last user as current user
+// Current user is now managed by WalletContext
+// Each wallet address maps to a user profile

@@ -11,29 +11,32 @@ import PublicUsers from "./pages/PublicUsers";
 import Settings from "./pages/Settings";
 import { BottomTabs } from "./components/navigation/BottomTabs";
 import { Header } from "./components/navigation/Header";
+import { WalletProvider } from "./contexts/WalletContext";
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <div className="relative">
-          <Header />
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/contacts" element={<Contacts />} />
-            <Route path="/public-chats" element={<PublicChats />} />
-            <Route path="/users" element={<PublicUsers />} />
-            <Route path="/settings" element={<Settings />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-          <BottomTabs />
-        </div>
-      </BrowserRouter>
+      <WalletProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <div className="relative">
+            <Header />
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/contacts" element={<Contacts />} />
+              <Route path="/public-chats" element={<PublicChats />} />
+              <Route path="/users" element={<PublicUsers />} />
+              <Route path="/settings" element={<Settings />} />
+              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+            <BottomTabs />
+          </div>
+        </BrowserRouter>
+      </WalletProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );

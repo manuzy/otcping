@@ -5,15 +5,17 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { mockUsers, currentUser } from "@/data/mockData";
+import { mockUsers } from "@/data/mockData";
+import { useWallet } from "@/hooks/useWallet";
 import { User } from "@/types";
 
 export default function Contacts() {
   const [searchQuery, setSearchQuery] = useState("");
+  const { currentUser } = useWallet();
   
   // Filter users that are in current user's contacts
   const contacts = mockUsers.filter(user => 
-    currentUser.contacts.includes(user.id) && 
+    currentUser?.contacts.includes(user.id) && 
     user.displayName.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
