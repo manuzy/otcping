@@ -35,11 +35,15 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const connect = async () => {
     setIsConnecting(true);
     try {
+      console.log('Starting wallet connection process...');
+      
       // Initialize WalletConnect if not already done
       const initialized = await walletConnectService.initialize();
       if (!initialized) {
-        throw new Error('Failed to initialize WalletConnect');
+        throw new Error('Failed to initialize WalletConnect. Check console for details.');
       }
+      
+      console.log('WalletConnect initialized, attempting connection...');
 
       // Connect to wallet
       const connection = await walletConnectService.connect();

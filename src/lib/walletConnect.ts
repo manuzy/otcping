@@ -22,19 +22,35 @@ class WalletConnectService {
 
   async initialize() {
     try {
+      console.log('Initializing WalletConnect with projectId:', this.config.projectId);
+      
+      if (!this.config.projectId || this.config.projectId === '8091c0243978a61f761f5c2a82ad83d8') {
+        throw new Error('Invalid or default WalletConnect Project ID. Please get a valid Project ID from https://cloud.walletconnect.com');
+      }
+
       this.signClient = await SignClient.init({
         projectId: this.config.projectId,
         metadata: this.config.metadata,
       });
+
+      console.log('SignClient initialized successfully');
 
       this.modal = new WalletConnectModal({
         projectId: this.config.projectId,
         chains: ['eip155:1', 'eip155:137'], // Ethereum and Polygon
       });
 
+      console.log('WalletConnect Modal initialized successfully');
       return true;
     } catch (error) {
       console.error('Failed to initialize WalletConnect:', error);
+      
+      if (error instanceof Error) {
+        if (error.message.includes('Project not found') || error.message.includes('3000')) {
+          console.error('Project ID is invalid. Please check your WalletConnect Cloud project ID.');
+        }
+      }
+      
       return false;
     }
   }
