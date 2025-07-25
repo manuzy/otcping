@@ -132,9 +132,9 @@ export const ChatView = ({ chat, onMenuClick }: ChatViewProps) => {
               </div>
               <div className="mt-3 flex items-center justify-between">
                 <Badge 
-                  className={`capitalize ${chat.trade.type === 'buy' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}
+                  className={chat.trade.type === 'buy' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}
                 >
-                  {chat.trade.type}
+                  {chat.trade.type.toUpperCase()}
                 </Badge>
                 <Badge 
                   variant="secondary"
