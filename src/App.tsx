@@ -12,32 +12,38 @@ import Settings from "./pages/Settings";
 import CreateTrade from "./pages/CreateTrade";
 import { BottomTabs } from "./components/navigation/BottomTabs";
 import { Header } from "./components/navigation/Header";
+import { AuthProvider } from "./hooks/useAuth";
+import { AppKitProvider } from "./components/providers/AppKitProvider";
 
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <div className="relative">
-          <Header />
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/contacts" element={<Contacts />} />
-            <Route path="/public-chats" element={<PublicChats />} />
-            <Route path="/users" element={<PublicUsers />} />
-            <Route path="/settings" element={<Settings />} />
-            <Route path="/create-trade" element={<CreateTrade />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-          <BottomTabs />
-        </div>
-      </BrowserRouter>
-    </TooltipProvider>
+    <AppKitProvider>
+      <AuthProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <div className="relative">
+              <Header />
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/contacts" element={<Contacts />} />
+                <Route path="/public-chats" element={<PublicChats />} />
+                <Route path="/users" element={<PublicUsers />} />
+                <Route path="/settings" element={<Settings />} />
+                <Route path="/create-trade" element={<CreateTrade />} />
+                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+              <BottomTabs />
+            </div>
+          </BrowserRouter>
+        </TooltipProvider>
+      </AuthProvider>
+    </AppKitProvider>
   </QueryClientProvider>
 );
 

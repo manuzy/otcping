@@ -1,16 +1,15 @@
 import { Button } from "@/components/ui/button";
-import { Menu, Plus, MessageSquare, Wallet } from "lucide-react";
+import { Menu, Plus, MessageSquare } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import ReownConnectButton from "@/components/wallet/ReownConnectButton";
-import { useAppKit, useAppKitAccount } from '@reown/appkit/react';
+import WalletAuthButton from "@/components/auth/WalletAuthButton";
+import { useAuth } from "@/hooks/useAuth";
 
 interface WelcomeViewProps {
   onMenuClick: () => void;
 }
 
 export const WelcomeView = ({ onMenuClick }: WelcomeViewProps) => {
-  const { open } = useAppKit();
-  const { address, isConnected } = useAppKitAccount();
+  const { user } = useAuth();
   const navigate = useNavigate();
 
   return (
@@ -26,15 +25,27 @@ export const WelcomeView = ({ onMenuClick }: WelcomeViewProps) => {
       {/* Welcome Content */}
       <div className="flex-1 flex items-center justify-center p-8">
         <div className="text-center max-w-md">
-          {!isConnected ? (
-            <ReownConnectButton />
+          {!user ? (
+            <div className="space-y-6">
+              <div>
+                <MessageSquare className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
+                <h2 className="text-2xl font-bold mb-2">Welcome to OTC Trades</h2>
+                <p className="text-muted-foreground">
+                  Secure peer-to-peer cryptocurrency trading platform
+                </p>
+                <p className="text-muted-foreground mt-2">
+                  Connect and authenticate your wallet to start trading.
+                </p>
+              </div>
+              <WalletAuthButton />
+            </div>
           ) : (
             <>
               <div className="mb-6">
                 <MessageSquare className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
                 <h2 className="text-2xl font-bold mb-2">Welcome back!</h2>
                 <p className="text-muted-foreground">
-                  Connected with {address?.slice(0, 6)}...{address?.slice(-4)}
+                  Your wallet is authenticated and ready for trading.
                 </p>
                 <p className="text-muted-foreground mt-2">
                   Start by creating a new trade or selecting an existing chat from the sidebar.

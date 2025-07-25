@@ -1,26 +1,20 @@
 import { useState } from "react";
-import { Camera, Bell, Shield, User, Phone, Mail, MessageSquare } from "lucide-react";
+import { Bell, Shield, Phone, Mail, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
-import { useAppKitAccount } from '@reown/appkit/react';
 import { useToast } from "@/hooks/use-toast";
+import ProfileManager from "@/components/profile/ProfileManager";
+import WalletAuthButton from "@/components/auth/WalletAuthButton";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function Settings() {
   const { toast } = useToast();
-  const { address } = useAppKitAccount();
+  const { user } = useAuth();
   
-  const [profileData, setProfileData] = useState({
-    displayName: address ? `User ${address.slice(-4)}` : "User",
-    description: "",
-    isPublic: false,
-  });
-
   const [notifications, setNotifications] = useState({
     email: "",
     telegram: "",
@@ -32,13 +26,6 @@ export default function Settings() {
     enableSMS: false,
   });
 
-  const handleSaveProfile = () => {
-    toast({
-      title: "Profile updated",
-      description: "Your profile settings have been saved successfully.",
-    });
-  };
-
   const handleSaveNotifications = () => {
     toast({
       title: "Notification settings updated",
@@ -49,65 +36,16 @@ export default function Settings() {
   return (
     <div className="flex flex-col h-screen bg-background">
       {/* Header */}
-      <div className="border-b border-border p-4">
+      <div className="border-b border-border p-4 flex items-center justify-between">
         <h1 className="text-2xl font-bold">Settings</h1>
+        <WalletAuthButton />
       </div>
 
       {/* Settings Content */}
       <div className="flex-1 overflow-y-auto p-4 space-y-6 pb-20 md:pb-4">
         
         {/* Profile Settings */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <User className="h-5 w-5" />
-              Profile Settings
-            </CardTitle>
-            <CardDescription>
-              Manage your public profile and display preferences
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {/* Avatar */}
-            <div className="flex items-center gap-4">
-              <Avatar className="h-20 w-20">
-                <AvatarFallback>{address ? address.slice(0, 2).toUpperCase() : "U"}</AvatarFallback>
-              </Avatar>
-              <Button variant="outline" className="gap-2">
-                <Camera className="h-4 w-4" />
-                Change Photo
-              </Button>
-            </div>
-
-            {/* Display Name */}
-            <div className="space-y-2">
-              <Label htmlFor="displayName">Display Name</Label>
-              <Input
-                id="displayName"
-                value={profileData.displayName}
-                onChange={(e) => setProfileData(prev => ({ ...prev, displayName: e.target.value }))}
-                placeholder="Enter your display name"
-              />
-            </div>
-
-            {/* Description */}
-            <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
-              <Textarea
-                id="description"
-                value={profileData.description}
-                onChange={(e) => setProfileData(prev => ({ ...prev, description: e.target.value }))}
-                placeholder="Tell others about yourself and your trading experience..."
-                rows={3}
-              />
-            </div>
-
-
-            <Button onClick={handleSaveProfile} className="w-full">
-              Save Profile Changes
-            </Button>
-          </CardContent>
-        </Card>
+        <ProfileManager />
 
         {/* Notification Settings */}
         <Card>
@@ -262,18 +200,17 @@ export default function Settings() {
               <Switch defaultChecked />
             </div>
 
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label>Public Profile</Label>
-                <p className="text-sm text-muted-foreground">
-                  Allow others to see your profile in public listings
-                </p>
+            {user && (
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label>Authenticated</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Your wallet is authenticated and profile is active
+                  </p>
+                </div>
+                <div className="h-2 w-2 bg-green-500 rounded-full" />
               </div>
-              <Switch
-                checked={profileData.isPublic}
-                onCheckedChange={(checked) => setProfileData(prev => ({ ...prev, isPublic: checked }))}
-              />
-            </div>
+            )}
           </CardContent>
         </Card>
       </div>
