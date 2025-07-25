@@ -4,6 +4,38 @@ export interface User {
   displayName: string;
   avatar: string;
   isOnline: boolean;
+  description?: string;
+  isPublic: boolean;
+  reputation: number;
+  successfulTrades: number;
+  totalTrades: number;
+  joinedAt: Date;
+  contacts: string[]; // user IDs
+}
+
+export interface NotificationSettings {
+  email?: string;
+  telegram?: string;
+  slack?: string;
+  phone?: string;
+  enableEmail: boolean;
+  enableTelegram: boolean;
+  enableSlack: boolean;
+  enableSMS: boolean;
+}
+
+export interface AlertFilter {
+  id: string;
+  userId: string;
+  name: string;
+  chain?: string;
+  pair?: string;
+  type?: 'buy' | 'sell';
+  minSize?: number;
+  maxSize?: number;
+  isActive: boolean;
+  notifications: NotificationSettings;
+  createdAt: Date;
 }
 
 export interface Trade {
