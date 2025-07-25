@@ -138,7 +138,7 @@ export const ChatView = ({ chat, onMenuClick }: ChatViewProps) => {
                 </Badge>
                 <Badge 
                   variant="secondary"
-                  className={`capitalize ${
+                  className={`${
                     chat.trade.status === 'active' ? 'bg-green-100 text-green-800' :
                     chat.trade.status === 'completed' ? 'bg-blue-100 text-blue-800' :
                     chat.trade.status === 'cancelled' ? 'bg-red-100 text-red-800' :
