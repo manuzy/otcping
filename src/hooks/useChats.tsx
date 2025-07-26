@@ -86,7 +86,36 @@ export function useChats() {
     }
   };
 
-  // Create a new chat with retry logic for auth timing issues
+  // Enhanced auth validation function
+  const validateAuthContext = async (): Promise<boolean> => {
+    try {
+      // Get current session
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError || !session) {
+        console.log('[Auth Validation] No valid session found');
+        return false;
+      }
+
+      // Test auth context with a simple query
+      const { data: authTest, error: authError } = await supabase
+        .from('profiles')
+        .select('id')
+        .limit(1);
+
+      if (authError) {
+        console.log('[Auth Validation] Auth context test failed:', authError);
+        return false;
+      }
+
+      console.log('[Auth Validation] Auth context is valid');
+      return true;
+    } catch (error) {
+      console.log('[Auth Validation] Validation failed:', error);
+      return false;
+    }
+  };
+
+  // Create a new chat with enhanced retry logic and pre-flight auth testing
   const createChat = async (
     name: string, 
     isPublic: boolean = false, 
@@ -98,31 +127,49 @@ export function useChats() {
       return null;
     }
 
-    const maxRetries = 3;
+    const maxRetries = 5; // Increased retries
     let lastError: any = null;
 
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
-        console.log(`Chat creation attempt ${attempt}/${maxRetries}`);
+        console.log(`[Chat Creation] Attempt ${attempt}/${maxRetries}`);
         
-        // For attempts after the first, validate session explicitly
-        if (attempt > 1) {
-          console.log('Validating session before retry...');
-          // Give the session a moment to propagate
-          await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+        // Pre-flight auth validation for all attempts
+        console.log('[Chat Creation] Validating auth context...');
+        const authValid = await validateAuthContext();
+        
+        if (!authValid) {
+          console.log('[Chat Creation] Auth context invalid, refreshing session...');
           
-          // Refresh session to ensure auth context is current
+          // Wait progressively longer between attempts
+          const waitTime = Math.min(1000 * attempt, 5000);
+          await new Promise(resolve => setTimeout(resolve, waitTime));
+          
+          // Force session refresh
           const { data: { session: refreshedSession }, error: refreshError } = await supabase.auth.refreshSession();
           if (refreshError || !refreshedSession) {
-            console.warn('Session refresh failed:', refreshError);
+            console.warn('[Chat Creation] Session refresh failed:', refreshError);
             lastError = new Error('Session validation failed');
             continue;
           }
-          console.log('Session refreshed successfully');
+          
+          console.log('[Chat Creation] Session refreshed, re-validating...');
+          
+          // Wait a bit more for session to propagate
+          await new Promise(resolve => setTimeout(resolve, 500));
+          
+          // Re-validate auth context
+          const revalidated = await validateAuthContext();
+          if (!revalidated) {
+            console.warn('[Chat Creation] Re-validation failed after refresh');
+            lastError = new Error('Auth context validation failed after refresh');
+            continue;
+          }
         }
 
-        // Create chat
-        console.log('Creating chat with name:', name);
+        console.log('[Chat Creation] Auth context validated, creating chat...');
+
+        // Create chat with explicit auth header
         const { data: chat, error: chatError } = await supabase
           .from('chats')
           .insert({
@@ -134,12 +181,12 @@ export function useChats() {
           .single();
 
         if (chatError) {
-          console.error(`Chat creation error (attempt ${attempt}):`, chatError);
+          console.error(`[Chat Creation] Chat creation error (attempt ${attempt}):`, chatError);
           lastError = chatError;
           
-          // If it's an RLS policy violation, try again with session refresh
+          // If it's an RLS policy violation, continue retrying
           if (chatError.message?.includes('row-level security policy')) {
-            console.log('RLS policy violation, retrying with session refresh...');
+            console.log('[Chat Creation] RLS policy violation, will retry...');
             continue;
           }
           
@@ -147,14 +194,14 @@ export function useChats() {
           throw chatError;
         }
 
-        console.log('Chat created successfully:', chat.id);
+        console.log('[Chat Creation] Chat created successfully:', chat.id);
 
-        // Add current user as participant
+        // Add current user as participant with the same auth validation
         const participantsToAdd = [user.id, ...participantIds].filter((id, index, arr) => 
           arr.indexOf(id) === index // Remove duplicates
         );
 
-        console.log('Adding participants:', participantsToAdd);
+        console.log('[Chat Creation] Adding participants:', participantsToAdd);
         const { error: participantError } = await supabase
           .from('chat_participants')
           .insert(
@@ -165,13 +212,13 @@ export function useChats() {
           );
 
         if (participantError) {
-          console.error('Participant creation error:', participantError);
+          console.error('[Chat Creation] Participant creation error:', participantError);
           // If participants fail, we should clean up the chat
           await supabase.from('chats').delete().eq('id', chat.id);
           throw participantError;
         }
 
-        console.log('Participants added successfully');
+        console.log('[Chat Creation] Participants added successfully');
         
         toast({
           title: "Chat created",
@@ -180,7 +227,7 @@ export function useChats() {
 
         return chat.id;
       } catch (error) {
-        console.error(`Error creating chat (attempt ${attempt}):`, error);
+        console.error(`[Chat Creation] Error (attempt ${attempt}):`, error);
         lastError = error;
         
         // If this is the last attempt, break
@@ -191,7 +238,7 @@ export function useChats() {
     }
 
     // All attempts failed
-    console.error('All chat creation attempts failed. Last error:', lastError);
+    console.error('[Chat Creation] All attempts failed. Last error:', lastError);
     toast({
       title: "Error",
       description: lastError?.message?.includes('row-level security policy') 
