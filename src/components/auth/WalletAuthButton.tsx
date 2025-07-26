@@ -3,7 +3,8 @@ import { Button } from '@/components/ui/button';
 import { useAppKitAccount, useAppKit } from '@reown/appkit/react';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Wallet } from 'lucide-react';
+import { Loader2, Wallet, Shield } from 'lucide-react';
+import { useWalletClient } from 'wagmi';
 
 export default function WalletAuthButton() {
   const [isAuthenticating, setIsAuthenticating] = useState(false);
@@ -11,6 +12,7 @@ export default function WalletAuthButton() {
   const { open } = useAppKit();
   const { user, createWalletChallenge, authenticateWallet } = useAuth();
   const { toast } = useToast();
+  const { data: walletClient } = useWalletClient();
 
   const handleAuthenticate = async () => {
     if (!isConnected || !address) {
@@ -36,16 +38,20 @@ export default function WalletAuthButton() {
       }
 
       // Request signature from wallet
-      // In a real implementation, you would use the wallet's signMessage function
-      // For now, we'll simulate this step
+      if (!walletClient) {
+        throw new Error('Wallet client not available');
+      }
+
       toast({
         title: "Sign Message",
         description: "Please sign the message in your wallet to authenticate.",
       });
 
-      // Simulate wallet signature - in real implementation this would be:
-      // const signature = await walletClient.signMessage({ message: challenge.message });
-      const signature = "simulated_signature_" + Date.now();
+      // Get real signature from wallet
+      const signature = await walletClient.signMessage({ 
+        message: challenge.message,
+        account: address as `0x${string}`
+      });
 
       // Authenticate with backend
       const result = await authenticateWallet(signature, challenge.message, challenge.nonce);
@@ -72,10 +78,10 @@ export default function WalletAuthButton() {
 
   if (user) {
     return (
-      <div className="flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-lg">
-        <Wallet className="h-4 w-4 text-primary" />
-        <span className="text-sm text-primary">
-          Connected: {address?.slice(0, 6)}...{address?.slice(-4)}
+      <div className="flex items-center gap-2 px-4 py-2 bg-success/10 rounded-lg border border-success/20">
+        <Shield className="h-4 w-4 text-success" />
+        <span className="text-sm text-success font-medium">
+          Authenticated: {address?.slice(0, 6)}...{address?.slice(-4)}
         </span>
       </div>
     );

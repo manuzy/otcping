@@ -10,6 +10,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2, User } from 'lucide-react';
+import { sanitizeText, validateAvatarUrl, sanitizeDisplayName } from '@/components/ui/input-sanitizer';
 
 interface Profile {
   id: string;
@@ -84,17 +85,23 @@ export default function ProfileManager() {
 
     setSaving(true);
     try {
+      // Sanitize inputs before saving
+      const sanitizedProfile = {
+        display_name: sanitizeDisplayName(profile.display_name),
+        description: sanitizeText(profile.description || '', 500),
+        avatar: validateAvatarUrl(profile.avatar || ''),
+        is_public: profile.is_public,
+      };
+
       const { error } = await supabase
         .from('profiles')
-        .update({
-          display_name: profile.display_name,
-          description: profile.description,
-          avatar: profile.avatar,
-          is_public: profile.is_public,
-        })
+        .update(sanitizedProfile)
         .eq('id', user.id);
 
       if (error) throw error;
+
+      // Update local state with sanitized values
+      setProfile(prev => prev ? { ...prev, ...sanitizedProfile } : null);
 
       toast({
         title: "Profile updated",
