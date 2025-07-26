@@ -118,7 +118,7 @@ export function useChatParticipants(chatId: string | null) {
           console.log(`Retrying in ${delay}ms...`);
           await sleep(delay);
           if (mountedRef.current) {
-            return fetchParticipants(retryCount + 1);
+            return fetchParticipantsRef.current?.(retryCount + 1);
           }
         }
         
