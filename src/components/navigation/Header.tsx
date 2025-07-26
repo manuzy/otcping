@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useWalletAuth } from "@/hooks/useWalletAuth";
 import { useAuth } from "@/hooks/useAuth";
+import WalletAuthButton from "@/components/auth/WalletAuthButton";
 
 const navItems = [
   { id: 'chats', label: 'Chats', icon: MessageCircle, path: '/' },
@@ -99,13 +100,7 @@ export const Header = () => {
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <Button 
-                onClick={() => open()} 
-                className="flex items-center gap-2"
-              >
-                <Wallet className="h-4 w-4" />
-                Connect Wallet
-              </Button>
+              <WalletAuthButton />
             )}
           </div>
         </div>
