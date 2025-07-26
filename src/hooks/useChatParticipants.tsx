@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { useOnlinePresence } from './useOnlinePresence';
@@ -9,11 +9,11 @@ export function useChatParticipants(chatId: string | null) {
   const [participants, setParticipants] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
-  const { isUserOnline } = useOnlinePresence();
+  const { isUserOnline, onlineUsers } = useOnlinePresence();
   const { toast } = useToast();
 
   // Fetch participants for a chat
-  const fetchParticipants = async () => {
+  const fetchParticipants = useCallback(async () => {
     if (!chatId) return;
 
     try {
@@ -65,7 +65,7 @@ export function useChatParticipants(chatId: string | null) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [chatId, isUserOnline, toast]);
 
   // Add a participant to the chat
   const addParticipant = async (userId: string) => {
@@ -149,15 +149,15 @@ export function useChatParticipants(chatId: string | null) {
     return () => {
       supabase.removeChannel(participantsChannel);
     };
-  }, [chatId]);
+  }, [chatId, fetchParticipants]);
 
   // Update online status when presence changes
   useEffect(() => {
     setParticipants(prev => prev.map(participant => ({
       ...participant,
-      isOnline: isUserOnline(participant.id)
+      isOnline: onlineUsers.has(participant.id)
     })));
-  }, [isUserOnline]);
+  }, [onlineUsers]);
 
   return {
     participants,
