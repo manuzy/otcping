@@ -20,6 +20,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [walletLoading, setWalletLoading] = useState(true);
   const { address, isConnected } = useAppKitAccount();
 
   // Track previous wallet address to detect changes
@@ -45,21 +46,40 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
+  // Handle wallet loading state
+  useEffect(() => {
+    // Give Reown time to initialize and reconnect after page refresh
+    const timer = setTimeout(() => {
+      setWalletLoading(false);
+    }, 2000); // 2 second grace period for wallet reconnection
+
+    return () => clearTimeout(timer);
+  }, []);
+
   // Handle wallet disconnection and address changes
   useEffect(() => {
+    // Don't act on wallet state changes while wallet is still loading
+    if (walletLoading) {
+      console.log('[Auth] Wallet still loading, skipping disconnect check');
+      return;
+    }
+
     // If wallet disconnects while user is authenticated, sign them out
-    if (!isConnected && user) {
+    // But only if we're sure the wallet is actually disconnected (not just loading)
+    if (!isConnected && user && !walletLoading) {
+      console.log('[Auth] Wallet disconnected, signing out user');
       signOut();
     }
     
     // If wallet address changes while authenticated, sign out previous session
     if (isConnected && address && previousAddress && address !== previousAddress && user) {
+      console.log('[Auth] Wallet address changed, signing out previous session');
       signOut();
     }
     
     // Update previous address
     setPreviousAddress(address);
-  }, [isConnected, address, user, previousAddress]);
+  }, [isConnected, address, user, previousAddress, walletLoading]);
 
   const signOut = async () => {
     const { error } = await supabase.auth.signOut();
@@ -188,7 +208,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const value = {
     user,
     session,
-    loading,
+    loading: loading || walletLoading,
     signOut,
     authenticateWallet,
     createWalletChallenge,

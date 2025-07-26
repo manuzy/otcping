@@ -14,7 +14,7 @@ export default function WalletAuthButton() {
   const { user, createWalletChallenge, authenticateWallet } = useAuth();
   const { toast } = useToast();
   const { data: walletClient } = useWalletClient();
-  const { isConnectedButNotAuthenticated } = useWalletAuth();
+  const { isConnectedButNotAuthenticated, loading: authLoading } = useWalletAuth();
 
   const handleAuthenticate = async () => {
     if (!isConnected || !address) {
@@ -77,6 +77,18 @@ export default function WalletAuthButton() {
       setIsAuthenticating(false);
     }
   };
+
+  // Show loading state during auth initialization
+  if (authLoading) {
+    return (
+      <div className="flex items-center gap-2 px-4 py-2 bg-muted rounded-lg border">
+        <Loader2 className="h-4 w-4 animate-spin" />
+        <span className="text-sm text-muted-foreground">
+          Initializing...
+        </span>
+      </div>
+    );
+  }
 
   if (user && isConnected) {
     return (
