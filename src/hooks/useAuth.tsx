@@ -113,6 +113,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!address) return { success: false, error: 'No wallet connected' };
 
     try {
+      console.log('[Wallet Auth] Starting wallet authentication process...');
+      
       // Step 1: Verify signature with database function
       const { data, error } = await supabase.rpc('authenticate_wallet', {
         wallet_addr: address,
@@ -129,19 +131,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return { success: false, error: result.error || 'Signature verification failed' };
       }
 
+      console.log('[Wallet Auth] Signature verification successful, proceeding with Supabase auth...');
+
       // Step 2: Create or sign in user with Supabase Auth
       const email = address + '@wallet.local';
       const password = CryptoJS.SHA256(address).toString();
 
+      let authResult;
+
       // Try to sign in first
-      const { error: signInError } = await supabase.auth.signInWithPassword({
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password
       });
 
       if (signInError) {
+        console.log('[Wallet Auth] User does not exist, creating new user...');
         // User doesn't exist, create new user
-        const { error: signUpError } = await supabase.auth.signUp({
+        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
           email,
           password,
           options: {
@@ -154,14 +161,48 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         });
         
         if (signUpError) {
-          console.error('Sign up error:', signUpError);
+          console.error('[Wallet Auth] Sign up error:', signUpError);
           return { success: false, error: 'Failed to create user account' };
         }
+        authResult = signUpData;
+      } else {
+        console.log('[Wallet Auth] User sign-in successful');
+        authResult = signInData;
       }
 
+      // Step 3: Critical - Ensure session is properly established
+      console.log('[Wallet Auth] Ensuring session is properly established...');
+      
+      // Force a session refresh to ensure the JWT token is properly set
+      const { data: { session }, error: refreshError } = await supabase.auth.refreshSession();
+      if (refreshError) {
+        console.error('[Wallet Auth] Session refresh failed:', refreshError);
+        return { success: false, error: 'Failed to establish session' };
+      }
+
+      if (!session) {
+        console.error('[Wallet Auth] No session after refresh');
+        return { success: false, error: 'Failed to establish session' };
+      }
+
+      console.log('[Wallet Auth] Session established successfully');
+
+      // Step 4: Validate that auth context is working at database level
+      console.log('[Wallet Auth] Validating database auth context...');
+      
+      // Wait a moment for token propagation
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      const { data: authTest, error: authTestError } = await supabase.rpc('auth_uid_test');
+      if (authTestError || !authTest) {
+        console.error('[Wallet Auth] Database auth context validation failed:', authTestError);
+        return { success: false, error: 'Authentication session not properly established' };
+      }
+
+      console.log('[Wallet Auth] Database auth context validated successfully, uid:', authTest);
       return { success: true };
     } catch (error) {
-      console.error('Error authenticating wallet:', error);
+      console.error('[Wallet Auth] Error authenticating wallet:', error);
       return { success: false, error: 'Authentication failed' };
     }
   };

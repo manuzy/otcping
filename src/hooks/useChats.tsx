@@ -135,25 +135,35 @@ export function useChats() {
     try {
       console.log('[Token Sync] Forcing session refresh and token sync...');
       
-      // Get fresh session
+      // First, get the current session to see what we have
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      console.log('[Token Sync] Current session exists:', !!currentSession);
+      
+      // Force a session refresh to get the latest token
       const { data: { session }, error: sessionError } = await supabase.auth.refreshSession();
       if (sessionError || !session) {
         console.log('[Token Sync] Session refresh failed:', sessionError);
         return false;
       }
 
-      // Force the client to use the new token by making a simple authenticated call
-      const { error: testError } = await supabase
+      console.log('[Token Sync] Session refreshed successfully');
+
+      // Give the database time to process the new token
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // Test with a simple RLS-protected query to ensure token is working
+      const { data: testData, error: testError } = await supabase
         .from('profiles')
         .select('id')
+        .eq('id', user?.id)
         .limit(1);
 
       if (testError) {
-        console.log('[Token Sync] Token sync test failed:', testError);
+        console.log('[Token Sync] RLS test query failed:', testError);
         return false;
       }
 
-      console.log('[Token Sync] Token synchronized successfully');
+      console.log('[Token Sync] Token synchronized and RLS test passed');
       return true;
     } catch (error) {
       console.log('[Token Sync] Synchronization failed:', error);

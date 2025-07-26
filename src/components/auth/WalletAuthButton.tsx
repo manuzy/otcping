@@ -61,7 +61,7 @@ export default function WalletAuthButton() {
       if (result.success) {
         toast({
           title: "Authentication successful",
-          description: "You have been signed in with your wallet.",
+          description: "You are now signed in and ready to use the platform.",
         });
       } else {
         throw new Error(result.error || 'Authentication failed');
