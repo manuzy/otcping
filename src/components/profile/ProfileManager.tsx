@@ -98,7 +98,7 @@ export default function ProfileManager() {
   const handleSave = async () => {
     if (!profile || !user) return;
 
-    // Check avatar validation before saving
+    // Check avatar validation before saving - only if we have an avatar and validation failed
     if (profile.avatar && avatarValidation && !avatarValidation.isValid) {
       toast({
         title: "Invalid avatar URL",
@@ -110,12 +110,17 @@ export default function ProfileManager() {
 
     setSaving(true);
     try {
-      // Sanitize inputs before saving
-      const avatarValidationResult = validateAvatarUrl(profile.avatar || '');
+      // Use the already validated avatar URL from state, apply basic sanitization only
+      let avatarUrl = null;
+      if (profile.avatar && profile.avatar.trim()) {
+        // Only apply basic length limit, don't re-validate since we already did real-time validation
+        avatarUrl = profile.avatar.trim().length <= 500 ? profile.avatar.trim() : null;
+      }
+
       const sanitizedProfile = {
         display_name: sanitizeDisplayName(profile.display_name),
         description: sanitizeText(profile.description || '', 500),
-        avatar: avatarValidationResult.url,
+        avatar: avatarUrl,
         is_public: profile.is_public,
       };
 
