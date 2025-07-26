@@ -86,31 +86,77 @@ export function useChats() {
     }
   };
 
-  // Enhanced auth validation function
-  const validateAuthContext = async (): Promise<boolean> => {
+  // Enhanced auth validation function that tests actual database auth context
+  const validateAuthContext = async (): Promise<{ valid: boolean; uid?: string }> => {
     try {
       // Get current session
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       if (sessionError || !session) {
         console.log('[Auth Validation] No valid session found');
+        return { valid: false };
+      }
+
+      console.log('[Auth Validation] Session token exists, testing database auth context...');
+
+      // Test the actual auth.uid() function that RLS policies use
+      // This directly tests what the database sees
+      const { data: authTest, error: authError } = await supabase
+        .rpc('auth_uid_test');
+
+      if (authError) {
+        console.log('[Auth Validation] Database auth.uid() test failed:', authError);
+        return { valid: false };
+      }
+
+      const dbUid = authTest;
+      console.log('[Auth Validation] Database auth.uid() returns:', dbUid);
+      console.log('[Auth Validation] Frontend user.id:', user?.id);
+
+      if (!dbUid) {
+        console.log('[Auth Validation] Database auth.uid() is NULL - this is the RLS issue!');
+        return { valid: false };
+      }
+
+      if (dbUid !== user?.id) {
+        console.log('[Auth Validation] UID mismatch between frontend and database');
+        return { valid: false, uid: dbUid };
+      }
+
+      console.log('[Auth Validation] Database auth context is valid and matches frontend');
+      return { valid: true, uid: dbUid };
+    } catch (error) {
+      console.log('[Auth Validation] Validation failed:', error);
+      return { valid: false };
+    }
+  };
+
+  // Force token synchronization with database
+  const synchronizeAuthToken = async (): Promise<boolean> => {
+    try {
+      console.log('[Token Sync] Forcing session refresh and token sync...');
+      
+      // Get fresh session
+      const { data: { session }, error: sessionError } = await supabase.auth.refreshSession();
+      if (sessionError || !session) {
+        console.log('[Token Sync] Session refresh failed:', sessionError);
         return false;
       }
 
-      // Test auth context with a simple query
-      const { data: authTest, error: authError } = await supabase
+      // Force the client to use the new token by making a simple authenticated call
+      const { error: testError } = await supabase
         .from('profiles')
         .select('id')
         .limit(1);
 
-      if (authError) {
-        console.log('[Auth Validation] Auth context test failed:', authError);
+      if (testError) {
+        console.log('[Token Sync] Token sync test failed:', testError);
         return false;
       }
 
-      console.log('[Auth Validation] Auth context is valid');
+      console.log('[Token Sync] Token synchronized successfully');
       return true;
     } catch (error) {
-      console.log('[Auth Validation] Validation failed:', error);
+      console.log('[Token Sync] Synchronization failed:', error);
       return false;
     }
   };
@@ -134,37 +180,37 @@ export function useChats() {
       try {
         console.log(`[Chat Creation] Attempt ${attempt}/${maxRetries}`);
         
-        // Pre-flight auth validation for all attempts
-        console.log('[Chat Creation] Validating auth context...');
-        const authValid = await validateAuthContext();
+        // Enhanced auth validation that directly tests database auth.uid()
+        console.log('[Chat Creation] Testing database auth context...');
+        const authResult = await validateAuthContext();
         
-        if (!authValid) {
-          console.log('[Chat Creation] Auth context invalid, refreshing session...');
+        if (!authResult.valid) {
+          console.log('[Chat Creation] Database auth.uid() is invalid, attempting token synchronization...');
           
-          // Wait progressively longer between attempts
-          const waitTime = Math.min(1000 * attempt, 5000);
-          await new Promise(resolve => setTimeout(resolve, waitTime));
-          
-          // Force session refresh
-          const { data: { session: refreshedSession }, error: refreshError } = await supabase.auth.refreshSession();
-          if (refreshError || !refreshedSession) {
-            console.warn('[Chat Creation] Session refresh failed:', refreshError);
-            lastError = new Error('Session validation failed');
+          // Force token synchronization
+          const syncSuccess = await synchronizeAuthToken();
+          if (!syncSuccess) {
+            console.log('[Chat Creation] Token synchronization failed');
+            lastError = new Error('Token synchronization failed');
+            await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
             continue;
           }
           
-          console.log('[Chat Creation] Session refreshed, re-validating...');
+          // Wait for token to propagate to database
+          await new Promise(resolve => setTimeout(resolve, 1000));
           
-          // Wait a bit more for session to propagate
-          await new Promise(resolve => setTimeout(resolve, 500));
-          
-          // Re-validate auth context
-          const revalidated = await validateAuthContext();
-          if (!revalidated) {
-            console.warn('[Chat Creation] Re-validation failed after refresh');
-            lastError = new Error('Auth context validation failed after refresh');
+          // Re-test database auth context after sync
+          const retestResult = await validateAuthContext();
+          if (!retestResult.valid) {
+            console.log('[Chat Creation] Database auth context still invalid after sync');
+            lastError = new Error('Database auth context validation failed');
+            await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
             continue;
           }
+          
+          console.log('[Chat Creation] Database auth context validated after sync');
+        } else {
+          console.log('[Chat Creation] Database auth context is valid from the start');
         }
 
         console.log('[Chat Creation] Auth context validated, creating chat...');
