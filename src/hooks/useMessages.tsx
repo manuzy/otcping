@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import type { Message } from '@/types';
 
 export function useMessages(chatId: string | null) {
@@ -10,10 +10,13 @@ export function useMessages(chatId: string | null) {
   const [sending, setSending] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
+  const isUnmountedRef = useRef(false);
 
   // Fetch messages for a chat
   const fetchMessages = async () => {
-    if (!chatId || !user) return;
+    if (!chatId || !user || isUnmountedRef.current) return;
+
+    console.log('🔍 Fetching messages for chat:', chatId, 'user:', user.id);
 
     try {
       const { data, error } = await supabase
@@ -27,6 +30,10 @@ export function useMessages(chatId: string | null) {
 
       if (error) throw error;
 
+      console.log('📨 Fetched messages:', data?.length || 0, 'messages');
+
+      if (isUnmountedRef.current) return;
+
       const transformedMessages: Message[] = (data || []).map(msg => ({
         id: msg.id,
         chatId: msg.chat_id,
@@ -38,20 +45,26 @@ export function useMessages(chatId: string | null) {
 
       setMessages(transformedMessages);
     } catch (error) {
-      console.error('Error fetching messages:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load messages",
-        variant: "destructive",
-      });
+      console.error('❌ Error fetching messages:', error);
+      if (!isUnmountedRef.current) {
+        toast({
+          title: "Error",
+          description: "Failed to load messages",
+          variant: "destructive",
+        });
+      }
     } finally {
-      setLoading(false);
+      if (!isUnmountedRef.current) {
+        setLoading(false);
+      }
     }
   };
 
   // Send a new message
   const sendMessage = async (content: string, type: 'message' | 'trade_action' | 'system' = 'message') => {
-    if (!chatId || !user || !content.trim()) return false;
+    if (!chatId || !user || !content.trim() || isUnmountedRef.current) return false;
+
+    console.log('📤 Sending message:', content, 'in chat:', chatId, 'by user:', user.id);
 
     setSending(true);
     try {
@@ -81,6 +94,10 @@ export function useMessages(chatId: string | null) {
 
       if (error) throw error;
 
+      console.log('✅ Message sent successfully:', data.id);
+
+      if (isUnmountedRef.current) return true;
+
       // Replace temp message with real one
       setMessages(prev => prev.map(msg => 
         msg.id === tempMessage.id 
@@ -92,8 +109,6 @@ export function useMessages(chatId: string | null) {
           : msg
       ));
 
-      // Note: Removed chat timestamp update to prevent infinite subscription loops
-
       // Increment unread count for other participants
       const { error: rpcError } = await supabase.rpc('increment_unread_count', {
         chat_id: chatId,
@@ -101,30 +116,39 @@ export function useMessages(chatId: string | null) {
       });
 
       if (rpcError) {
-        console.error('Error incrementing unread count:', rpcError);
+        console.error('⚠️ Error incrementing unread count:', rpcError);
       }
 
       return true;
     } catch (error) {
-      console.error('Error sending message:', error);
+      console.error('❌ Error sending message:', error);
       
-      // Remove optimistic message on error
-      setMessages(prev => prev.filter(msg => !msg.id.startsWith('temp-')));
-      
-      toast({
-        title: "Error",
-        description: "Failed to send message",
-        variant: "destructive",
-      });
+      if (!isUnmountedRef.current) {
+        // Remove optimistic message on error
+        setMessages(prev => prev.filter(msg => !msg.id.startsWith('temp-')));
+        
+        toast({
+          title: "Error",
+          description: "Failed to send message",
+          variant: "destructive",
+        });
+      }
       return false;
     } finally {
-      setSending(false);
+      if (!isUnmountedRef.current) {
+        setSending(false);
+      }
     }
   };
 
   // Set up real-time subscription for messages
   useEffect(() => {
     if (!chatId || !user) return;
+
+    // Mark component as mounted
+    isUnmountedRef.current = false;
+    
+    console.log('🔗 Setting up real-time subscription for chat:', chatId, 'user:', user.id);
 
     fetchMessages();
 
@@ -135,23 +159,45 @@ export function useMessages(chatId: string | null) {
         schema: 'public',
         table: 'messages',
         filter: `chat_id=eq.${chatId}`
-      }, (payload) => {
-        // Only add if it's not from current user (to avoid duplicate from optimistic update)
-        if (payload.new.sender_id !== user.id) {
-          const newMessage: Message = {
-            id: payload.new.id,
-            chatId: payload.new.chat_id,
-            senderId: payload.new.sender_id,
-            content: payload.new.content,
-            type: payload.new.type,
-            timestamp: new Date(payload.new.created_at)
-          };
-          setMessages(prev => [...prev, newMessage]);
-        }
+      }, async (payload) => {
+        console.log('📨 Real-time message received:', payload);
+        
+        if (isUnmountedRef.current) return;
+
+        // Add message from any user (including current user for consistency)
+        // The optimistic update will be replaced by this real message
+        const newMessage: Message = {
+          id: payload.new.id,
+          chatId: payload.new.chat_id,
+          senderId: payload.new.sender_id,
+          content: payload.new.content,
+          type: payload.new.type,
+          timestamp: new Date(payload.new.created_at)
+        };
+
+        setMessages(prev => {
+          // Remove any temporary message with same content and sender
+          const withoutTemp = prev.filter(msg => 
+            !(msg.id.startsWith('temp-') && 
+              msg.senderId === newMessage.senderId && 
+              msg.content === newMessage.content)
+          );
+          
+          // Check if this message already exists (avoid duplicates)
+          const exists = withoutTemp.some(msg => msg.id === newMessage.id);
+          if (exists) return prev;
+          
+          console.log('✅ Adding real-time message to UI:', newMessage.id);
+          return [...withoutTemp, newMessage];
+        });
       })
-      .subscribe();
+      .subscribe((status) => {
+        console.log('📡 Message subscription status:', status);
+      });
 
     return () => {
+      console.log('🔌 Cleaning up message subscription for chat:', chatId);
+      isUnmountedRef.current = true;
       supabase.removeChannel(messagesChannel);
     };
   }, [chatId, user]);
