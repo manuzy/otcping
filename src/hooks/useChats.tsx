@@ -368,22 +368,22 @@ export function useChats() {
 
     fetchChats();
 
-    // Subscribe to chat changes
+    // Subscribe to chat changes - only listen to INSERT/DELETE to avoid loops
     const chatsChannel = supabase
       .channel('chats-changes')
       .on('postgres_changes', {
-        event: '*',
+        event: 'INSERT',
         schema: 'public',
         table: 'chats'
       }, () => {
-        fetchChats(); // Refetch when chats change
+        fetchChats(); // Refetch when new chats are created
       })
       .on('postgres_changes', {
-        event: '*',
+        event: 'DELETE',
         schema: 'public',
-        table: 'messages'
+        table: 'chats'
       }, () => {
-        fetchChats(); // Refetch when messages change
+        fetchChats(); // Refetch when chats are deleted
       })
       .on('postgres_changes', {
         event: '*',

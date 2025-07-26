@@ -92,11 +92,7 @@ export function useMessages(chatId: string | null) {
           : msg
       ));
 
-      // Update chat's updated_at timestamp
-      await supabase
-        .from('chats')
-        .update({ updated_at: new Date().toISOString() })
-        .eq('id', chatId);
+      // Note: Removed chat timestamp update to prevent infinite subscription loops
 
       // Increment unread count for other participants
       const { error: rpcError } = await supabase.rpc('increment_unread_count', {
