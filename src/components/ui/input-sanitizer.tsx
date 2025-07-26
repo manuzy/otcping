@@ -35,6 +35,26 @@ export function validateAvatarUrl(url: string): string | null {
     // Only allow HTTPS
     if (urlObj.protocol !== 'https:') return null;
     
+    // Trusted domains for avatar hosting
+    const trustedDomains = [
+      'images.unsplash.com',
+      'avatars.githubusercontent.com',
+      'lh3.googleusercontent.com',
+      'cdn.jsdelivr.net',
+      'ui-avatars.com',
+      'gravatar.com',
+      'www.gravatar.com',
+      'secure.gravatar.com',
+      'cloudflare-ipfs.com',
+      'ipfs.io'
+    ];
+    
+    const isValidDomain = trustedDomains.some(domain => 
+      urlObj.hostname === domain || urlObj.hostname.endsWith('.' + domain)
+    );
+    
+    if (!isValidDomain) return null;
+    
     // Check for valid image extension
     const validExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp'];
     const hasValidExtension = validExtensions.some(ext => 
@@ -45,6 +65,11 @@ export function validateAvatarUrl(url: string): string | null {
     
     // Limit URL length
     if (url.length > 500) return null;
+    
+    // Check for suspicious query parameters
+    const suspiciousParams = ['javascript:', 'data:', 'vbscript:', 'onclick', 'onerror'];
+    const queryString = urlObj.search.toLowerCase();
+    if (suspiciousParams.some(param => queryString.includes(param))) return null;
     
     return url;
   } catch {
