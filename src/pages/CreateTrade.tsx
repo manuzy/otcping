@@ -12,6 +12,7 @@ import { useAppKitAccount } from '@reown/appkit/react';
 import { useContacts } from "@/hooks/useContacts";
 import { useChats } from "@/hooks/useChats";
 import { useToast } from "@/components/ui/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 
 // Mock data for chains and tokens
@@ -41,6 +42,7 @@ interface TradeFormData {
 const CreateTrade = () => {
   const navigate = useNavigate();
   const { address } = useAppKitAccount();
+  const { user } = useAuth();
   const { contacts, loading: contactsLoading } = useContacts();
   const { createChat } = useChats();
   const { toast } = useToast();
@@ -83,7 +85,14 @@ const CreateTrade = () => {
   };
 
   const handlePublish = async () => {
-    if (!address) return;
+    if (!user?.id) {
+      toast({
+        title: "Authentication Required",
+        description: "Please sign in to create a trade",
+        variant: "destructive",
+      });
+      return;
+    }
     
     setIsPublishing(true);
     
@@ -98,7 +107,7 @@ const CreateTrade = () => {
           price: "Market",
           type: "sell",
           status: "active",
-          created_by: address
+          created_by: user.id
         })
         .select()
         .single();
