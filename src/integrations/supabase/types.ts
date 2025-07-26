@@ -299,6 +299,10 @@ export type Database = {
         }
         Returns: Json
       }
+      cleanup_expired_sessions: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       create_wallet_challenge: {
         Args: { wallet_addr: string }
         Returns: Json
