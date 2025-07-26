@@ -22,7 +22,7 @@ export default function PublicUsers() {
   const { users, loading, searchQuery, setSearchQuery, sortBy, setSortBy, checkIsContact } = usePublicUsers();
   const { addContact } = useContacts();
   const { isUserOnline } = useOnlinePresence();
-  const { createChat } = useChats();
+  const { createChat, findExistingDirectChat } = useChats();
   const [contactStates, setContactStates] = useState<{ [userId: string]: boolean }>({});
   const [creatingChat, setCreatingChat] = useState<{ [userId: string]: boolean }>({});
 
@@ -77,23 +77,41 @@ export default function PublicUsers() {
     setCreatingChat(prev => ({ ...prev, [userId]: true }));
 
     try {
-      console.log('Starting chat creation with user:', userId, displayName);
+      console.log('Checking for existing chat with user:', userId, displayName);
       
-      // Create a direct message chat with the selected user
-      const chatId = await createChat(`Chat with ${displayName}`, false, undefined, [userId]);
+      // First, check if a direct chat already exists with this user
+      const existingChat = await findExistingDirectChat(userId);
       
-      if (chatId) {
-        console.log('Chat created successfully, navigating to:', chatId);
-        // Use the correct navigation pattern based on the app's routing
-        navigate(`/?chat=${chatId}`);
+      if (existingChat) {
+        console.log('Found existing chat:', existingChat.id);
+        // Navigate to existing chat
+        navigate(`/?chat=${existingChat.id}`);
+        toast({
+          title: "Existing Chat Found",
+          description: `Redirected to your existing chat with ${displayName}.`,
+        });
       } else {
-        console.error('Chat creation returned null');
+        console.log('No existing chat found, creating new chat with user:', userId, displayName);
+        
+        // Create a new direct message chat
+        const chatId = await createChat(`Chat with ${displayName}`, false, undefined, [userId]);
+        
+        if (chatId) {
+          console.log('Chat created successfully, navigating to:', chatId);
+          navigate(`/?chat=${chatId}`);
+          toast({
+            title: "Chat Created",
+            description: `Started a new chat with ${displayName}.`,
+          });
+        } else {
+          console.error('Chat creation returned null');
+        }
       }
     } catch (error) {
       console.error('Error in handleMessage:', error);
       toast({
         title: "Error",
-        description: "Failed to create chat. Please try again.",
+        description: "Failed to create or find chat. Please try again.",
         variant: "destructive",
       });
     } finally {

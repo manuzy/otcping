@@ -428,12 +428,70 @@ export function useChats() {
     };
   }, [user]);
 
+  const findExistingDirectChat = async (targetUserId: string): Promise<Chat | null> => {
+    if (!user?.id) return null;
+
+    try {
+      const { data: existingChats, error } = await supabase
+        .from('chats')
+        .select(`
+          *,
+          chat_participants!inner(user_id),
+          profiles:chat_participants(profiles(id, display_name, avatar, wallet_address))
+        `)
+        .eq('is_public', false)
+        .is('trade_id', null);
+
+      if (error) throw error;
+
+      // Find chats where both current user and target user are participants
+      const directChat = existingChats?.find(chat => {
+        const participantIds = chat.chat_participants.map((p: any) => p.user_id);
+        return participantIds.length === 2 && 
+               participantIds.includes(user.id) && 
+               participantIds.includes(targetUserId);
+      });
+
+      if (directChat) {
+        // Transform to match Chat type
+        const participants = directChat.profiles.map((p: any) => ({
+          id: p.profiles.id,
+          walletAddress: p.profiles.wallet_address || '',
+          displayName: p.profiles.display_name,
+          avatar: p.profiles.avatar || '',
+          isOnline: false,
+          isPublic: false,
+          reputation: 0,
+          successfulTrades: 0,
+          totalTrades: 0,
+          joinedAt: new Date(),
+          contacts: []
+        }));
+
+        return {
+          id: directChat.id,
+          name: directChat.name,
+          isPublic: directChat.is_public,
+          participants,
+          unreadCount: 0,
+          lastActivity: new Date(directChat.updated_at)
+        };
+      }
+
+      return null;
+    } catch (error) {
+      console.error('Error finding existing direct chat:', error);
+      return null;
+    }
+  };
+
   return {
     chats,
     loading,
     createChat,
     joinChat,
     markAsRead,
-    refetch: fetchChats
+    refetch: fetchChats,
+    findExistingDirectChat
   };
 }
