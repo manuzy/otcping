@@ -89,40 +89,36 @@ export function useContacts() {
         return false;
       }
 
-      // Add contact (bidirectional)
-      const { error: error1 } = await supabase
+      // Add contact (unidirectional)
+      const { error } = await supabase
         .from('contacts')
         .insert({ user_id: user.id, contact_id: contactId });
 
-      const { error: error2 } = await supabase
-        .from('contacts')
-        .insert({ user_id: contactId, contact_id: user.id });
+      if (error) {
+        // Log error for debugging
+        console.log('Contact insertion error:', error.message, error.code);
+        
+        // Check if it's a duplicate constraint violation
+        const isDuplicateError = (err: any) => {
+          if (!err) return false;
+          const message = err.message?.toLowerCase() || '';
+          return message.includes('duplicate key') || 
+                 message.includes('unique constraint') ||
+                 message.includes('already exists') ||
+                 err.code === '23505'; // PostgreSQL unique violation code
+        };
 
-      // Log errors for debugging
-      if (error1) console.log('Contact insertion error1:', error1.message, error1.code);
-      if (error2) console.log('Contact insertion error2:', error2.message, error2.code);
+        // If it's a duplicate, treat as success
+        if (isDuplicateError(error)) {
+          toast({
+            title: "Already in contacts",
+            description: "This user is already in your contacts",
+          });
+          return false;
+        }
 
-      // Check if errors are actual failures or just duplicate constraint violations
-      const isDuplicateError = (error: any) => {
-        if (!error) return false;
-        const message = error.message?.toLowerCase() || '';
-        return message.includes('duplicate key') || 
-               message.includes('unique constraint') ||
-               message.includes('already exists') ||
-               error.code === '23505'; // PostgreSQL unique violation code
-      };
-
-      const hasRealError1 = error1 && !isDuplicateError(error1);
-      const hasRealError2 = error2 && !isDuplicateError(error2);
-
-      // If both operations failed with real errors, throw
-      if (hasRealError1 && hasRealError2) {
-        throw hasRealError1 ? error1 : error2;
-      }
-
-      // If only one failed with a real error, throw that
-      if (hasRealError1 || hasRealError2) {
-        throw hasRealError1 ? error1 : error2;
+        // Otherwise, it's a real error
+        throw error;
       }
 
       toast({
@@ -149,20 +145,14 @@ export function useContacts() {
     if (!user) return false;
 
     try {
-      // Remove contact (bidirectional)
-      const { error: error1 } = await supabase
+      // Remove contact (unidirectional)
+      const { error } = await supabase
         .from('contacts')
         .delete()
         .eq('user_id', user.id)
         .eq('contact_id', contactId);
 
-      const { error: error2 } = await supabase
-        .from('contacts')
-        .delete()
-        .eq('user_id', contactId)
-        .eq('contact_id', user.id);
-
-      if (error1 || error2) throw error1 || error2;
+      if (error) throw error;
 
       toast({
         title: "Contact removed",
