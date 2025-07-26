@@ -1,13 +1,15 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { Menu, Send, MoreVertical } from "lucide-react";
+import { Menu, Send, MoreVertical, Loader2 } from "lucide-react";
 import { Chat, Message } from "@/types";
-import { mockMessages } from "@/data/mockData";
-import { useAppKitAccount } from '@reown/appkit/react';
+import { useMessages } from '@/hooks/useMessages';
+import { useChatParticipants } from '@/hooks/useChatParticipants';
+import { useChats } from '@/hooks/useChats';
+import { useAuth } from '@/hooks/useAuth';
 
 interface ChatViewProps {
   chat: Chat;
@@ -16,16 +18,25 @@ interface ChatViewProps {
 
 export const ChatView = ({ chat, onMenuClick }: ChatViewProps) => {
   const [message, setMessage] = useState("");
-  const [messages] = useState<Message[]>(
-    mockMessages.filter(msg => msg.chatId === chat.id)
-  );
-  const { address } = useAppKitAccount();
+  const { user } = useAuth();
+  const { messages, loading: messagesLoading, sending, sendMessage } = useMessages(chat.id);
+  const { participants } = useChatParticipants(chat.id);
+  const { markAsRead } = useChats();
 
-  const handleSendMessage = () => {
-    if (!message.trim()) return;
-    // In real implementation, this would send the message
-    console.log("Sending message:", message);
-    setMessage("");
+  // Mark messages as read when chat is opened
+  useEffect(() => {
+    if (chat.id && user) {
+      markAsRead(chat.id);
+    }
+  }, [chat.id, user, markAsRead]);
+
+  const handleSendMessage = async () => {
+    if (!message.trim() || sending) return;
+    
+    const success = await sendMessage(message.trim());
+    if (success) {
+      setMessage("");
+    }
   };
 
   const formatTime = (date: Date) => {
@@ -33,8 +44,9 @@ export const ChatView = ({ chat, onMenuClick }: ChatViewProps) => {
   };
 
   const renderMessage = (msg: Message) => {
-    const isOwnMessage = msg.senderId === address;
+    const isOwnMessage = user && msg.senderId === user.id;
     const isSystemMessage = msg.type === 'system' || msg.type === 'trade_action';
+    const sender = participants.find(p => p.id === msg.senderId);
 
     if (isSystemMessage) {
       return (
@@ -51,8 +63,10 @@ export const ChatView = ({ chat, onMenuClick }: ChatViewProps) => {
         <div className={`flex gap-2 max-w-[70%] ${isOwnMessage ? 'flex-row-reverse' : 'flex-row'}`}>
           {!isOwnMessage && (
             <Avatar className="h-8 w-8 mt-1">
-              <AvatarImage src={chat.participants.find(p => p.id === msg.senderId)?.avatar} />
-              <AvatarFallback>U</AvatarFallback>
+              <AvatarImage src={sender?.avatar} />
+              <AvatarFallback>
+                {sender?.displayName?.[0] || 'U'}
+              </AvatarFallback>
             </Avatar>
           )}
           <div className={`
@@ -86,7 +100,7 @@ export const ChatView = ({ chat, onMenuClick }: ChatViewProps) => {
         </Button>
         
         <Avatar className="h-10 w-10">
-          <AvatarImage src={chat.participants[0]?.avatar} />
+          <AvatarImage src={participants[0]?.avatar} />
           <AvatarFallback>
             {chat.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
           </AvatarFallback>
@@ -98,7 +112,7 @@ export const ChatView = ({ chat, onMenuClick }: ChatViewProps) => {
             {chat.isPublic && <Badge variant="secondary" className="text-xs">Public</Badge>}
           </div>
           <p className="text-sm text-muted-foreground">
-            {chat.participants.length} participant{chat.participants.length !== 1 ? 's' : ''}
+            {participants.length} participant{participants.length !== 1 ? 's' : ''}
           </p>
         </div>
         
@@ -155,7 +169,18 @@ export const ChatView = ({ chat, onMenuClick }: ChatViewProps) => {
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4">
-        {messages.map(renderMessage)}
+        {messagesLoading ? (
+          <div className="flex items-center justify-center py-8">
+            <Loader2 className="h-6 w-6 animate-spin" />
+            <span className="ml-2">Loading messages...</span>
+          </div>
+        ) : messages.length === 0 ? (
+          <div className="text-center py-8 text-muted-foreground">
+            No messages yet. Start the conversation!
+          </div>
+        ) : (
+          messages.map(renderMessage)
+        )}
       </div>
 
       {/* Message Input */}
@@ -165,11 +190,25 @@ export const ChatView = ({ chat, onMenuClick }: ChatViewProps) => {
             placeholder="Type a message..."
             value={message}
             onChange={(e) => setMessage(e.target.value)}
-            onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+            onKeyPress={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                handleSendMessage();
+              }
+            }}
+            disabled={sending}
             className="flex-1"
           />
-          <Button onClick={handleSendMessage} size="icon">
-            <Send className="h-4 w-4" />
+          <Button 
+            onClick={handleSendMessage} 
+            size="icon"
+            disabled={sending || !message.trim()}
+          >
+            {sending ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Send className="h-4 w-4" />
+            )}
           </Button>
         </div>
       </div>

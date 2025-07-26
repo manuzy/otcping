@@ -307,6 +307,10 @@ export type Database = {
         Args: { wallet_addr: string }
         Returns: Json
       }
+      increment_unread_count: {
+        Args: { chat_id: string; sender_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       message_type: "message" | "trade_action" | "system"

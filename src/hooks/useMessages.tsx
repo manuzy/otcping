@@ -98,8 +98,15 @@ export function useMessages(chatId: string | null) {
         .update({ updated_at: new Date().toISOString() })
         .eq('id', chatId);
 
-      // Increment unread count for other participants  
-      // Skip unread count update for now - will be handled by database trigger later
+      // Increment unread count for other participants
+      const { error: rpcError } = await supabase.rpc('increment_unread_count', {
+        chat_id: chatId,
+        sender_id: user.id
+      });
+
+      if (rpcError) {
+        console.error('Error incrementing unread count:', rpcError);
+      }
 
       return true;
     } catch (error) {
