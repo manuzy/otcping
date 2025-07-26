@@ -5,6 +5,11 @@ import { useOnlinePresence } from './useOnlinePresence';
 import { useToast } from '@/components/ui/use-toast';
 import type { User } from '@/types';
 
+// Add retry logic with exponential backoff
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+const MAX_RETRIES = 3;
+const BASE_DELAY = 1000;
+
 export function useChatParticipants(chatId: string | null) {
   const [participants, setParticipants] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -14,12 +19,12 @@ export function useChatParticipants(chatId: string | null) {
   const mountedRef = useRef(true);
   const lastErrorRef = useRef<number>(0);
 
-  // Fetch participants for a chat
-  const fetchParticipants = useCallback(async () => {
-    if (!chatId) return;
+  // Fetch participants for a chat with retry logic
+  const fetchParticipants = useCallback(async (retryCount = 0): Promise<void> => {
+    if (!chatId || !mountedRef.current) return;
 
     try {
-      console.log('🔍 Fetching participants for chat:', chatId);
+      console.log('🔍 Fetching participants for chat:', chatId, `(attempt ${retryCount + 1})`);
       
       const { data, error } = await supabase
         .from('chat_participants')
@@ -41,44 +46,64 @@ export function useChatParticipants(chatId: string | null) {
         `)
         .eq('chat_id', chatId);
 
-      console.log('📊 Participants query result:', { data, error });
+      console.log('📊 Participants query result:', { data, error, retryCount });
 
       if (error) throw error;
 
-      const transformedParticipants: User[] = (data || []).map(participant => ({
-        id: participant.profiles.id,
-        walletAddress: participant.profiles.wallet_address || '',
-        displayName: participant.profiles.display_name,
-        avatar: participant.profiles.avatar || '',
-        isOnline: onlineUsers.has(participant.profiles.id),
-        description: participant.profiles.description || '',
-        isPublic: participant.profiles.is_public,
-        reputation: participant.profiles.reputation,
-        successfulTrades: participant.profiles.successful_trades,
-        totalTrades: participant.profiles.total_trades,
-        joinedAt: new Date(participant.profiles.created_at),
-        contacts: [] // Not needed for participants view
-      }));
+      if (!data) {
+        console.warn('No participants data returned for chat:', chatId);
+        return;
+      }
+
+      const transformedParticipants: User[] = data
+        .filter(participant => participant.profiles) // Filter out null profiles
+        .map(participant => ({
+          id: participant.profiles.id,
+          walletAddress: participant.profiles.wallet_address || '',
+          displayName: participant.profiles.display_name || 'Unknown User',
+          avatar: participant.profiles.avatar || '',
+          isOnline: onlineUsers.has(participant.profiles.id),
+          description: participant.profiles.description || '',
+          isPublic: participant.profiles.is_public || false,
+          reputation: participant.profiles.reputation || 0,
+          successfulTrades: participant.profiles.successful_trades || 0,
+          totalTrades: participant.profiles.total_trades || 0,
+          joinedAt: new Date(participant.profiles.created_at),
+          contacts: [] // Not needed for participants view
+        }));
 
       if (mountedRef.current) {
         setParticipants(transformedParticipants);
+        setLoading(false);
       }
     } catch (error) {
-      console.error('Error fetching participants:', error);
+      console.error('Error fetching participants:', error, { chatId, retryCount });
       
-      // Debounce error toasts to prevent spam
-      const now = Date.now();
-      if (now - lastErrorRef.current > 5000) { // Only show error every 5 seconds
-        lastErrorRef.current = now;
+      // Retry with exponential backoff
+      if (retryCount < MAX_RETRIES && mountedRef.current) {
+        const delay = BASE_DELAY * Math.pow(2, retryCount);
+        console.log(`Retrying in ${delay}ms...`);
+        await sleep(delay);
         if (mountedRef.current) {
-          toast({
-            title: "Error",
-            description: "Failed to load chat participants",
-            variant: "destructive",
-          });
+          return fetchParticipants(retryCount + 1);
         }
       }
-    } finally {
+      
+      // Show error toast only after all retries failed
+      if (retryCount >= MAX_RETRIES) {
+        const now = Date.now();
+        if (now - lastErrorRef.current > 5000) { // Only show error every 5 seconds
+          lastErrorRef.current = now;
+          if (mountedRef.current) {
+            toast({
+              title: "Error",
+              description: "Failed to load chat participants",
+              variant: "destructive",
+            });
+          }
+        }
+      }
+      
       if (mountedRef.current) {
         setLoading(false);
       }
@@ -146,11 +171,18 @@ export function useChatParticipants(chatId: string | null) {
     }
   };
 
+  // Create a stable reference to fetchParticipants to avoid recreation
+  const fetchParticipantsRef = useRef(fetchParticipants);
+  fetchParticipantsRef.current = fetchParticipants;
+
   // Set up real-time subscription for participants
   useEffect(() => {
     if (!chatId) return;
 
-    fetchParticipants();
+    console.log('🔄 Setting up participants subscription for chat:', chatId);
+    
+    // Initial fetch
+    fetchParticipantsRef.current();
 
     const participantsChannel = supabase
       .channel(`participants-${chatId}`)
@@ -159,16 +191,28 @@ export function useChatParticipants(chatId: string | null) {
         schema: 'public',
         table: 'chat_participants',
         filter: `chat_id=eq.${chatId}`
-      }, () => {
-        fetchParticipants(); // Refetch when participants change
+      }, (payload) => {
+        console.log('📡 Participants change detected:', payload);
+        // Use stable ref to avoid dependency issues
+        fetchParticipantsRef.current();
       })
-      .subscribe();
+      .subscribe((status) => {
+        console.log('📡 Participants subscription status:', status);
+      });
 
     return () => {
-      mountedRef.current = false;
+      console.log('🧹 Cleaning up participants subscription for chat:', chatId);
       supabase.removeChannel(participantsChannel);
     };
-  }, [chatId, fetchParticipants]);
+  }, [chatId]); // Remove fetchParticipants from dependencies
+
+  // Reset mounted ref when chat changes
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, [chatId]);
 
   // Update online status when presence changes
   useEffect(() => {
