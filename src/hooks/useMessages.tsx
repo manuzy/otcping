@@ -98,11 +98,8 @@ export function useMessages(chatId: string | null) {
         .update({ updated_at: new Date().toISOString() })
         .eq('id', chatId);
 
-      // Increment unread count for other participants
-      await supabase.rpc('increment_unread_count', {
-        chat_id: chatId,
-        sender_id: user.id
-      });
+      // Increment unread count for other participants  
+      // Skip unread count update for now - will be handled by database trigger later
 
       return true;
     } catch (error) {

@@ -48,7 +48,17 @@ export function useChats() {
           id: chat.id,
           name: chat.name,
           isPublic: chat.is_public,
-          trade: chat.trade || undefined,
+          trade: chat.trade ? {
+            id: chat.trade.id,
+            chain: chat.trade.chain,
+            pair: chat.trade.pair,
+            size: chat.trade.size,
+            price: chat.trade.price,
+            type: chat.trade.type as 'buy' | 'sell',
+            status: chat.trade.status as 'active' | 'completed' | 'cancelled',
+            createdAt: new Date(chat.trade.created_at),
+            createdBy: chat.trade.created_by
+          } : undefined,
           participants: [], // Will be populated separately
           lastMessage: lastMessage ? {
             id: lastMessage.id,
