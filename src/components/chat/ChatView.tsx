@@ -60,15 +60,7 @@ export const ChatView = ({ chat, onMenuClick }: ChatViewProps) => {
 
     return (
       <div key={msg.id} className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'} mb-4`}>
-        <div className={`flex gap-2 max-w-[70%] ${isOwnMessage ? 'flex-row-reverse' : 'flex-row'}`}>
-          {!isOwnMessage && (
-            <Avatar className="h-8 w-8 mt-1">
-              <AvatarImage src={sender?.avatar} />
-              <AvatarFallback>
-                {sender?.displayName?.[0] || 'U'}
-              </AvatarFallback>
-            </Avatar>
-          )}
+        <div className={`max-w-[70%]`}>
           <div className={`
             p-3 rounded-2xl
             ${isOwnMessage 
