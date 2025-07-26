@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Search, Star, TrendingUp, MessageCircle, UserPlus, UserCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,13 +11,16 @@ import { usePublicUsers, SortOption } from "@/hooks/usePublicUsers";
 import { useContacts } from "@/hooks/useContacts";
 import { useOnlinePresence } from "@/hooks/useOnlinePresence";
 import { useWalletAuth } from "@/hooks/useWalletAuth";
+import { useChats } from "@/hooks/useChats";
 import { formatDistanceToNow } from "date-fns";
 
 export default function PublicUsers() {
+  const navigate = useNavigate();
   const { isAuthenticated } = useWalletAuth();
   const { users, loading, searchQuery, setSearchQuery, sortBy, setSortBy, checkIsContact } = usePublicUsers();
   const { addContact } = useContacts();
   const { isUserOnline } = useOnlinePresence();
+  const { createChat } = useChats();
   const [contactStates, setContactStates] = useState<{ [userId: string]: boolean }>({});
 
   // Check contact status for all users
@@ -49,6 +53,13 @@ export default function PublicUsers() {
     const success = await addContact(userId);
     if (success) {
       setContactStates(prev => ({ ...prev, [userId]: true }));
+    }
+  };
+
+  const handleMessage = async (userId: string, displayName: string) => {
+    const chatId = await createChat(`Chat with ${displayName}`, false);
+    if (chatId) {
+      navigate(`/?chat=${chatId}`);
     }
   };
 
@@ -168,7 +179,12 @@ export default function PublicUsers() {
                     </div>
                     
                     <div className="flex gap-2">
-                      <Button size="sm" variant="outline" className="gap-2">
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        className="gap-2"
+                        onClick={() => handleMessage(user.id, user.display_name)}
+                      >
                         <MessageCircle className="h-4 w-4" />
                         Message
                       </Button>

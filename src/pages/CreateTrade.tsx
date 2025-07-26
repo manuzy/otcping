@@ -9,8 +9,10 @@ import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ArrowLeft, Check } from "lucide-react";
 import { useAppKitAccount } from '@reown/appkit/react';
-import { mockUsers } from "@/data/mockData";
-import { User, Trade, Chat, Message } from "@/types";
+import { useContacts } from "@/hooks/useContacts";
+import { useChats } from "@/hooks/useChats";
+import { useToast } from "@/components/ui/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 // Mock data for chains and tokens
 const chains = [
@@ -39,9 +41,13 @@ interface TradeFormData {
 const CreateTrade = () => {
   const navigate = useNavigate();
   const { address } = useAppKitAccount();
+  const { contacts, loading: contactsLoading } = useContacts();
+  const { createChat } = useChats();
+  const { toast } = useToast();
   const [currentStep, setCurrentStep] = useState(1);
   const [isPublicChat, setIsPublicChat] = useState(true);
   const [selectedContacts, setSelectedContacts] = useState<string[]>([]);
+  const [isPublishing, setIsPublishing] = useState(false);
   const [formData, setFormData] = useState<TradeFormData>({
     chain: "",
     sellAsset: "",
@@ -49,10 +55,6 @@ const CreateTrade = () => {
     usdAmount: "",
     expectedExecutionTimestamp: ""
   });
-
-  // Simplified for demo - in real app you'd have proper user/contact management
-  const userContacts: string[] = [];
-  const availableContacts = mockUsers.filter(u => userContacts.includes(u.id));
 
   const handleInputChange = (field: keyof TradeFormData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -80,67 +82,73 @@ const CreateTrade = () => {
     }
   };
 
-  const handlePublish = () => {
+  const handlePublish = async () => {
     if (!address) return;
+    
+    setIsPublishing(true);
+    
+    try {
+      // Create the trade first
+      const { data: tradeData, error: tradeError } = await supabase
+        .from('trades')
+        .insert({
+          chain: formData.chain,
+          pair: `${formData.sellAsset}/${formData.buyAsset}`,
+          size: formData.usdAmount,
+          price: "Market",
+          type: "sell",
+          status: "active",
+          created_by: address
+        })
+        .select()
+        .single();
 
-    // Create new trade
-    const newTrade: Trade = {
-      id: `trade-${Date.now()}`,
-      chain: formData.chain,
-      pair: `${formData.sellAsset}/${formData.buyAsset}`,
-      size: formData.usdAmount,
-      price: "Market",
-      type: "sell",
-      status: "active",
-      createdAt: new Date(),
-      createdBy: address
-    };
+      if (tradeError) throw tradeError;
 
-    // Create chat participants (simplified)
-    const participants: User[] = [{
-      id: address,
-      displayName: 'User',
-      avatar: '',
-      walletAddress: address,
-      isOnline: true,
-      isPublic: true,
-      reputation: 0,
-      description: '',
-      successfulTrades: 0,
-      totalTrades: 0,
-      contacts: [],
-      joinedAt: new Date()
-    }];
-    if (!isPublicChat) {
-      const contactUsers = mockUsers.filter(u => selectedContacts.includes(u.id));
-      participants.push(...contactUsers);
+      // Create the chat
+      const chatName = isPublicChat 
+        ? `${formData.sellAsset}/${formData.buyAsset} Trade` 
+        : "Private Trade Chat";
+      
+      const chatId = await createChat(chatName, isPublicChat, tradeData.id);
+      
+      if (!chatId) {
+        throw new Error("Failed to create chat");
+      }
+
+      // Add selected contacts to private chat
+      if (!isPublicChat && selectedContacts.length > 0) {
+        const { error: participantsError } = await supabase
+          .from('chat_participants')
+          .insert(
+            selectedContacts.map(contactId => ({
+              chat_id: chatId,
+              user_id: contactId
+            }))
+          );
+
+        if (participantsError) {
+          console.error("Error adding participants:", participantsError);
+        }
+      }
+
+      toast({
+        title: "Trade Created",
+        description: "Your trade has been published successfully!",
+      });
+
+      // Navigate to the new chat
+      navigate(`/?chat=${chatId}`);
+    } catch (error) {
+      console.error('Error creating trade:', error);
+      toast({
+        title: "Error",
+        description: "Failed to create trade. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsPublishing(false);
     }
-
-    // Create new chat
-    const newChat: Chat = {
-      id: `chat-${Date.now()}`,
-      name: isPublicChat ? `${formData.sellAsset}/${formData.buyAsset} Trade` : "Private Trade Chat",
-      isPublic: isPublicChat,
-      trade: newTrade,
-      participants,
-      unreadCount: 0,
-      lastActivity: new Date()
-    };
-
-    // Create initial system message
-    const systemMessage: Message = {
-      id: `msg-${Date.now()}`,
-      chatId: newChat.id,
-      senderId: "system",
-      content: `Trade created: ${formData.sellAsset} → ${formData.buyAsset} for $${formData.usdAmount}`,
-      type: "system",
-      timestamp: new Date()
-    };
-
-    newChat.lastMessage = systemMessage;
-
-    // For now, just redirect to home - in a real app, you'd save the trade and chat
-    navigate("/");
   };
 
   const isStep1Valid = formData.chain && formData.sellAsset && formData.buyAsset && formData.usdAmount && formData.expectedExecutionTimestamp;
@@ -279,12 +287,14 @@ const CreateTrade = () => {
                   <div className="space-y-4">
                     <Label>Select Contacts to Invite</Label>
                     <div className="space-y-2 max-h-60 overflow-y-auto">
-                      {availableContacts.length === 0 ? (
+                      {contactsLoading ? (
+                        <p className="text-sm text-muted-foreground">Loading contacts...</p>
+                      ) : contacts.length === 0 ? (
                         <p className="text-sm text-muted-foreground">
                           No contacts available. Add contacts first to create private chats.
                         </p>
                       ) : (
-                        availableContacts.map((contact) => (
+                        contacts.map((contact) => (
                           <div key={contact.id} className="flex items-center space-x-2">
                             <Checkbox
                               id={contact.id}
@@ -293,11 +303,11 @@ const CreateTrade = () => {
                             />
                             <Label htmlFor={contact.id} className="flex items-center gap-2 cursor-pointer">
                               <img
-                                src={contact.avatar}
-                                alt={contact.displayName}
+                                src={contact.avatar || '/placeholder.svg'}
+                                alt={contact.display_name}
                                 className="w-6 h-6 rounded-full"
                               />
-                              {contact.displayName}
+                              {contact.display_name}
                             </Label>
                           </div>
                         ))
@@ -364,8 +374,12 @@ const CreateTrade = () => {
                   Next
                 </Button>
               ) : (
-                <Button onClick={handlePublish} className="flex-1">
-                  Publish Trade
+                <Button 
+                  onClick={handlePublish} 
+                  className="flex-1"
+                  disabled={isPublishing}
+                >
+                  {isPublishing ? "Publishing..." : "Publish Trade"}
                 </Button>
               )}
             </div>
