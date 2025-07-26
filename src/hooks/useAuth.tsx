@@ -21,6 +21,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const { address, isConnected } = useAppKitAccount();
 
+  // Track previous wallet address to detect changes
+  const [previousAddress, setPreviousAddress] = useState<string | undefined>(address);
+
   useEffect(() => {
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -40,6 +43,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     return () => subscription.unsubscribe();
   }, []);
+
+  // Handle wallet disconnection and address changes
+  useEffect(() => {
+    // If wallet disconnects while user is authenticated, sign them out
+    if (!isConnected && user) {
+      signOut();
+    }
+    
+    // If wallet address changes while authenticated, sign out previous session
+    if (isConnected && address && previousAddress && address !== previousAddress && user) {
+      signOut();
+    }
+    
+    // Update previous address
+    setPreviousAddress(address);
+  }, [isConnected, address, user, previousAddress]);
 
   const signOut = async () => {
     const { error } = await supabase.auth.signOut();

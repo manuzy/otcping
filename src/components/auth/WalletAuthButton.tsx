@@ -3,8 +3,9 @@ import { Button } from '@/components/ui/button';
 import { useAppKitAccount, useAppKit } from '@reown/appkit/react';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Wallet, Shield } from 'lucide-react';
+import { Loader2, Wallet, Shield, X } from 'lucide-react';
 import { useWalletClient } from 'wagmi';
+import { useWalletAuth } from '@/hooks/useWalletAuth';
 
 export default function WalletAuthButton() {
   const [isAuthenticating, setIsAuthenticating] = useState(false);
@@ -13,6 +14,7 @@ export default function WalletAuthButton() {
   const { user, createWalletChallenge, authenticateWallet } = useAuth();
   const { toast } = useToast();
   const { data: walletClient } = useWalletClient();
+  const { isConnectedButNotAuthenticated } = useWalletAuth();
 
   const handleAuthenticate = async () => {
     if (!isConnected || !address) {
@@ -76,13 +78,41 @@ export default function WalletAuthButton() {
     }
   };
 
-  if (user) {
+  if (user && isConnected) {
     return (
       <div className="flex items-center gap-2 px-4 py-2 bg-success/10 rounded-lg border border-success/20">
         <Shield className="h-4 w-4 text-success" />
         <span className="text-sm text-success font-medium">
           Authenticated: {address?.slice(0, 6)}...{address?.slice(-4)}
         </span>
+      </div>
+    );
+  }
+
+  // Show disconnect option if connected but not authenticated
+  if (isConnectedButNotAuthenticated) {
+    return (
+      <div className="flex items-center gap-2">
+        <Button 
+          onClick={handleAuthenticate}
+          disabled={isAuthenticating}
+          className="flex items-center gap-2"
+        >
+          {isAuthenticating ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Wallet className="h-4 w-4" />
+          )}
+          Authenticate {address?.slice(0, 6)}...{address?.slice(-4)}
+        </Button>
+        <Button 
+          variant="outline" 
+          size="icon"
+          onClick={() => open()}
+          title="Switch wallet"
+        >
+          <X className="h-4 w-4" />
+        </Button>
       </div>
     );
   }

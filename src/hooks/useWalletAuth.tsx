@@ -9,6 +9,9 @@ export function useWalletAuth() {
     isConnected,
     address,
     user,
-    isAuthenticated: !!user
+    // User is authenticated only if they have both a wallet connection AND Supabase auth
+    isAuthenticated: !!(user && isConnected && address),
+    // Check if wallet is connected but not yet authenticated
+    isConnectedButNotAuthenticated: !!(isConnected && address && !user)
   };
 }
