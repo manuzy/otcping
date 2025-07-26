@@ -10,7 +10,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { useOnlinePresence } from '@/hooks/useOnlinePresence';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, User, AlertCircle, CheckCircle } from 'lucide-react';
+import { Loader2, User, AlertCircle, CheckCircle, Shuffle } from 'lucide-react';
 import { sanitizeText, validateAvatarUrl, sanitizeDisplayName } from '@/components/ui/input-sanitizer';
 
 interface Profile {
@@ -33,6 +33,54 @@ export default function ProfileManager() {
   const { user, session } = useAuth();
   const { toast } = useToast();
   const { isUserOnline } = useOnlinePresence();
+
+  // Random avatar generation options
+  const avatarOptions = {
+    avatarStyle: ["Circle", "Transparent"],
+    topType: [
+      "NoHair", "Eyepatch", "Hat", "Hijab", "Turban", "WinterHat1", "WinterHat2", "WinterHat3", "WinterHat4",
+      "LongHairBigHair", "LongHairBob", "LongHairBun", "LongHairCurly", "LongHairCurvy", "LongHairDreads",
+      "LongHairFrida", "LongHairFro", "LongHairFroBand", "LongHairNotTooLong", "LongHairShavedSides",
+      "LongHairMiaWallace", "LongHairStraight", "LongHairStraight2", "LongHairStraightStrand",
+      "ShortHairDreads01", "ShortHairDreads02", "ShortHairFrizzle", "ShortHairShaggyMullet", "ShortHairShortCurly",
+      "ShortHairShortFlat", "ShortHairShortRound", "ShortHairShortWaved", "ShortHairSides",
+      "ShortHairTheCaesar", "ShortHairTheCaesarSidePart"
+    ],
+    accessoriesType: ["Blank", "Kurt", "Prescription01", "Prescription02", "Round", "Sunglasses", "Wayfarers"],
+    hairColor: ["Auburn", "Black", "Blonde", "BlondeGolden", "Brown", "BrownDark", "PastelPink", "Blue", "Platinum", "Red", "SilverGray"],
+    facialHairType: ["Blank", "BeardMedium", "BeardLight", "BeardMajestic", "MoustacheFancy", "MoustacheMagnum"],
+    facialHairColor: ["Auburn", "Black", "Blonde", "BlondeGolden", "Brown", "BrownDark", "Platinum", "Red"],
+    clotheType: ["BlazerShirt", "BlazerSweater", "CollarSweater", "GraphicShirt", "Hoodie", "Overall", "ShirtCrewNeck", "ShirtScoopNeck", "ShirtVNeck"],
+    clotheColor: [
+      "Black", "Blue01", "Blue02", "Blue03", "Gray01", "Gray02", "Heather", "PastelBlue", "PastelGreen",
+      "PastelOrange", "PastelRed", "PastelYellow", "Pink", "Red", "White"
+    ],
+    graphicType: ["Bat", "Cumbia", "Deer", "Diamond", "Hola", "Pizza", "Resist", "Selena", "Bear", "SkullOutline", "Skull"],
+    eyeType: ["Close", "Cry", "Default", "Dizzy", "EyeRoll", "Happy", "Hearts", "Side", "Squint", "Surprised", "Wink", "WinkWacky"],
+    eyebrowType: [
+      "Angry", "AngryNatural", "Default", "DefaultNatural", "FlatNatural", "RaisedExcited", "RaisedExcitedNatural",
+      "SadConcerned", "SadConcernedNatural", "UnibrowNatural", "UpDown", "UpDownNatural"
+    ],
+    mouthType: [
+      "Concerned", "Default", "Disbelief", "Eating", "Grimace", "Sad", "ScreamOpen", "Serious", "Smile", "Tongue", "Twinkle", "Vomit"
+    ],
+    skinColor: ["Tanned", "Yellow", "Pale", "Light", "Brown", "DarkBrown", "Black"]
+  };
+
+  const getRandomElement = (arr: string[]) => arr[Math.floor(Math.random() * arr.length)];
+
+  const generateRandomAvatar = () => {
+    const params = Object.entries(avatarOptions)
+      .map(([key, values]) => `${key}=${getRandomElement(values)}`)
+      .join("&");
+    
+    return `https://avataaars.io/?${params}`;
+  };
+
+  const handleRandomAvatar = () => {
+    const randomAvatarUrl = generateRandomAvatar();
+    handleAvatarChange(randomAvatarUrl);
+  };
 
   useEffect(() => {
     if (user) {
@@ -214,13 +262,25 @@ export default function ProfileManager() {
           <div className="flex-1 space-y-2">
             <Label htmlFor="avatar">Avatar URL</Label>
             <div className="space-y-2">
-              <Input
-                id="avatar"
-                value={profile.avatar || ''}
-                onChange={(e) => handleAvatarChange(e.target.value)}
-                placeholder="https://ui-avatars.com/api/?name=YourName&background=random"
-                className={avatarValidation && !avatarValidation.isValid ? 'border-destructive' : ''}
-              />
+              <div className="flex gap-2">
+                <Input
+                  id="avatar"
+                  value={profile.avatar || ''}
+                  onChange={(e) => handleAvatarChange(e.target.value)}
+                  placeholder="Enter avatar URL or click random"
+                  className={`flex-1 ${avatarValidation && !avatarValidation.isValid ? 'border-destructive' : ''}`}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="default"
+                  onClick={handleRandomAvatar}
+                  className="shrink-0"
+                >
+                  <Shuffle className="h-4 w-4 mr-2" />
+                  Random
+                </Button>
+              </div>
               {avatarValidation && (
                 <div className={`flex items-center gap-2 text-sm ${avatarValidation.isValid ? 'text-green-600' : 'text-destructive'}`}>
                   {avatarValidation.isValid ? (
