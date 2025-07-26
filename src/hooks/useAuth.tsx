@@ -11,6 +11,7 @@ interface AuthContextType {
   signOut: () => Promise<void>;
   authenticateWallet: (signature: string, message: string, nonce: string) => Promise<{ success: boolean; error?: string }>;
   createWalletChallenge: () => Promise<{ message: string; nonce: string } | null>;
+  validateSession: () => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -145,13 +146,53 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  // Validate that the session is actually valid at the database level
+  const validateSession = async (): Promise<boolean> => {
+    try {
+      if (!session?.access_token) {
+        console.warn('No session or access token available');
+        return false;
+      }
+
+      // Force refresh the session to ensure it's current
+      const { data: { session: refreshedSession }, error } = await supabase.auth.refreshSession();
+      
+      if (error || !refreshedSession) {
+        console.warn('Session validation failed:', error);
+        return false;
+      }
+
+      // Test database auth context by making a simple query
+      const { data, error: testError } = await supabase
+        .rpc('auth_uid_test')
+        .maybeSingle();
+
+      if (testError) {
+        console.warn('Database auth context test failed:', testError);
+        return false;
+      }
+
+      if (!data) {
+        console.warn('auth.uid() returned null');
+        return false;
+      }
+
+      console.log('Session validation successful, auth.uid():', data);
+      return true;
+    } catch (error) {
+      console.error('Session validation error:', error);
+      return false;
+    }
+  };
+
   const value = {
     user,
     session,
     loading,
     signOut,
     authenticateWallet,
-    createWalletChallenge
+    createWalletChallenge,
+    validateSession
   };
 
   return (

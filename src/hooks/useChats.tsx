@@ -86,66 +86,120 @@ export function useChats() {
     }
   };
 
-  // Create a new chat
+  // Create a new chat with retry logic for auth timing issues
   const createChat = async (
     name: string, 
     isPublic: boolean = false, 
     tradeId?: string, 
     participantIds: string[] = []
-  ) => {
-    if (!user) return null;
-
-    try {
-      // Create chat
-      const { data: chat, error: chatError } = await supabase
-        .from('chats')
-        .insert({
-          name,
-          is_public: isPublic,
-          trade_id: tradeId
-        })
-        .select()
-        .single();
-
-      if (chatError) {
-        console.error('Chat creation error:', chatError);
-        throw chatError;
-      }
-
-      // Add current user as participant
-      const participantsToAdd = [user.id, ...participantIds].filter((id, index, arr) => 
-        arr.indexOf(id) === index // Remove duplicates
-      );
-
-      const { error: participantError } = await supabase
-        .from('chat_participants')
-        .insert(
-          participantsToAdd.map(userId => ({
-            chat_id: chat.id,
-            user_id: userId
-          }))
-        );
-
-      if (participantError) {
-        console.error('Participant creation error:', participantError);
-        throw participantError;
-      }
-
-      toast({
-        title: "Chat created",
-        description: `Chat "${name}" has been created`,
-      });
-
-      return chat.id;
-    } catch (error) {
-      console.error('Error creating chat:', error);
-      toast({
-        title: "Error",
-        description: "Failed to create chat",
-        variant: "destructive",
-      });
+  ): Promise<string | null> => {
+    if (!user) {
+      console.error('No user authenticated');
       return null;
     }
+
+    const maxRetries = 3;
+    let lastError: any = null;
+
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        console.log(`Chat creation attempt ${attempt}/${maxRetries}`);
+        
+        // For attempts after the first, validate session explicitly
+        if (attempt > 1) {
+          console.log('Validating session before retry...');
+          // Give the session a moment to propagate
+          await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+          
+          // Refresh session to ensure auth context is current
+          const { data: { session: refreshedSession }, error: refreshError } = await supabase.auth.refreshSession();
+          if (refreshError || !refreshedSession) {
+            console.warn('Session refresh failed:', refreshError);
+            lastError = new Error('Session validation failed');
+            continue;
+          }
+          console.log('Session refreshed successfully');
+        }
+
+        // Create chat
+        console.log('Creating chat with name:', name);
+        const { data: chat, error: chatError } = await supabase
+          .from('chats')
+          .insert({
+            name,
+            is_public: isPublic,
+            trade_id: tradeId
+          })
+          .select()
+          .single();
+
+        if (chatError) {
+          console.error(`Chat creation error (attempt ${attempt}):`, chatError);
+          lastError = chatError;
+          
+          // If it's an RLS policy violation, try again with session refresh
+          if (chatError.message?.includes('row-level security policy')) {
+            console.log('RLS policy violation, retrying with session refresh...');
+            continue;
+          }
+          
+          // For other errors, don't retry
+          throw chatError;
+        }
+
+        console.log('Chat created successfully:', chat.id);
+
+        // Add current user as participant
+        const participantsToAdd = [user.id, ...participantIds].filter((id, index, arr) => 
+          arr.indexOf(id) === index // Remove duplicates
+        );
+
+        console.log('Adding participants:', participantsToAdd);
+        const { error: participantError } = await supabase
+          .from('chat_participants')
+          .insert(
+            participantsToAdd.map(userId => ({
+              chat_id: chat.id,
+              user_id: userId
+            }))
+          );
+
+        if (participantError) {
+          console.error('Participant creation error:', participantError);
+          // If participants fail, we should clean up the chat
+          await supabase.from('chats').delete().eq('id', chat.id);
+          throw participantError;
+        }
+
+        console.log('Participants added successfully');
+        
+        toast({
+          title: "Chat created",
+          description: `Chat "${name}" has been created`,
+        });
+
+        return chat.id;
+      } catch (error) {
+        console.error(`Error creating chat (attempt ${attempt}):`, error);
+        lastError = error;
+        
+        // If this is the last attempt, break
+        if (attempt === maxRetries) {
+          break;
+        }
+      }
+    }
+
+    // All attempts failed
+    console.error('All chat creation attempts failed. Last error:', lastError);
+    toast({
+      title: "Error",
+      description: lastError?.message?.includes('row-level security policy') 
+        ? "Authentication issue - please try refreshing the page" 
+        : "Failed to create chat",
+      variant: "destructive",
+    });
+    return null;
   };
 
   // Join an existing chat

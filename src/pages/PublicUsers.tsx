@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, Star, TrendingUp, MessageCircle, UserPlus, UserCheck } from "lucide-react";
+import { Search, Star, TrendingUp, MessageCircle, UserPlus, UserCheck, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -12,9 +12,11 @@ import { useContacts } from "@/hooks/useContacts";
 import { useOnlinePresence } from "@/hooks/useOnlinePresence";
 import { useWalletAuth } from "@/hooks/useWalletAuth";
 import { useChats } from "@/hooks/useChats";
+import { useToast } from "@/components/ui/use-toast";
 import { formatDistanceToNow } from "date-fns";
 
 export default function PublicUsers() {
+  const { toast } = useToast();
   const navigate = useNavigate();
   const { isAuthenticated } = useWalletAuth();
   const { users, loading, searchQuery, setSearchQuery, sortBy, setSortBy, checkIsContact } = usePublicUsers();
@@ -22,6 +24,7 @@ export default function PublicUsers() {
   const { isUserOnline } = useOnlinePresence();
   const { createChat } = useChats();
   const [contactStates, setContactStates] = useState<{ [userId: string]: boolean }>({});
+  const [creatingChat, setCreatingChat] = useState<{ [userId: string]: boolean }>({});
 
   // Check contact status for all users
   useEffect(() => {
@@ -58,14 +61,43 @@ export default function PublicUsers() {
 
   const handleMessage = async (userId: string, displayName: string) => {
     if (!isAuthenticated) {
+      toast({
+        title: "Authentication Required",
+        description: "Please connect your wallet to send messages",
+        variant: "destructive",
+      });
       return;
     }
 
-    // Create a direct message chat with the selected user
-    const chatId = await createChat(`Chat with ${displayName}`, false, undefined, [userId]);
-    
-    if (chatId) {
-      navigate(`/chat/${chatId}`);
+    // Prevent multiple simultaneous chat creation attempts
+    if (creatingChat[userId]) {
+      return;
+    }
+
+    setCreatingChat(prev => ({ ...prev, [userId]: true }));
+
+    try {
+      console.log('Starting chat creation with user:', userId, displayName);
+      
+      // Create a direct message chat with the selected user
+      const chatId = await createChat(`Chat with ${displayName}`, false, undefined, [userId]);
+      
+      if (chatId) {
+        console.log('Chat created successfully, navigating to:', chatId);
+        // Use the correct navigation pattern based on the app's routing
+        navigate(`/?chat=${chatId}`);
+      } else {
+        console.error('Chat creation returned null');
+      }
+    } catch (error) {
+      console.error('Error in handleMessage:', error);
+      toast({
+        title: "Error",
+        description: "Failed to create chat. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setCreatingChat(prev => ({ ...prev, [userId]: false }));
     }
   };
 
@@ -190,9 +222,14 @@ export default function PublicUsers() {
                         variant="outline" 
                         className="gap-2"
                         onClick={() => handleMessage(user.id, user.display_name)}
+                        disabled={creatingChat[user.id]}
                       >
-                        <MessageCircle className="h-4 w-4" />
-                        Message
+                        {creatingChat[user.id] ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <MessageCircle className="h-4 w-4" />
+                        )}
+                        {creatingChat[user.id] ? "Creating..." : "Message"}
                       </Button>
                       <Button size="sm" variant="outline" className="gap-2">
                         <TrendingUp className="h-4 w-4" />
