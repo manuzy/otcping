@@ -98,10 +98,29 @@ export function useContacts() {
         .from('contacts')
         .insert({ user_id: contactId, contact_id: user.id });
 
-      // Check if both operations had actual errors (not just duplicate key errors)
-      const hasRealError1 = error1 && !error1.message?.includes('duplicate key');
-      const hasRealError2 = error2 && !error2.message?.includes('duplicate key');
+      // Log errors for debugging
+      if (error1) console.log('Contact insertion error1:', error1.message, error1.code);
+      if (error2) console.log('Contact insertion error2:', error2.message, error2.code);
 
+      // Check if errors are actual failures or just duplicate constraint violations
+      const isDuplicateError = (error: any) => {
+        if (!error) return false;
+        const message = error.message?.toLowerCase() || '';
+        return message.includes('duplicate key') || 
+               message.includes('unique constraint') ||
+               message.includes('already exists') ||
+               error.code === '23505'; // PostgreSQL unique violation code
+      };
+
+      const hasRealError1 = error1 && !isDuplicateError(error1);
+      const hasRealError2 = error2 && !isDuplicateError(error2);
+
+      // If both operations failed with real errors, throw
+      if (hasRealError1 && hasRealError2) {
+        throw hasRealError1 ? error1 : error2;
+      }
+
+      // If only one failed with a real error, throw that
       if (hasRealError1 || hasRealError2) {
         throw hasRealError1 ? error1 : error2;
       }
