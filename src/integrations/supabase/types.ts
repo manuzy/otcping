@@ -318,6 +318,10 @@ export type Database = {
         Args: { chat_id: string; sender_id: string }
         Returns: undefined
       }
+      user_is_chat_member: {
+        Args: { check_chat_id: string; check_user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       message_type: "message" | "trade_action" | "system"
