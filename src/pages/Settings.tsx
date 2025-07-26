@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Bell, Shield, Phone, Mail, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,10 +9,13 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import ProfileManager from "@/components/profile/ProfileManager";
 import { useWalletAuth } from "@/hooks/useWalletAuth";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function Settings() {
   const { toast } = useToast();
   const { isAuthenticated, address } = useWalletAuth();
+  const { user } = useAuth();
   
   const [notifications, setNotifications] = useState({
     email: "",
@@ -29,13 +32,61 @@ export default function Settings() {
     showOnlineStatus: true,
     showTradingActivity: true,
     allowContactRequests: true,
+    publicProfile: false,
   });
 
-  const handleSavePrivacy = () => {
-    toast({
-      title: "Privacy settings updated",
-      description: "Your privacy preferences have been saved.",
-    });
+  // Load current profile data to get public setting
+  useEffect(() => {
+    if (user) {
+      fetchProfileData();
+    }
+  }, [user]);
+
+  const fetchProfileData = async () => {
+    if (!user) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('is_public')
+        .eq('id', user.id)
+        .single();
+
+      if (error && error.code !== 'PGRST116') {
+        throw error;
+      }
+
+      if (data) {
+        setPrivacy(prev => ({ ...prev, publicProfile: data.is_public }));
+      }
+    } catch (error) {
+      console.error('Error fetching profile data:', error);
+    }
+  };
+
+  const handleSavePrivacy = async () => {
+    if (!user) return;
+
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ is_public: privacy.publicProfile })
+        .eq('id', user.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Privacy settings updated",
+        description: "Your privacy preferences have been saved.",
+      });
+    } catch (error) {
+      console.error('Error saving privacy settings:', error);
+      toast({
+        title: "Error saving settings",
+        description: "Failed to save your privacy preferences",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleSaveNotifications = () => {
@@ -227,6 +278,19 @@ export default function Settings() {
               <Switch 
                 checked={privacy.allowContactRequests}
                 onCheckedChange={(checked) => setPrivacy(prev => ({ ...prev, allowContactRequests: checked }))}
+              />
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label>Public Profile</Label>
+                <p className="text-sm text-muted-foreground">
+                  Allow your profile to appear in public user listings
+                </p>
+              </div>
+              <Switch 
+                checked={privacy.publicProfile}
+                onCheckedChange={(checked) => setPrivacy(prev => ({ ...prev, publicProfile: checked }))}
               />
             </div>
 

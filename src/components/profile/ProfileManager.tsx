@@ -268,22 +268,6 @@ export default function ProfileManager() {
           </div>
         </div>
 
-        {/* Privacy Settings */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label htmlFor="isPublic">Public Profile</Label>
-              <div className="text-sm text-muted-foreground">
-                Allow others to see your profile and trade history
-              </div>
-            </div>
-            <Switch
-              id="isPublic"
-              checked={profile.is_public}
-              onCheckedChange={(checked) => setProfile({ ...profile, is_public: checked })}
-            />
-          </div>
-        </div>
 
         {/* Trading Stats */}
         <div className="grid grid-cols-3 gap-4 pt-4 border-t">
