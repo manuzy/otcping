@@ -14,6 +14,7 @@ import { BottomTabs } from "./components/navigation/BottomTabs";
 import { Header } from "./components/navigation/Header";
 import { AuthProvider } from "./hooks/useAuth";
 import { AppKitProvider } from "./components/providers/AppKitProvider";
+import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 
 
 const queryClient = new QueryClient();
@@ -30,11 +31,11 @@ const App = () => (
               <Header />
               <Routes>
                 <Route path="/" element={<Index />} />
-                <Route path="/contacts" element={<Contacts />} />
-                <Route path="/public-chats" element={<PublicChats />} />
-                <Route path="/users" element={<PublicUsers />} />
-                <Route path="/settings" element={<Settings />} />
-                <Route path="/create-trade" element={<CreateTrade />} />
+                <Route path="/contacts" element={<ProtectedRoute><Contacts /></ProtectedRoute>} />
+                <Route path="/public-chats" element={<ProtectedRoute><PublicChats /></ProtectedRoute>} />
+                <Route path="/users" element={<ProtectedRoute><PublicUsers /></ProtectedRoute>} />
+                <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+                <Route path="/create-trade" element={<ProtectedRoute><CreateTrade /></ProtectedRoute>} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
