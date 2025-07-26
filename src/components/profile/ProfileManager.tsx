@@ -10,7 +10,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { useOnlinePresence } from '@/hooks/useOnlinePresence';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, User } from 'lucide-react';
+import { Loader2, User, AlertCircle, CheckCircle } from 'lucide-react';
 import { sanitizeText, validateAvatarUrl, sanitizeDisplayName } from '@/components/ui/input-sanitizer';
 
 interface Profile {
@@ -29,6 +29,7 @@ export default function ProfileManager() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [avatarValidation, setAvatarValidation] = useState<{ isValid: boolean; error?: string } | null>(null);
   const { user, session } = useAuth();
   const { toast } = useToast();
   const { isUserOnline } = useOnlinePresence();
@@ -82,16 +83,39 @@ export default function ProfileManager() {
     }
   };
 
+  const handleAvatarChange = (newAvatarUrl: string) => {
+    setProfile({ ...profile!, avatar: newAvatarUrl });
+    
+    // Validate avatar URL in real-time
+    if (newAvatarUrl.trim()) {
+      const validation = validateAvatarUrl(newAvatarUrl);
+      setAvatarValidation({ isValid: validation.isValid, error: validation.error });
+    } else {
+      setAvatarValidation(null);
+    }
+  };
+
   const handleSave = async () => {
     if (!profile || !user) return;
+
+    // Check avatar validation before saving
+    if (profile.avatar && avatarValidation && !avatarValidation.isValid) {
+      toast({
+        title: "Invalid avatar URL",
+        description: avatarValidation.error || "Please fix the avatar URL before saving",
+        variant: "destructive",
+      });
+      return;
+    }
 
     setSaving(true);
     try {
       // Sanitize inputs before saving
+      const avatarValidationResult = validateAvatarUrl(profile.avatar || '');
       const sanitizedProfile = {
         display_name: sanitizeDisplayName(profile.display_name),
         description: sanitizeText(profile.description || '', 500),
-        avatar: validateAvatarUrl(profile.avatar || ''),
+        avatar: avatarValidationResult.url,
         is_public: profile.is_public,
       };
 
@@ -182,14 +206,32 @@ export default function ProfileManager() {
               <div className="absolute bottom-0 right-0 h-5 w-5 bg-green-500 rounded-full border-2 border-background" />
             )}
           </div>
-          <div className="space-y-2">
+          <div className="flex-1 space-y-2">
             <Label htmlFor="avatar">Avatar URL</Label>
-            <Input
-              id="avatar"
-              value={profile.avatar || ''}
-              onChange={(e) => setProfile({ ...profile, avatar: e.target.value })}
-              placeholder="https://example.com/avatar.jpg"
-            />
+            <div className="space-y-2">
+              <Input
+                id="avatar"
+                value={profile.avatar || ''}
+                onChange={(e) => handleAvatarChange(e.target.value)}
+                placeholder="https://ui-avatars.com/api/?name=YourName&background=random"
+                className={avatarValidation && !avatarValidation.isValid ? 'border-destructive' : ''}
+              />
+              {avatarValidation && (
+                <div className={`flex items-center gap-2 text-sm ${avatarValidation.isValid ? 'text-green-600' : 'text-destructive'}`}>
+                  {avatarValidation.isValid ? (
+                    <CheckCircle className="h-4 w-4" />
+                  ) : (
+                    <AlertCircle className="h-4 w-4" />
+                  )}
+                  {avatarValidation.isValid ? 'Valid avatar URL' : avatarValidation.error}
+                </div>
+              )}
+              {profile.avatar && (
+                <div className="text-xs text-muted-foreground">
+                  Preview will appear in the avatar above when the URL is valid
+                </div>
+              )}
+            </div>
           </div>
         </div>
 

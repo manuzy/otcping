@@ -25,15 +25,18 @@ export function sanitizeText(input: string, maxLength: number = 500): string {
 
 /**
  * Validates URL format and ensures it's from trusted domains
+ * Returns validation result with success status and error message
  */
-export function validateAvatarUrl(url: string): string | null {
-  if (!url) return null;
+export function validateAvatarUrl(url: string): { isValid: boolean; url: string | null; error?: string } {
+  if (!url) return { isValid: true, url: null };
   
   try {
     const urlObj = new URL(url);
     
     // Only allow HTTPS
-    if (urlObj.protocol !== 'https:') return null;
+    if (urlObj.protocol !== 'https:') {
+      return { isValid: false, url: null, error: 'Only HTTPS URLs are allowed' };
+    }
     
     // Trusted domains for avatar hosting
     const trustedDomains = [
@@ -42,6 +45,7 @@ export function validateAvatarUrl(url: string): string | null {
       'lh3.googleusercontent.com',
       'cdn.jsdelivr.net',
       'ui-avatars.com',
+      'avataaars.io',
       'gravatar.com',
       'www.gravatar.com',
       'secure.gravatar.com',
@@ -53,28 +57,54 @@ export function validateAvatarUrl(url: string): string | null {
       urlObj.hostname === domain || urlObj.hostname.endsWith('.' + domain)
     );
     
-    if (!isValidDomain) return null;
+    if (!isValidDomain) {
+      return { isValid: false, url: null, error: `Domain '${urlObj.hostname}' is not in the trusted list` };
+    }
     
-    // Check for valid image extension
-    const validExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp'];
-    const hasValidExtension = validExtensions.some(ext => 
-      urlObj.pathname.toLowerCase().includes(ext)
+    // For API-based avatar services, allow URLs without file extensions
+    const apiDomains = ['avatars.githubusercontent.com', 'ui-avatars.com', 'avataaars.io', 'gravatar.com', 'www.gravatar.com', 'secure.gravatar.com'];
+    const isApiDomain = apiDomains.some(domain => 
+      urlObj.hostname === domain || urlObj.hostname.endsWith('.' + domain)
     );
     
-    if (!hasValidExtension) return null;
+    // Check for valid image extension (required for non-API domains)
+    if (!isApiDomain) {
+      const validExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp'];
+      const fullUrl = urlObj.pathname + urlObj.search;
+      const hasValidExtension = validExtensions.some(ext => 
+        fullUrl.toLowerCase().includes(ext)
+      );
+      
+      if (!hasValidExtension) {
+        return { isValid: false, url: null, error: 'URL must contain a valid image extension (.jpg, .jpeg, .png, .gif, .webp)' };
+      }
+    }
     
     // Limit URL length
-    if (url.length > 500) return null;
+    if (url.length > 500) {
+      return { isValid: false, url: null, error: 'URL is too long (max 500 characters)' };
+    }
     
     // Check for suspicious query parameters
     const suspiciousParams = ['javascript:', 'data:', 'vbscript:', 'onclick', 'onerror'];
     const queryString = urlObj.search.toLowerCase();
-    if (suspiciousParams.some(param => queryString.includes(param))) return null;
+    if (suspiciousParams.some(param => queryString.includes(param))) {
+      return { isValid: false, url: null, error: 'URL contains suspicious parameters' };
+    }
     
-    return url;
+    return { isValid: true, url };
   } catch {
-    return null;
+    return { isValid: false, url: null, error: 'Invalid URL format' };
   }
+}
+
+/**
+ * Legacy function for backwards compatibility
+ * @deprecated Use validateAvatarUrl instead for better error handling
+ */
+export function validateAvatarUrlLegacy(url: string): string | null {
+  const result = validateAvatarUrl(url);
+  return result.url;
 }
 
 /**
