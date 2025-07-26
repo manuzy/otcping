@@ -15,11 +15,31 @@ export const ChatListItem = ({ chat, isSelected, onSelect, formatTime }: ChatLis
   const { user } = useAuth();
   const { participants } = useChatParticipants(chat.id);
   
+  // DEBUG: Log all relevant data
+  console.log('🔍 ChatListItem Debug:', {
+    chatId: chat.id,
+    chatName: chat.name,
+    chatIsPublic: chat.isPublic,
+    currentUserId: user?.id,
+    currentUserMetadata: user?.user_metadata,
+    participantsCount: participants.length,
+    participants: participants.map(p => ({ id: p.id, displayName: p.displayName, avatar: p.avatar }))
+  });
+  
   // For direct messages, get the other participant for display
   const isDirectMessage = participants.length === 2 && !chat.isPublic;
   const otherParticipant = isDirectMessage ? participants.find(p => p.id !== user?.id) : null;
   const displayName = isDirectMessage && otherParticipant ? otherParticipant.displayName : chat.name;
   const displayAvatar = isDirectMessage && otherParticipant ? otherParticipant.avatar : undefined;
+  
+  // DEBUG: Log computed values
+  console.log('📊 ChatListItem Computed:', {
+    chatId: chat.id,
+    isDirectMessage,
+    otherParticipant: otherParticipant ? { id: otherParticipant.id, displayName: otherParticipant.displayName, avatar: otherParticipant.avatar } : null,
+    displayName,
+    displayAvatar
+  });
 
   return (
     <div

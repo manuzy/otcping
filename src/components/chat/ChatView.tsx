@@ -43,11 +43,31 @@ export const ChatView = ({ chat, onMenuClick }: ChatViewProps) => {
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
+  // DEBUG: Log all relevant data
+  console.log('🔍 ChatView Debug:', {
+    chatId: chat.id,
+    chatName: chat.name,
+    chatIsPublic: chat.isPublic,
+    currentUserId: user?.id,
+    currentUserMetadata: user?.user_metadata,
+    participantsCount: participants.length,
+    participants: participants.map(p => ({ id: p.id, displayName: p.displayName, avatar: p.avatar }))
+  });
+
   // For direct messages, get the other participant for display
   const isDirectMessage = participants.length === 2 && !chat.isPublic;
   const otherParticipant = isDirectMessage ? participants.find(p => p.id !== user?.id) : null;
   const displayName = isDirectMessage && otherParticipant ? otherParticipant.displayName : chat.name;
   const displayAvatar = isDirectMessage && otherParticipant ? otherParticipant.avatar : undefined;
+  
+  // DEBUG: Log computed values
+  console.log('📊 ChatView Computed:', {
+    chatId: chat.id,
+    isDirectMessage,
+    otherParticipant: otherParticipant ? { id: otherParticipant.id, displayName: otherParticipant.displayName, avatar: otherParticipant.avatar } : null,
+    displayName,
+    displayAvatar
+  });
 
   const renderMessage = (msg: Message) => {
     const isOwnMessage = user && msg.senderId === user.id;
