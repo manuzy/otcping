@@ -12,7 +12,7 @@ import { useWalletAuth } from "@/hooks/useWalletAuth";
 
 export default function Settings() {
   const { toast } = useToast();
-  const { isAuthenticated, address, isAuthenticating } = useWalletAuth();
+  const { isAuthenticated, address } = useWalletAuth();
   
   const [notifications, setNotifications] = useState({
     email: "",

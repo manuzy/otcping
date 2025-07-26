@@ -24,7 +24,7 @@ const navItems = [
 
 export const Header = () => {
   const { open } = useAppKit();
-  const { isConnected, address, isAuthenticated, isAuthenticating } = useWalletAuth();
+  const { isConnected, address, isAuthenticated } = useWalletAuth();
   const { signOut } = useAuth();
 
   const formatWalletAddress = (address: string) => {
@@ -98,11 +98,6 @@ export const Header = () => {
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-            ) : isConnected && isAuthenticating ? (
-              <Button disabled className="flex items-center gap-2">
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Authenticating...
-              </Button>
             ) : (
               <Button 
                 onClick={() => open()} 
