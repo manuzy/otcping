@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { useOnlinePresence } from './useOnlinePresence';
@@ -9,8 +9,10 @@ export function useChatParticipants(chatId: string | null) {
   const [participants, setParticipants] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
-  const { isUserOnline, onlineUsers } = useOnlinePresence();
+  const { onlineUsers } = useOnlinePresence();
   const { toast } = useToast();
+  const mountedRef = useRef(true);
+  const lastErrorRef = useRef<number>(0);
 
   // Fetch participants for a chat
   const fetchParticipants = useCallback(async () => {
@@ -44,7 +46,7 @@ export function useChatParticipants(chatId: string | null) {
         walletAddress: participant.profiles.wallet_address || '',
         displayName: participant.profiles.display_name,
         avatar: participant.profiles.avatar || '',
-        isOnline: isUserOnline(participant.profiles.id),
+        isOnline: onlineUsers.has(participant.profiles.id),
         description: participant.profiles.description || '',
         isPublic: participant.profiles.is_public,
         reputation: participant.profiles.reputation,
@@ -54,18 +56,30 @@ export function useChatParticipants(chatId: string | null) {
         contacts: [] // Not needed for participants view
       }));
 
-      setParticipants(transformedParticipants);
+      if (mountedRef.current) {
+        setParticipants(transformedParticipants);
+      }
     } catch (error) {
       console.error('Error fetching participants:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load chat participants",
-        variant: "destructive",
-      });
+      
+      // Debounce error toasts to prevent spam
+      const now = Date.now();
+      if (now - lastErrorRef.current > 5000) { // Only show error every 5 seconds
+        lastErrorRef.current = now;
+        if (mountedRef.current) {
+          toast({
+            title: "Error",
+            description: "Failed to load chat participants",
+            variant: "destructive",
+          });
+        }
+      }
     } finally {
-      setLoading(false);
+      if (mountedRef.current) {
+        setLoading(false);
+      }
     }
-  }, [chatId, isUserOnline, toast]);
+  }, [chatId, onlineUsers, toast]);
 
   // Add a participant to the chat
   const addParticipant = async (userId: string) => {
@@ -147,16 +161,19 @@ export function useChatParticipants(chatId: string | null) {
       .subscribe();
 
     return () => {
+      mountedRef.current = false;
       supabase.removeChannel(participantsChannel);
     };
   }, [chatId, fetchParticipants]);
 
   // Update online status when presence changes
   useEffect(() => {
-    setParticipants(prev => prev.map(participant => ({
-      ...participant,
-      isOnline: onlineUsers.has(participant.id)
-    })));
+    if (mountedRef.current) {
+      setParticipants(prev => prev.map(participant => ({
+        ...participant,
+        isOnline: onlineUsers.has(participant.id)
+      })));
+    }
   }, [onlineUsers]);
 
   return {
