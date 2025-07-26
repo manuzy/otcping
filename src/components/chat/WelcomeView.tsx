@@ -16,7 +16,7 @@ export const WelcomeView = ({ onMenuClick }: WelcomeViewProps) => {
     <div className="flex flex-col h-full">
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-border md:hidden">
-        <h1 className="text-lg font-semibold">OTC Trades</h1>
+        <h1 className="text-lg font-semibold">OTCping</h1>
         <Button variant="ghost" size="icon" onClick={onMenuClick}>
           <Menu className="h-5 w-5" />
         </Button>
@@ -29,7 +29,7 @@ export const WelcomeView = ({ onMenuClick }: WelcomeViewProps) => {
             <div className="space-y-6">
               <div>
                 <MessageSquare className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
-                <h2 className="text-2xl font-bold mb-2">Welcome to OTC Trades</h2>
+                <h2 className="text-2xl font-bold mb-2">Welcome to OTCping</h2>
                 <p className="text-muted-foreground">
                   Secure peer-to-peer cryptocurrency trading platform
                 </p>

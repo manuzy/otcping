@@ -7,7 +7,7 @@ const projectId = '8091c0243978a61f761f5c2a82ad83d8'
 
 // Metadata for your app
 const metadata = {
-  name: 'OTC Trades',
+  name: 'OTCping',
   description: 'Secure OTC cryptocurrency trading platform',
   url: window.location.origin,
   icons: [`${window.location.origin}/favicon.ico`]
