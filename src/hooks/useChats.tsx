@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { createClient } from '@supabase/supabase-js';
 import { useAuth } from './useAuth';
 import { useToast } from '@/components/ui/use-toast';
 import type { Chat, User } from '@/types';
@@ -171,7 +172,7 @@ export function useChats() {
     }
   };
 
-  // Create a new chat with enhanced retry logic and pre-flight auth testing
+  // Create a new chat with connection-level auth validation and explicit client creation
   const createChat = async (
     name: string, 
     isPublic: boolean = false, 
@@ -183,126 +184,126 @@ export function useChats() {
       return null;
     }
 
-    const maxRetries = 5; // Increased retries
-    let lastError: any = null;
+    console.log('[Chat Creation] Starting connection-level validated chat creation...');
 
-    for (let attempt = 1; attempt <= maxRetries; attempt++) {
-      try {
-        console.log(`[Chat Creation] Attempt ${attempt}/${maxRetries}`);
-        
-        // Enhanced auth validation that directly tests database auth.uid()
-        console.log('[Chat Creation] Testing database auth context...');
-        const authResult = await validateAuthContext();
-        
-        if (!authResult.valid) {
-          console.log('[Chat Creation] Database auth.uid() is invalid, attempting token synchronization...');
-          
-          // Force token synchronization
-          const syncSuccess = await synchronizeAuthToken();
-          if (!syncSuccess) {
-            console.log('[Chat Creation] Token synchronization failed');
-            lastError = new Error('Token synchronization failed');
-            await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
-            continue;
+    try {
+      // Get fresh session with explicit token
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError || !session) {
+        console.error('[Chat Creation] No valid session available');
+        toast({
+          title: "Error",
+          description: "Authentication issue - please try refreshing the page",
+          variant: "destructive",
+        });
+        return null;
+      }
+
+      console.log('[Chat Creation] Session available, creating dedicated client...');
+
+      // Create a dedicated client with explicit auth headers for this operation
+      const chatClient = createClient(
+        'https://peqqefvohjemxhuyvzbg.supabase.co',
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBlcXFlZnZvaGplbXhodXl2emJnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMzNjM1NjAsImV4cCI6MjA2ODkzOTU2MH0.YPJYJrYziXv8b3oy3kyDKnIuK4Gknl_iTP95I4OAO9o',
+        {
+          auth: {
+            storage: localStorage,
+            persistSession: true,
+            autoRefreshToken: true,
+          },
+          global: {
+            headers: {
+              Authorization: `Bearer ${session.access_token}`
+            }
           }
-          
-          // Wait for token to propagate to database
-          await new Promise(resolve => setTimeout(resolve, 1000));
-          
-          // Re-test database auth context after sync
-          const retestResult = await validateAuthContext();
-          if (!retestResult.valid) {
-            console.log('[Chat Creation] Database auth context still invalid after sync');
-            lastError = new Error('Database auth context validation failed');
-            await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
-            continue;
-          }
-          
-          console.log('[Chat Creation] Database auth context validated after sync');
-        } else {
-          console.log('[Chat Creation] Database auth context is valid from the start');
         }
+      );
 
-        console.log('[Chat Creation] Auth context validated, creating chat...');
+      // Test connection-level auth context before attempting to create
+      console.log('[Chat Creation] Testing connection-level auth context...');
+      const { data: authTest, error: authTestError } = await chatClient.rpc('auth_uid_test');
+      
+      if (authTestError || !authTest) {
+        console.error('[Chat Creation] Connection-level auth test failed:', authTestError);
+        toast({
+          title: "Error", 
+          description: "Authentication issue - please try refreshing the page",
+          variant: "destructive",
+        });
+        return null;
+      }
 
-        // Create chat with explicit auth header
-        const { data: chat, error: chatError } = await supabase
-          .from('chats')
-          .insert({
-            name,
-            is_public: isPublic,
-            trade_id: tradeId
-          })
-          .select()
-          .single();
+      console.log('[Chat Creation] Connection-level auth validated, creating chat...');
 
-        if (chatError) {
-          console.error(`[Chat Creation] Chat creation error (attempt ${attempt}):`, chatError);
-          lastError = chatError;
-          
-          // If it's an RLS policy violation, continue retrying
-          if (chatError.message?.includes('row-level security policy')) {
-            console.log('[Chat Creation] RLS policy violation, will retry...');
-            continue;
-          }
-          
-          // For other errors, don't retry
-          throw chatError;
-        }
+      // Create chat using the validated client
+      const { data: chat, error: chatError } = await chatClient
+        .from('chats')
+        .insert({
+          name,
+          is_public: isPublic,
+          trade_id: tradeId
+        })
+        .select()
+        .single();
 
-        console.log('[Chat Creation] Chat created successfully:', chat.id);
+      if (chatError) {
+        console.error('[Chat Creation] Chat creation error:', chatError);
+        toast({
+          title: "Error",
+          description: chatError.message?.includes('row-level security policy') 
+            ? "Authentication issue - please try refreshing the page" 
+            : "Failed to create chat",
+          variant: "destructive",
+        });
+        return null;
+      }
 
-        // Add current user as participant with the same auth validation
-        const participantsToAdd = [user.id, ...participantIds].filter((id, index, arr) => 
-          arr.indexOf(id) === index // Remove duplicates
+      console.log('[Chat Creation] Chat created successfully:', chat.id);
+
+      // Add current user as participant using the same validated client
+      const participantsToAdd = [user.id, ...participantIds].filter((id, index, arr) => 
+        arr.indexOf(id) === index // Remove duplicates
+      );
+
+      console.log('[Chat Creation] Adding participants:', participantsToAdd);
+      const { error: participantError } = await chatClient
+        .from('chat_participants')
+        .insert(
+          participantsToAdd.map(userId => ({
+            chat_id: chat.id,
+            user_id: userId
+          }))
         );
 
-        console.log('[Chat Creation] Adding participants:', participantsToAdd);
-        const { error: participantError } = await supabase
-          .from('chat_participants')
-          .insert(
-            participantsToAdd.map(userId => ({
-              chat_id: chat.id,
-              user_id: userId
-            }))
-          );
-
-        if (participantError) {
-          console.error('[Chat Creation] Participant creation error:', participantError);
-          // If participants fail, we should clean up the chat
-          await supabase.from('chats').delete().eq('id', chat.id);
-          throw participantError;
-        }
-
-        console.log('[Chat Creation] Participants added successfully');
-        
+      if (participantError) {
+        console.error('[Chat Creation] Participant creation error:', participantError);
+        // If participants fail, clean up the chat using the same client
+        await chatClient.from('chats').delete().eq('id', chat.id);
         toast({
-          title: "Chat created",
-          description: `Chat "${name}" has been created`,
+          title: "Error",
+          description: "Failed to add participants to chat",
+          variant: "destructive",
         });
-
-        return chat.id;
-      } catch (error) {
-        console.error(`[Chat Creation] Error (attempt ${attempt}):`, error);
-        lastError = error;
-        
-        // If this is the last attempt, break
-        if (attempt === maxRetries) {
-          break;
-        }
+        return null;
       }
-    }
 
-    // All attempts failed
-    console.error('[Chat Creation] All attempts failed. Last error:', lastError);
-    toast({
-      title: "Error",
-      description: lastError?.message?.includes('row-level security policy') 
-        ? "Authentication issue - please try refreshing the page" 
-        : "Failed to create chat",
-      variant: "destructive",
-    });
-    return null;
+      console.log('[Chat Creation] Participants added successfully');
+      
+      toast({
+        title: "Chat created",
+        description: `Chat "${name}" has been created`,
+      });
+
+      return chat.id;
+    } catch (error) {
+      console.error('[Chat Creation] Unexpected error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to create chat",
+        variant: "destructive",
+      });
+      return null;
+    }
   };
 
   // Join an existing chat

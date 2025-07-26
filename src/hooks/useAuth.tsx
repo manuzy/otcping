@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import { createClient } from '@supabase/supabase-js';
 import { useAppKitAccount } from '@reown/appkit/react';
 import CryptoJS from 'crypto-js';
 
@@ -187,19 +188,38 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       console.log('[Wallet Auth] Session established successfully');
 
-      // Step 4: Validate that auth context is working at database level
-      console.log('[Wallet Auth] Validating database auth context...');
+      // Step 4: Enhanced database auth context validation with connection-level testing
+      console.log('[Wallet Auth] Validating database auth context with connection-level testing...');
       
-      // Wait a moment for token propagation
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Wait for token propagation
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
-      const { data: authTest, error: authTestError } = await supabase.rpc('auth_uid_test');
+      // Create a dedicated client with explicit auth headers for testing
+      const testClient = createClient(
+        'https://peqqefvohjemxhuyvzbg.supabase.co',
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBlcXFlZnZvaGplbXhodXl2emJnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMzNjM1NjAsImV4cCI6MjA2ODkzOTU2MH0.YPJYJrYziXv8b3oy3kyDKnIuK4Gknl_iTP95I4OAO9o',
+        {
+          auth: {
+            storage: localStorage,
+            persistSession: true,
+            autoRefreshToken: true,
+          },
+          global: {
+            headers: {
+              Authorization: `Bearer ${session.access_token}`
+            }
+          }
+        }
+      );
+
+      // Test connection-level auth context
+      const { data: authTest, error: authTestError } = await testClient.rpc('auth_uid_test');
       if (authTestError || !authTest) {
-        console.error('[Wallet Auth] Database auth context validation failed:', authTestError);
-        return { success: false, error: 'Authentication session not properly established' };
+        console.error('[Wallet Auth] Connection-level database auth context validation failed:', authTestError);
+        return { success: false, error: 'Authentication session not properly established at connection level' };
       }
 
-      console.log('[Wallet Auth] Database auth context validated successfully, uid:', authTest);
+      console.log('[Wallet Auth] Connection-level database auth context validated successfully, uid:', authTest);
       return { success: true };
     } catch (error) {
       console.error('[Wallet Auth] Error authenticating wallet:', error);
