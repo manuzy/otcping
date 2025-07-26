@@ -19,12 +19,14 @@ export function useChatParticipants(chatId: string | null) {
     if (!chatId) return;
 
     try {
+      console.log('🔍 Fetching participants for chat:', chatId);
+      
       const { data, error } = await supabase
         .from('chat_participants')
         .select(`
           user_id,
           joined_at,
-          profiles!inner(
+          profiles (
             id,
             display_name,
             avatar,
@@ -38,6 +40,8 @@ export function useChatParticipants(chatId: string | null) {
           )
         `)
         .eq('chat_id', chatId);
+
+      console.log('📊 Participants query result:', { data, error });
 
       if (error) throw error;
 
