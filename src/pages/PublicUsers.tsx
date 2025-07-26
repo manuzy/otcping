@@ -1,42 +1,38 @@
-import { useState } from "react";
-import { Search, Star, TrendingUp, MessageCircle, UserPlus } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Search, Star, TrendingUp, MessageCircle, UserPlus, UserCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { mockUsers } from "@/data/mockData";
-import { useAppKitAccount } from '@reown/appkit/react';
+import { usePublicUsers, SortOption } from "@/hooks/usePublicUsers";
+import { useContacts } from "@/hooks/useContacts";
+import { useOnlinePresence } from "@/hooks/useOnlinePresence";
+import { useWalletAuth } from "@/hooks/useWalletAuth";
 import { formatDistanceToNow } from "date-fns";
 
 export default function PublicUsers() {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [sortBy, setSortBy] = useState<string>("reputation");
+  const { isAuthenticated } = useWalletAuth();
+  const { users, loading, searchQuery, setSearchQuery, sortBy, setSortBy, checkIsContact } = usePublicUsers();
+  const { addContact } = useContacts();
+  const { isUserOnline } = useOnlinePresence();
+  const [contactStates, setContactStates] = useState<{ [userId: string]: boolean }>({});
 
-  const { address } = useAppKitAccount();
+  // Check contact status for all users
+  useEffect(() => {
+    const checkContactStatus = async () => {
+      const states: { [userId: string]: boolean } = {};
+      for (const user of users) {
+        states[user.id] = await checkIsContact(user.id);
+      }
+      setContactStates(states);
+    };
 
-  // Filter public users (excluding current user)
-  const publicUsers = mockUsers.filter(user => 
-    user.isPublic && 
-    user.walletAddress !== address &&
-    user.displayName.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  const sortedUsers = publicUsers.sort((a, b) => {
-    switch (sortBy) {
-      case "reputation":
-        return b.reputation - a.reputation;
-      case "trades":
-        return b.totalTrades - a.totalTrades;
-      case "success":
-        return (b.successfulTrades / Math.max(b.totalTrades, 1)) - (a.successfulTrades / Math.max(a.totalTrades, 1));
-      case "newest":
-        return new Date(b.joinedAt).getTime() - new Date(a.joinedAt).getTime();
-      default:
-        return 0;
+    if (users.length > 0) {
+      checkContactStatus();
     }
-  });
+  }, [users, checkIsContact]);
 
   const getReputationColor = (reputation: number) => {
     if (reputation >= 4.5) return "bg-green-100 text-green-800";
@@ -49,7 +45,20 @@ export default function PublicUsers() {
     return Math.round((successful / total) * 100);
   };
 
-  const isContact = (userId: string) => false; // Simplified for demo
+  const handleAddContact = async (userId: string) => {
+    const success = await addContact(userId);
+    if (success) {
+      setContactStates(prev => ({ ...prev, [userId]: true }));
+    }
+  };
+
+  if (!isAuthenticated) {
+    return (
+      <div className="flex flex-col items-center justify-center h-screen">
+        <p className="text-muted-foreground mb-4">Please connect your wallet to discover users</p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col h-screen bg-background">
@@ -69,7 +78,7 @@ export default function PublicUsers() {
             />
           </div>
           
-          <Select value={sortBy} onValueChange={setSortBy}>
+          <Select value={sortBy} onValueChange={(value: SortOption) => setSortBy(value)}>
             <SelectTrigger className="w-40">
               <SelectValue placeholder="Sort by" />
             </SelectTrigger>
@@ -85,49 +94,55 @@ export default function PublicUsers() {
 
       {/* Users List */}
       <div className="flex-1 overflow-y-auto p-4 space-y-3 pb-20 md:pb-4">
-        {sortedUsers.length === 0 ? (
+        {loading ? (
+          <div className="text-center py-8 text-muted-foreground">
+            Loading users...
+          </div>
+        ) : users.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
             No public traders found
           </div>
         ) : (
-          sortedUsers.map((user) => (
+          users.map((user) => (
             <Card key={user.id} className="hover:shadow-md transition-shadow">
               <CardContent className="p-4">
                 <div className="flex items-start gap-4">
                   <div className="relative">
                     <Avatar className="h-16 w-16">
-                      <AvatarImage src={user.avatar} alt={user.displayName} />
-                      <AvatarFallback>{user.displayName.charAt(0)}</AvatarFallback>
+                      <AvatarImage src={user.avatar} alt={user.display_name} />
+                      <AvatarFallback>{user.display_name.charAt(0)}</AvatarFallback>
                     </Avatar>
-                    {user.isOnline && (
+                    {isUserOnline(user.id) && (
                       <div className="absolute bottom-0 right-0 h-4 w-4 bg-green-500 rounded-full border-2 border-background" />
                     )}
                   </div>
                   
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-2">
-                      <h3 className="font-semibold text-lg">{user.displayName}</h3>
+                      <h3 className="font-semibold text-lg">{user.display_name}</h3>
                       <Badge className={getReputationColor(user.reputation)}>
                         <Star className="h-3 w-3 mr-1" />
                         {user.reputation.toFixed(1)}
                       </Badge>
-                      {user.isOnline && (
+                      {isUserOnline(user.id) && (
                         <Badge variant="secondary" className="text-green-600">
                           Online
                         </Badge>
                       )}
                     </div>
                     
-                    <div className="mb-2">
-                      <a 
-                        href={`https://etherscan.io/address/${user.walletAddress}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="font-mono text-xs text-primary hover:underline"
-                      >
-                        {user.walletAddress}
-                      </a>
-                    </div>
+                    {user.wallet_address && (
+                      <div className="mb-2">
+                        <a 
+                          href={`https://etherscan.io/address/${user.wallet_address}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="font-mono text-xs text-primary hover:underline"
+                        >
+                          {user.wallet_address}
+                        </a>
+                      </div>
+                    )}
                     
                     <p className="text-muted-foreground mb-3 text-sm">
                       {user.description || "No description provided"}
@@ -136,18 +151,18 @@ export default function PublicUsers() {
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-3 text-sm">
                       <div>
                         <p className="text-xs text-muted-foreground">Total Trades</p>
-                        <p className="font-semibold">{user.totalTrades}</p>
+                        <p className="font-semibold">{user.total_trades}</p>
                       </div>
                       <div>
                         <p className="text-xs text-muted-foreground">Success Rate</p>
                         <p className="font-semibold text-green-600">
-                          {getSuccessRate(user.successfulTrades, user.totalTrades)}%
+                          {getSuccessRate(user.successful_trades, user.total_trades)}%
                         </p>
                       </div>
                       <div>
                         <p className="text-xs text-muted-foreground">Member Since</p>
                         <p className="font-semibold">
-                          {formatDistanceToNow(user.joinedAt, { addSuffix: true })}
+                          {formatDistanceToNow(new Date(user.created_at), { addSuffix: true })}
                         </p>
                       </div>
                     </div>
@@ -163,11 +178,13 @@ export default function PublicUsers() {
                       </Button>
                       <Button 
                         size="sm" 
-                        variant={isContact(user.id) ? "secondary" : "outline"} 
+                        variant={contactStates[user.id] ? "secondary" : "outline"} 
                         className="gap-2"
+                        onClick={() => !contactStates[user.id] && handleAddContact(user.id)}
+                        disabled={contactStates[user.id]}
                       >
-                        <UserPlus className="h-4 w-4" />
-                        {isContact(user.id) ? "Contact" : "Add"}
+                        {contactStates[user.id] ? <UserCheck className="h-4 w-4" /> : <UserPlus className="h-4 w-4" />}
+                        {contactStates[user.id] ? "Contact" : "Add"}
                       </Button>
                     </div>
                   </div>

@@ -1,21 +1,27 @@
 import { useState } from "react";
-import { Search, UserPlus, MessageCircle, TrendingUp } from "lucide-react";
+import { Search, UserPlus, MessageCircle, TrendingUp, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { mockUsers } from "@/data/mockData";
-import { useAppKitAccount } from '@reown/appkit/react';
-import { User } from "@/types";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { useContacts } from "@/hooks/useContacts";
+import { useOnlinePresence } from "@/hooks/useOnlinePresence";
+import { useWalletAuth } from "@/hooks/useWalletAuth";
+import { useNavigate } from "react-router-dom";
 
 export default function Contacts() {
   const [searchQuery, setSearchQuery] = useState("");
-  const { address } = useAppKitAccount();
+  const navigate = useNavigate();
+  const { isAuthenticated } = useWalletAuth();
+  const { contacts, loading, removeContact } = useContacts();
+  const { isUserOnline } = useOnlinePresence();
   
-  // Filter users that are in current user's contacts (simplified for now)
-  const contacts = mockUsers.filter(user => 
-    user.displayName.toLowerCase().includes(searchQuery.toLowerCase())
+  // Filter contacts based on search query
+  const filteredContacts = contacts.filter(contact => 
+    contact.display_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    contact.description?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const getReputationColor = (reputation: number) => {
@@ -24,15 +30,23 @@ export default function Contacts() {
     return "bg-red-100 text-red-800";
   };
 
+  if (!isAuthenticated) {
+    return (
+      <div className="flex flex-col items-center justify-center h-screen">
+        <p className="text-muted-foreground mb-4">Please connect your wallet to view contacts</p>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col h-screen bg-background">
       {/* Header */}
       <div className="border-b border-border p-4">
         <div className="flex items-center justify-between mb-4">
           <h1 className="text-2xl font-bold">My Contacts</h1>
-          <Button size="sm" className="gap-2">
+          <Button size="sm" className="gap-2" onClick={() => navigate('/users')}>
             <UserPlus className="h-4 w-4" />
-            Add Contact
+            Find Users
           </Button>
         </div>
         
@@ -50,28 +64,32 @@ export default function Contacts() {
 
       {/* Contacts List */}
       <div className="flex-1 overflow-y-auto p-4 space-y-3 pb-20 md:pb-4">
-        {contacts.length === 0 ? (
+        {loading ? (
           <div className="text-center py-8 text-muted-foreground">
-            {searchQuery ? "No contacts found" : "No contacts yet"}
+            Loading contacts...
+          </div>
+        ) : filteredContacts.length === 0 ? (
+          <div className="text-center py-8 text-muted-foreground">
+            {searchQuery ? "No contacts found" : "No contacts yet. Start by finding users to add!"}
           </div>
         ) : (
-          contacts.map((contact) => (
+          filteredContacts.map((contact) => (
             <Card key={contact.id} className="hover:shadow-md transition-shadow">
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
                   <div className="relative">
                     <Avatar className="h-12 w-12">
-                      <AvatarImage src={contact.avatar} alt={contact.displayName} />
-                      <AvatarFallback>{contact.displayName.charAt(0)}</AvatarFallback>
+                      <AvatarImage src={contact.avatar} alt={contact.display_name} />
+                      <AvatarFallback>{contact.display_name.charAt(0)}</AvatarFallback>
                     </Avatar>
-                    {contact.isOnline && (
+                    {isUserOnline(contact.id) && (
                       <div className="absolute bottom-0 right-0 h-3 w-3 bg-green-500 rounded-full border-2 border-background" />
                     )}
                   </div>
                   
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <h3 className="font-semibold truncate">{contact.displayName}</h3>
+                      <h3 className="font-semibold truncate">{contact.display_name}</h3>
                       <Badge variant="secondary" className={getReputationColor(contact.reputation)}>
                         ⭐ {contact.reputation.toFixed(1)}
                       </Badge>
@@ -82,9 +100,9 @@ export default function Contacts() {
                     </p>
                     
                     <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                      <span>{contact.successfulTrades}/{contact.totalTrades} trades</span>
-                      <span className={contact.isOnline ? "text-green-600" : ""}>
-                        {contact.isOnline ? "Online" : "Offline"}
+                      <span>{contact.successful_trades}/{contact.total_trades} trades</span>
+                      <span className={isUserOnline(contact.id) ? "text-green-600" : ""}>
+                        {isUserOnline(contact.id) ? "Online" : "Offline"}
                       </span>
                     </div>
                   </div>
@@ -96,6 +114,31 @@ export default function Contacts() {
                     <Button size="sm" variant="outline" className="gap-1">
                       <TrendingUp className="h-4 w-4" />
                     </Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button size="sm" variant="outline" className="gap-1 text-destructive hover:text-destructive">
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Remove Contact</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Are you sure you want to remove {contact.display_name} from your contacts?
+                            This action cannot be undone.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction 
+                            onClick={() => removeContact(contact.id)}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          >
+                            Remove
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                   </div>
                 </div>
               </CardContent>

@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
+import { useOnlinePresence } from '@/hooks/useOnlinePresence';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2, User } from 'lucide-react';
 import { sanitizeText, validateAvatarUrl, sanitizeDisplayName } from '@/components/ui/input-sanitizer';
@@ -30,6 +31,7 @@ export default function ProfileManager() {
   const [saving, setSaving] = useState(false);
   const { user, session } = useAuth();
   const { toast } = useToast();
+  const { isUserOnline } = useOnlinePresence();
 
   useEffect(() => {
     if (user) {
@@ -169,12 +171,17 @@ export default function ProfileManager() {
       <CardContent className="space-y-6">
         {/* Avatar Section */}
         <div className="flex items-center gap-4">
-          <Avatar className="h-20 w-20">
-            <AvatarImage src={profile.avatar} />
-            <AvatarFallback>
-              {profile.display_name.charAt(0).toUpperCase()}
-            </AvatarFallback>
-          </Avatar>
+          <div className="relative">
+            <Avatar className="h-20 w-20">
+              <AvatarImage src={profile.avatar} />
+              <AvatarFallback>
+                {profile.display_name.charAt(0).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+            {user && isUserOnline(user.id) && (
+              <div className="absolute bottom-0 right-0 h-5 w-5 bg-green-500 rounded-full border-2 border-background" />
+            )}
+          </div>
           <div className="space-y-2">
             <Label htmlFor="avatar">Avatar URL</Label>
             <Input
