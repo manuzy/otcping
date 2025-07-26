@@ -290,6 +290,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      auth_uid_test: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       authenticate_wallet: {
         Args: {
           wallet_addr: string
