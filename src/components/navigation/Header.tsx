@@ -14,6 +14,8 @@ import {
 import { useWalletAuth } from "@/hooks/useWalletAuth";
 import { useAuth } from "@/hooks/useAuth";
 import WalletAuthButton from "@/components/auth/WalletAuthButton";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 const navItems = [
   { id: 'chats', label: 'Chats', icon: MessageCircle, path: '/' },
@@ -26,7 +28,32 @@ const navItems = [
 export const Header = () => {
   const { open } = useAppKit();
   const { isConnected, address, isAuthenticated } = useWalletAuth();
-  const { signOut } = useAuth();
+  const { signOut, user } = useAuth();
+  const [profile, setProfile] = useState<{ display_name: string; avatar?: string } | null>(null);
+
+  useEffect(() => {
+    if (user) {
+      fetchProfile();
+    }
+  }, [user]);
+
+  const fetchProfile = async () => {
+    if (!user) return;
+
+    try {
+      const { data } = await supabase
+        .from('profiles')
+        .select('display_name, avatar')
+        .eq('id', user.id)
+        .single();
+
+      if (data) {
+        setProfile(data);
+      }
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+    }
+  };
 
   const formatWalletAddress = (address: string) => {
     return `${address.slice(0, 6)}...${address.slice(-4)}`;
@@ -71,10 +98,15 @@ export const Header = () => {
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="flex items-center gap-2 px-2">
                     <Avatar className="h-8 w-8">
-                      <AvatarFallback>{address.slice(0, 2).toUpperCase()}</AvatarFallback>
+                      <AvatarImage src={profile?.avatar} />
+                      <AvatarFallback>
+                        {profile?.display_name?.charAt(0)?.toUpperCase() || address.slice(0, 2).toUpperCase()}
+                      </AvatarFallback>
                     </Avatar>
                     <div className="flex flex-col items-start">
-                      <span className="text-sm font-medium">User</span>
+                      <span className="text-sm font-medium">
+                        {profile?.display_name || 'User'}
+                      </span>
                       <span className="text-xs text-muted-foreground">
                         {formatWalletAddress(address)}
                       </span>

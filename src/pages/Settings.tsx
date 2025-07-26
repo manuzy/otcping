@@ -25,6 +25,19 @@ export default function Settings() {
     enableSMS: false,
   });
 
+  const [privacy, setPrivacy] = useState({
+    showOnlineStatus: true,
+    showTradingActivity: true,
+    allowContactRequests: true,
+  });
+
+  const handleSavePrivacy = () => {
+    toast({
+      title: "Privacy settings updated",
+      description: "Your privacy preferences have been saved.",
+    });
+  };
+
   const handleSaveNotifications = () => {
     toast({
       title: "Notification settings updated",
@@ -185,7 +198,10 @@ export default function Settings() {
                   Let others see when you're online
                 </p>
               </div>
-              <Switch defaultChecked />
+              <Switch 
+                checked={privacy.showOnlineStatus}
+                onCheckedChange={(checked) => setPrivacy(prev => ({ ...prev, showOnlineStatus: checked }))}
+              />
             </div>
 
             <div className="flex items-center justify-between">
@@ -195,7 +211,10 @@ export default function Settings() {
                   Display your trading history to contacts
                 </p>
               </div>
-              <Switch defaultChecked />
+              <Switch 
+                checked={privacy.showTradingActivity}
+                onCheckedChange={(checked) => setPrivacy(prev => ({ ...prev, showTradingActivity: checked }))}
+              />
             </div>
 
             <div className="flex items-center justify-between">
@@ -205,7 +224,10 @@ export default function Settings() {
                   Let others send you contact requests
                 </p>
               </div>
-              <Switch defaultChecked />
+              <Switch 
+                checked={privacy.allowContactRequests}
+                onCheckedChange={(checked) => setPrivacy(prev => ({ ...prev, allowContactRequests: checked }))}
+              />
             </div>
 
             {isAuthenticated && (
@@ -219,6 +241,10 @@ export default function Settings() {
                 <div className="h-2 w-2 bg-green-500 rounded-full" />
               </div>
             )}
+
+            <Button onClick={handleSavePrivacy} className="w-full">
+              Save Privacy Settings
+            </Button>
           </CardContent>
         </Card>
       </div>
