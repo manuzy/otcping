@@ -87,7 +87,12 @@ export function useChats() {
   };
 
   // Create a new chat
-  const createChat = async (name: string, isPublic: boolean = false, tradeId?: string) => {
+  const createChat = async (
+    name: string, 
+    isPublic: boolean = false, 
+    tradeId?: string, 
+    participantIds: string[] = []
+  ) => {
     if (!user) return null;
 
     try {
@@ -102,17 +107,29 @@ export function useChats() {
         .select()
         .single();
 
-      if (chatError) throw chatError;
+      if (chatError) {
+        console.error('Chat creation error:', chatError);
+        throw chatError;
+      }
 
-      // Add user as participant
+      // Add current user as participant
+      const participantsToAdd = [user.id, ...participantIds].filter((id, index, arr) => 
+        arr.indexOf(id) === index // Remove duplicates
+      );
+
       const { error: participantError } = await supabase
         .from('chat_participants')
-        .insert({
-          chat_id: chat.id,
-          user_id: user.id
-        });
+        .insert(
+          participantsToAdd.map(userId => ({
+            chat_id: chat.id,
+            user_id: userId
+          }))
+        );
 
-      if (participantError) throw participantError;
+      if (participantError) {
+        console.error('Participant creation error:', participantError);
+        throw participantError;
+      }
 
       toast({
         title: "Chat created",

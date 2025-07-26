@@ -57,9 +57,15 @@ export default function PublicUsers() {
   };
 
   const handleMessage = async (userId: string, displayName: string) => {
-    const chatId = await createChat(`Chat with ${displayName}`, false);
+    if (!isAuthenticated) {
+      return;
+    }
+
+    // Create a direct message chat with the selected user
+    const chatId = await createChat(`Chat with ${displayName}`, false, undefined, [userId]);
+    
     if (chatId) {
-      navigate(`/?chat=${chatId}`);
+      navigate(`/chat/${chatId}`);
     }
   };
 
