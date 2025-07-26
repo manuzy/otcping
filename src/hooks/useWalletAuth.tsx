@@ -8,6 +8,8 @@ export function useWalletAuth() {
   const { user, createWalletChallenge, authenticateWallet } = useAuth();
   const { toast } = useToast();
   const [isAuthenticating, setIsAuthenticating] = useState(false);
+  const [lastFailedAttempt, setLastFailedAttempt] = useState<number>(0);
+  const [failedAttempts, setFailedAttempts] = useState(0);
 
   // Auto-authenticate when wallet connects and user is not authenticated
   useEffect(() => {
@@ -15,6 +17,21 @@ export function useWalletAuth() {
       // Only proceed if wallet is connected, user is not authenticated, and not already authenticating
       if (!isConnected || !address || user || isAuthenticating) {
         return;
+      }
+
+      // Check if we should backoff due to recent failures
+      const now = Date.now();
+      const timeSinceLastFailure = now - lastFailedAttempt;
+      const backoffTime = Math.min(5000 * Math.pow(2, failedAttempts), 30000); // Exponential backoff, max 30s
+
+      if (failedAttempts > 0 && timeSinceLastFailure < backoffTime) {
+        console.log(`Backing off for ${Math.round((backoffTime - timeSinceLastFailure) / 1000)}s due to ${failedAttempts} failed attempts`);
+        return;
+      }
+
+      // Reset failed attempts if enough time has passed
+      if (timeSinceLastFailure > 60000) { // Reset after 1 minute
+        setFailedAttempts(0);
       }
 
       setIsAuthenticating(true);
@@ -51,6 +68,10 @@ export function useWalletAuth() {
         const result = await authenticateWallet(signature, challenge.message, challenge.nonce);
         
         if (result.success) {
+          // Reset failure tracking on success
+          setFailedAttempts(0);
+          setLastFailedAttempt(0);
+          
           toast({
             title: "Authentication successful",
             description: "Your wallet has been authenticated successfully.",
@@ -60,8 +81,12 @@ export function useWalletAuth() {
         }
       } catch (error) {
         console.error('Auto-authentication error:', error);
-        // Only show error toast if it's not a user rejection
+        
+        // Track failures but don't count user rejections
         if (error instanceof Error && !error.message.includes('User rejected')) {
+          setFailedAttempts(prev => prev + 1);
+          setLastFailedAttempt(Date.now());
+          
           toast({
             title: "Authentication failed",
             description: error.message || "Failed to authenticate wallet automatically",
@@ -78,7 +103,7 @@ export function useWalletAuth() {
       const timeoutId = setTimeout(handleAutoAuth, 1000);
       return () => clearTimeout(timeoutId);
     }
-  }, [isConnected, address, user, isAuthenticating, createWalletChallenge, authenticateWallet, toast]);
+  }, [isConnected, address, user, isAuthenticating, failedAttempts, lastFailedAttempt, createWalletChallenge, authenticateWallet, toast]);
 
   return {
     isConnected,
