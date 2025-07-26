@@ -1,7 +1,7 @@
-import { MessageCircle, TrendingUp, Users, UserPlus, Settings, Wallet, ChevronDown } from "lucide-react";
+import { MessageCircle, TrendingUp, Users, UserPlus, Settings, Wallet, ChevronDown, Loader2 } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { useAppKit, useAppKitAccount } from '@reown/appkit/react';
+import { useAppKit } from '@reown/appkit/react';
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -11,6 +11,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useWalletAuth } from "@/hooks/useWalletAuth";
+import { useAuth } from "@/hooks/useAuth";
 
 const navItems = [
   { id: 'chats', label: 'Chats', icon: MessageCircle, path: '/' },
@@ -22,7 +24,8 @@ const navItems = [
 
 export const Header = () => {
   const { open } = useAppKit();
-  const { address, isConnected } = useAppKitAccount();
+  const { isConnected, address, isAuthenticated, isAuthenticating } = useWalletAuth();
+  const { signOut } = useAuth();
 
   const formatWalletAddress = (address: string) => {
     return `${address.slice(0, 6)}...${address.slice(-4)}`;
@@ -35,7 +38,7 @@ export const Header = () => {
           <div className="flex items-center space-x-8">
             <h1 className="text-xl font-bold">TradingChat</h1>
             
-            {isConnected && (
+            {isAuthenticated && (
               <nav className="flex space-x-1">
                 {navItems.map((item) => {
                   const Icon = item.icon;
@@ -62,7 +65,7 @@ export const Header = () => {
           </div>
 
           <div className="flex items-center space-x-4">
-            {isConnected && address ? (
+            {isAuthenticated && address ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="flex items-center gap-2 px-2">
@@ -86,12 +89,20 @@ export const Header = () => {
                     </NavLink>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => open()} className="text-red-600">
+                  <DropdownMenuItem onClick={() => open()}>
                     <Wallet className="h-4 w-4 mr-2" />
                     Manage Wallet
                   </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => signOut()} className="text-red-600">
+                    Sign Out
+                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
+            ) : isConnected && isAuthenticating ? (
+              <Button disabled className="flex items-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Authenticating...
+              </Button>
             ) : (
               <Button 
                 onClick={() => open()} 

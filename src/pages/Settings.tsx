@@ -8,12 +8,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import ProfileManager from "@/components/profile/ProfileManager";
-import WalletAuthButton from "@/components/auth/WalletAuthButton";
-import { useAuth } from "@/hooks/useAuth";
+import { useWalletAuth } from "@/hooks/useWalletAuth";
 
 export default function Settings() {
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { isAuthenticated, address, isAuthenticating } = useWalletAuth();
   
   const [notifications, setNotifications] = useState({
     email: "",
@@ -38,7 +37,16 @@ export default function Settings() {
       {/* Header */}
       <div className="border-b border-border p-4 flex items-center justify-between">
         <h1 className="text-2xl font-bold">Settings</h1>
-        <WalletAuthButton />
+        <div className="flex items-center gap-2">
+          {isAuthenticated && address && (
+            <div className="flex items-center gap-2 px-3 py-1 bg-success/10 rounded-lg border border-success/20">
+              <Shield className="h-4 w-4 text-success" />
+              <span className="text-sm text-success font-medium">
+                {address.slice(0, 6)}...{address.slice(-4)}
+              </span>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Settings Content */}
@@ -200,7 +208,7 @@ export default function Settings() {
               <Switch defaultChecked />
             </div>
 
-            {user && (
+            {isAuthenticated && (
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
                   <Label>Authenticated</Label>

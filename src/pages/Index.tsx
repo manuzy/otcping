@@ -1,12 +1,12 @@
 import { MainLayout } from "@/components/layout/MainLayout";
 import { WelcomeView } from "@/components/chat/WelcomeView";
-import { useAppKitAccount } from '@reown/appkit/react';
+import { useWalletAuth } from "@/hooks/useWalletAuth";
 
 const Index = () => {
-  const { isConnected } = useAppKitAccount();
+  const { isAuthenticated } = useWalletAuth();
   
-  // Show welcome/connect view if wallet not connected
-  if (!isConnected) {
+  // Show welcome/connect view if wallet not authenticated
+  if (!isAuthenticated) {
     return <WelcomeView onMenuClick={() => {}} />;
   }
   
