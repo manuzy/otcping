@@ -43,6 +43,12 @@ export const ChatView = ({ chat, onMenuClick }: ChatViewProps) => {
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
+  // For direct messages, get the other participant for display
+  const isDirectMessage = participants.length === 2 && !chat.isPublic;
+  const otherParticipant = isDirectMessage ? participants.find(p => p.id !== user?.id) : null;
+  const displayName = isDirectMessage && otherParticipant ? otherParticipant.displayName : chat.name;
+  const displayAvatar = isDirectMessage && otherParticipant ? otherParticipant.avatar : undefined;
+
   const renderMessage = (msg: Message) => {
     const isOwnMessage = user && msg.senderId === user.id;
     const isSystemMessage = msg.type === 'system' || msg.type === 'trade_action';
@@ -92,15 +98,15 @@ export const ChatView = ({ chat, onMenuClick }: ChatViewProps) => {
         </Button>
         
         <Avatar className="h-10 w-10">
-          <AvatarImage src={participants[0]?.avatar} />
+          <AvatarImage src={displayAvatar} />
           <AvatarFallback>
-            {chat.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+            {displayName.split(' ').map(n => n[0]).join('').slice(0, 2)}
           </AvatarFallback>
         </Avatar>
         
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <h2 className="font-semibold truncate">{chat.name}</h2>
+            <h2 className="font-semibold truncate">{displayName}</h2>
             {chat.isPublic && <Badge variant="secondary" className="text-xs">Public</Badge>}
           </div>
           <p className="text-sm text-muted-foreground">
