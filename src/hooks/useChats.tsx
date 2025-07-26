@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { createClient } from '@supabase/supabase-js';
 import { useAuth } from './useAuth';
@@ -10,10 +10,12 @@ export function useChats() {
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
   const { toast } = useToast();
+  const lastErrorTimeRef = useRef<number>(0);
+  const isUnmountedRef = useRef(false);
 
-  // Fetch chats where user is a participant
-  const fetchChats = async () => {
-    if (!user) return;
+  // Fetch chats where user is a participant with error handling and debouncing
+  const fetchChats = async (skipErrorToast = false) => {
+    if (!user || isUnmountedRef.current) return;
 
     try {
       const { data, error } = await supabase
@@ -34,6 +36,9 @@ export function useChats() {
         .order('updated_at', { ascending: false });
 
       if (error) throw error;
+
+      // Only update state if component is still mounted
+      if (isUnmountedRef.current) return;
 
       // Transform data to match Chat interface
       const transformedChats: Chat[] = (data || []).map(chat => {
@@ -77,13 +82,21 @@ export function useChats() {
       setChats(transformedChats);
     } catch (error) {
       console.error('Error fetching chats:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load chats",
-        variant: "destructive",
-      });
+      
+      // Only show toast if we haven't shown one recently (debounce errors)
+      const now = Date.now();
+      if (!skipErrorToast && now - lastErrorTimeRef.current > 5000) {
+        lastErrorTimeRef.current = now;
+        toast({
+          title: "Error",
+          description: "Failed to load chats",
+          variant: "destructive",
+        });
+      }
     } finally {
-      setLoading(false);
+      if (!isUnmountedRef.current) {
+        setLoading(false);
+      }
     }
   };
 
@@ -362,11 +375,26 @@ export function useChats() {
     }
   };
 
-  // Set up real-time subscriptions
+  // Set up real-time subscriptions with debouncing
   useEffect(() => {
     if (!user) return;
 
+    // Mark component as mounted
+    isUnmountedRef.current = false;
+
     fetchChats();
+
+    // Debounce real-time refetches to prevent excessive calls
+    let debounceTimer: NodeJS.Timeout | null = null;
+    
+    const debouncedFetch = () => {
+      if (debounceTimer) clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        if (!isUnmountedRef.current) {
+          fetchChats(true); // Skip error toast for subscription triggers
+        }
+      }, 500);
+    };
 
     // Subscribe to chat changes - only listen to INSERT/DELETE to avoid loops
     const chatsChannel = supabase
@@ -375,26 +403,27 @@ export function useChats() {
         event: 'INSERT',
         schema: 'public',
         table: 'chats'
-      }, () => {
-        fetchChats(); // Refetch when new chats are created
-      })
+      }, debouncedFetch)
       .on('postgres_changes', {
         event: 'DELETE',
         schema: 'public',
         table: 'chats'
-      }, () => {
-        fetchChats(); // Refetch when chats are deleted
-      })
+      }, debouncedFetch)
       .on('postgres_changes', {
         event: '*',
         schema: 'public',
         table: 'chat_participants'
-      }, () => {
-        fetchChats(); // Refetch when participants change
-      })
+      }, debouncedFetch)
       .subscribe();
 
     return () => {
+      // Mark component as unmounted
+      isUnmountedRef.current = true;
+      
+      // Clear debounce timer
+      if (debounceTimer) clearTimeout(debounceTimer);
+      
+      // Remove subscription
       supabase.removeChannel(chatsChannel);
     };
   }, [user]);
