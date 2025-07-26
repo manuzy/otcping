@@ -73,6 +73,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!address) return { success: false, error: 'No wallet connected' };
 
     try {
+      // Step 1: Verify signature with database function
       const { data, error } = await supabase.rpc('authenticate_wallet', {
         wallet_addr: address,
         signature_msg: message,
@@ -82,34 +83,43 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (error) throw error;
       
-      const result = data as { success: boolean; error?: string; user_id?: string; secure_password?: string };
+      const result = data as { success: boolean; error?: string; wallet_address?: string; verification_nonce?: string };
       
-      if (result.success && result.secure_password) {
-        // Use the secure password returned from the database
-        const { error: signInError } = await supabase.auth.signInWithPassword({
-          email: address + '@wallet.local',
-          password: result.secure_password
-        });
+      if (!result.success) {
+        return { success: false, error: result.error || 'Signature verification failed' };
+      }
 
-        if (signInError) {
-          // Create the user if doesn't exist with the secure password
-          const { error: signUpError } = await supabase.auth.signUp({
-            email: address + '@wallet.local',
-            password: result.secure_password,
-            options: {
-              emailRedirectTo: `${window.location.origin}/`,
-              data: { 
-                wallet_address: address,
-                secure_password: result.secure_password
-              }
+      // Step 2: Create or sign in user with Supabase Auth
+      const email = address + '@wallet.local';
+      const password = CryptoJS.SHA256(address + result.verification_nonce).toString();
+
+      // Try to sign in first
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+
+      if (signInError) {
+        // User doesn't exist, create new user
+        const { error: signUpError } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            emailRedirectTo: `${window.location.origin}/`,
+            data: { 
+              wallet_address: address,
+              display_name: `${address.slice(0, 6)}...${address.slice(-4)}`
             }
-          });
-          
-          if (signUpError) throw signUpError;
+          }
+        });
+        
+        if (signUpError) {
+          console.error('Sign up error:', signUpError);
+          return { success: false, error: 'Failed to create user account' };
         }
       }
 
-      return { success: result.success, error: result.error };
+      return { success: true };
     } catch (error) {
       console.error('Error authenticating wallet:', error);
       return { success: false, error: 'Authentication failed' };
