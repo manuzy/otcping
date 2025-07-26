@@ -63,7 +63,7 @@ export default function ProfileManager() {
           .insert([{
             id: user.id,
             display_name: user.email?.split('@')[0] || 'Anonymous',
-            is_public: false
+            is_public: true
           }])
           .select()
           .single();

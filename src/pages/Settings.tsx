@@ -32,7 +32,7 @@ export default function Settings() {
     showOnlineStatus: true,
     showTradingActivity: true,
     allowContactRequests: true,
-    publicProfile: false,
+    publicProfile: true,
   });
 
   // Load current profile data to get public setting
