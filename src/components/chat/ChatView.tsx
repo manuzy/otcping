@@ -25,10 +25,10 @@ export const ChatView = ({ chat, onMenuClick }: ChatViewProps) => {
 
   // Mark messages as read when chat is opened
   useEffect(() => {
-    if (chat.id && user) {
+    if (chat.id && user && chat.unreadCount > 0) {
       markAsRead(chat.id);
     }
-  }, [chat.id, user, markAsRead]);
+  }, [chat.id, user?.id, chat.unreadCount, markAsRead]);
 
   const handleSendMessage = async () => {
     if (!message.trim() || sending) return;

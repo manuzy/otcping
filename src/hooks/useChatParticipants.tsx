@@ -18,10 +18,27 @@ export function useChatParticipants(chatId: string | null) {
   const { toast } = useToast();
   const mountedRef = useRef(true);
   const lastErrorRef = useRef<number>(0);
+  const abortControllerRef = useRef<AbortController | null>(null);
+  const onlineUsersRef = useRef(onlineUsers);
+  const toastRef = useRef(toast);
+
+  // Update refs to current values
+  useEffect(() => {
+    onlineUsersRef.current = onlineUsers;
+    toastRef.current = toast;
+  });
 
   // Fetch participants for a chat with retry logic
   const fetchParticipants = useCallback(async (retryCount = 0): Promise<void> => {
     if (!chatId || !mountedRef.current) return;
+
+    // Cancel previous request
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+
+    const abortController = new AbortController();
+    abortControllerRef.current = abortController;
 
     try {
       console.log('🔍 Fetching participants for chat:', chatId, `(attempt ${retryCount + 1})`);
@@ -44,7 +61,8 @@ export function useChatParticipants(chatId: string | null) {
             wallet_address
           )
         `)
-        .eq('chat_id', chatId);
+        .eq('chat_id', chatId)
+        .abortSignal(abortController.signal);
 
       console.log('📊 Participants query result:', { data, error, retryCount });
 
@@ -62,7 +80,7 @@ export function useChatParticipants(chatId: string | null) {
           walletAddress: participant.profiles.wallet_address || '',
           displayName: participant.profiles.display_name || 'Unknown User',
           avatar: participant.profiles.avatar || '',
-          isOnline: onlineUsers.has(participant.profiles.id),
+          isOnline: onlineUsersRef.current.has(participant.profiles.id),
           description: participant.profiles.description || '',
           isPublic: participant.profiles.is_public || false,
           reputation: participant.profiles.reputation || 0,
@@ -76,7 +94,13 @@ export function useChatParticipants(chatId: string | null) {
         setParticipants(transformedParticipants);
         setLoading(false);
       }
-    } catch (error) {
+    } catch (error: any) {
+      // Ignore aborted requests
+      if (error?.name === 'AbortError') {
+        console.log('Request aborted for chat:', chatId);
+        return;
+      }
+
       console.error('Error fetching participants:', error, { chatId, retryCount });
       
       // Retry with exponential backoff
@@ -95,7 +119,7 @@ export function useChatParticipants(chatId: string | null) {
         if (now - lastErrorRef.current > 5000) { // Only show error every 5 seconds
           lastErrorRef.current = now;
           if (mountedRef.current) {
-            toast({
+            toastRef.current({
               title: "Error",
               description: "Failed to load chat participants",
               variant: "destructive",
@@ -108,7 +132,7 @@ export function useChatParticipants(chatId: string | null) {
         setLoading(false);
       }
     }
-  }, [chatId, onlineUsers, toast]);
+  }, [chatId]);
 
   // Add a participant to the chat
   const addParticipant = async (userId: string) => {
@@ -124,7 +148,7 @@ export function useChatParticipants(chatId: string | null) {
 
       if (error) throw error;
 
-      toast({
+      toastRef.current({
         title: "Participant added",
         description: "User has been added to the chat",
       });
@@ -132,7 +156,7 @@ export function useChatParticipants(chatId: string | null) {
       return true;
     } catch (error) {
       console.error('Error adding participant:', error);
-      toast({
+      toastRef.current({
         title: "Error",
         description: "Failed to add participant",
         variant: "destructive",
@@ -154,7 +178,7 @@ export function useChatParticipants(chatId: string | null) {
 
       if (error) throw error;
 
-      toast({
+      toastRef.current({
         title: "Participant removed",
         description: "User has been removed from the chat",
       });
@@ -162,7 +186,7 @@ export function useChatParticipants(chatId: string | null) {
       return true;
     } catch (error) {
       console.error('Error removing participant:', error);
-      toast({
+      toastRef.current({
         title: "Error",
         description: "Failed to remove participant",
         variant: "destructive",
@@ -171,10 +195,6 @@ export function useChatParticipants(chatId: string | null) {
     }
   };
 
-  // Create a stable reference to fetchParticipants to avoid recreation
-  const fetchParticipantsRef = useRef(fetchParticipants);
-  fetchParticipantsRef.current = fetchParticipants;
-
   // Set up real-time subscription for participants
   useEffect(() => {
     if (!chatId) return;
@@ -182,7 +202,7 @@ export function useChatParticipants(chatId: string | null) {
     console.log('🔄 Setting up participants subscription for chat:', chatId);
     
     // Initial fetch
-    fetchParticipantsRef.current();
+    fetchParticipants();
 
     const participantsChannel = supabase
       .channel(`participants-${chatId}`)
@@ -193,8 +213,12 @@ export function useChatParticipants(chatId: string | null) {
         filter: `chat_id=eq.${chatId}`
       }, (payload) => {
         console.log('📡 Participants change detected:', payload);
-        // Use stable ref to avoid dependency issues
-        fetchParticipantsRef.current();
+        // Debounce refetch to prevent multiple calls
+        setTimeout(() => {
+          if (mountedRef.current) {
+            fetchParticipants();
+          }
+        }, 100);
       })
       .subscribe((status) => {
         console.log('📡 Participants subscription status:', status);
@@ -202,9 +226,12 @@ export function useChatParticipants(chatId: string | null) {
 
     return () => {
       console.log('🧹 Cleaning up participants subscription for chat:', chatId);
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
       supabase.removeChannel(participantsChannel);
     };
-  }, [chatId]); // Remove fetchParticipants from dependencies
+  }, [chatId, fetchParticipants]);
 
   // Reset mounted ref when chat changes
   useEffect(() => {
