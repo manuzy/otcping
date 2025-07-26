@@ -2,12 +2,11 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { Search, Plus, MoreVertical, X, Loader2 } from "lucide-react";
+import { Search, Plus, X, Loader2 } from "lucide-react";
 import { Chat } from "@/types";
 import { useChats } from '@/hooks/useChats';
 import { useAppKitAccount } from '@reown/appkit/react';
+import { ChatListItem } from '@/components/chat/ChatListItem';
 
 interface SidebarProps {
   selectedChat: Chat | null;
@@ -81,56 +80,13 @@ export const Sidebar = ({ selectedChat, onChatSelect, onClose }: SidebarProps) =
             </div>
           ) : (
             filteredChats.map((chat) => (
-              <div
+              <ChatListItem 
                 key={chat.id}
-                onClick={() => onChatSelect(chat)}
-                className={`
-                  p-3 rounded-lg cursor-pointer hover:bg-accent transition-colors
-                  ${selectedChat?.id === chat.id ? 'bg-accent' : ''}
-                `}
-              >
-                <div className="flex items-start gap-3">
-                  <div className="relative">
-                    <Avatar className="h-12 w-12">
-                      <AvatarImage src={chat.participants[0]?.avatar} />
-                      <AvatarFallback>
-                        {chat.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
-                      </AvatarFallback>
-                    </Avatar>
-                    {chat.isPublic && (
-                      <div className="absolute -top-1 -right-1">
-                        <Badge variant="secondary" className="text-xs px-1">Public</Badge>
-                      </div>
-                    )}
-                  </div>
-                  
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between mb-1">
-                      <h3 className="font-medium text-sm truncate">{chat.name}</h3>
-                      <span className="text-xs text-muted-foreground">
-                        {formatTime(chat.lastActivity)}
-                      </span>
-                    </div>
-                    
-                    {chat.trade && (
-                      <div className="text-xs text-muted-foreground mb-1">
-                        {chat.trade.type.toUpperCase()}: {chat.trade.size} at {chat.trade.price}
-                      </div>
-                    )}
-                    
-                    <div className="flex items-center justify-between">
-                      <p className="text-sm text-muted-foreground truncate">
-                        {chat.lastMessage?.content || "No messages yet"}
-                      </p>
-                      {chat.unreadCount > 0 && (
-                        <Badge variant="default" className="ml-2 text-xs">
-                          {chat.unreadCount}
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
+                chat={chat}
+                isSelected={selectedChat?.id === chat.id}
+                onSelect={onChatSelect}
+                formatTime={formatTime}
+              />
             ))
           )}
         </div>
