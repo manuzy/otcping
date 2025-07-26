@@ -235,13 +235,14 @@ export function useChats() {
 
       console.log('[Chat Creation] Connection-level auth validated, creating chat...');
 
-      // Create chat using the validated client
+      // Create chat using the validated client with creator ownership
       const { data: chat, error: chatError } = await chatClient
         .from('chats')
         .insert({
           name,
           is_public: isPublic,
-          trade_id: tradeId
+          trade_id: tradeId,
+          created_by: user.id
         })
         .select()
         .single();

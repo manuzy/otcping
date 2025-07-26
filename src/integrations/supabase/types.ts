@@ -56,6 +56,7 @@ export type Database = {
       chats: {
         Row: {
           created_at: string
+          created_by: string
           id: string
           is_public: boolean
           name: string
@@ -64,6 +65,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          created_by?: string
           id?: string
           is_public?: boolean
           name: string
@@ -72,6 +74,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          created_by?: string
           id?: string
           is_public?: boolean
           name?: string
