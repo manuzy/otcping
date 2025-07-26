@@ -91,7 +91,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       // Step 2: Create or sign in user with Supabase Auth
       const email = address + '@wallet.local';
-      const password = CryptoJS.SHA256(address + result.verification_nonce).toString();
+      const password = CryptoJS.SHA256(address).toString();
 
       // Try to sign in first
       const { error: signInError } = await supabase.auth.signInWithPassword({

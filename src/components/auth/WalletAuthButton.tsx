@@ -98,7 +98,10 @@ export default function WalletAuthButton() {
       ) : (
         <Wallet className="h-4 w-4" />
       )}
-      {isConnected ? 'Authenticate Wallet' : 'Connect Wallet'}
+      {isConnected ? 
+        `Authenticate ${address?.slice(0, 6)}...${address?.slice(-4)}` : 
+        'Connect Wallet'
+      }
     </Button>
   );
 }
