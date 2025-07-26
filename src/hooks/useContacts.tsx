@@ -98,7 +98,13 @@ export function useContacts() {
         .from('contacts')
         .insert({ user_id: contactId, contact_id: user.id });
 
-      if (error1 || error2) throw error1 || error2;
+      // Check if both operations had actual errors (not just duplicate key errors)
+      const hasRealError1 = error1 && !error1.message?.includes('duplicate key');
+      const hasRealError2 = error2 && !error2.message?.includes('duplicate key');
+
+      if (hasRealError1 || hasRealError2) {
+        throw hasRealError1 ? error1 : error2;
+      }
 
       toast({
         title: "Contact added",
