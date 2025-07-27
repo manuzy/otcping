@@ -1,4 +1,4 @@
-import { MessageCircle, TrendingUp, Users, UserPlus, Settings, Wallet, ChevronDown, Loader2 } from "lucide-react";
+import { MessageCircle, TrendingUp, Users, UserPlus, Settings, Wallet, ChevronDown, Loader2, Shield } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useAppKit } from '@reown/appkit/react';
@@ -16,6 +16,7 @@ import { useAuth } from "@/hooks/useAuth";
 import WalletAuthButton from "@/components/auth/WalletAuthButton";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useIsAdmin } from "@/hooks/useIsAdmin";
 
 const navItems = [
   { id: 'dashboard', label: 'Dashboard', icon: MessageCircle, path: '/app' },
@@ -29,6 +30,7 @@ export const Header = () => {
   const { open } = useAppKit();
   const { isConnected, address, isAuthenticated } = useWalletAuth();
   const { signOut, user } = useAuth();
+  const { isAdmin } = useIsAdmin();
   const [profile, setProfile] = useState<{ display_name: string; avatar?: string } | null>(null);
 
   useEffect(() => {
@@ -85,12 +87,30 @@ export const Header = () => {
                     >
                       <Icon className="h-4 w-4" />
                       {item.label}
-                    </NavLink>
-                  );
-                })}
-              </nav>
-            )}
-          </div>
+                     </NavLink>
+                   );
+                 })}
+                 
+                 {/* Underground Admin Link - Only visible to Tom */}
+                 {isAdmin && (
+                   <NavLink
+                     to="/underground"
+                     className={({ isActive }) =>
+                       cn(
+                         "flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors",
+                         isActive
+                           ? "bg-destructive/10 text-destructive border border-destructive/20"
+                           : "text-destructive/70 hover:text-destructive hover:bg-destructive/5 border border-destructive/10"
+                       )
+                     }
+                   >
+                     <Shield className="h-4 w-4" />
+                     Underground
+                   </NavLink>
+                 )}
+               </nav>
+             )}
+           </div>
 
           <div className="flex items-center space-x-4">
             {isAuthenticated && address ? (

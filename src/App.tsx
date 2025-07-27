@@ -11,6 +11,7 @@ import PublicChats from "./pages/PublicChats";
 import PublicUsers from "./pages/PublicUsers";
 import Settings from "./pages/Settings";
 import CreateTrade from "./pages/CreateTrade";
+import Underground from "./pages/Underground";
 import { BottomTabs } from "./components/navigation/BottomTabs";
 import { Header } from "./components/navigation/Header";
 import { AuthProvider } from "./hooks/useAuth";
@@ -38,6 +39,7 @@ const App = () => (
                 <Route path="/users" element={<ProtectedRoute><PublicUsers /></ProtectedRoute>} />
                 <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
                 <Route path="/create-trade" element={<ProtectedRoute><CreateTrade /></ProtectedRoute>} />
+                <Route path="/underground" element={<ProtectedRoute><Underground /></ProtectedRoute>} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
