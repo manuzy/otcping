@@ -1,5 +1,5 @@
 import { MessageCircle, TrendingUp, Users, UserPlus, Settings, Wallet, ChevronDown, Loader2, ShieldCheck } from "lucide-react";
-import { NavLink } from "react-router-dom";
+import { NavLink, Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useAppKit } from '@reown/appkit/react';
 import { Button } from "@/components/ui/button";
@@ -66,7 +66,7 @@ export const Header = () => {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center space-x-8">
-            <h1 className="text-xl font-bold">OTCping</h1>
+            <Link to="/" className="text-xl font-bold hover:opacity-80 transition-opacity">OTCping</Link>
             
             {isAuthenticated && (
               <nav className="flex space-x-1">
