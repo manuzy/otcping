@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
+import AppPage from "./pages/App";
 import NotFound from "./pages/NotFound";
 import Contacts from "./pages/Contacts";
 import PublicChats from "./pages/PublicChats";
@@ -31,6 +32,7 @@ const App = () => (
               <Header />
               <Routes>
                 <Route path="/" element={<Index />} />
+                <Route path="/app" element={<ProtectedRoute><AppPage /></ProtectedRoute>} />
                 <Route path="/contacts" element={<ProtectedRoute><Contacts /></ProtectedRoute>} />
                 <Route path="/public-chats" element={<ProtectedRoute><PublicChats /></ProtectedRoute>} />
                 <Route path="/users" element={<ProtectedRoute><PublicUsers /></ProtectedRoute>} />
