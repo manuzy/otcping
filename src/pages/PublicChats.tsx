@@ -129,7 +129,7 @@ export default function PublicChats() {
             <Card 
               key={chat.id} 
               className="hover:shadow-md transition-shadow cursor-pointer"
-              onClick={() => navigate(`/?chat=${chat.id}`)}
+              onClick={() => navigate(`/app?chat=${chat.id}`)}
             >
               <CardContent className="p-4">
                 <div className="flex items-start justify-between mb-3">

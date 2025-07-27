@@ -85,7 +85,7 @@ export default function PublicUsers() {
       if (existingChat) {
         console.log('Found existing chat:', existingChat.id);
         // Navigate to existing chat
-        navigate(`/?chat=${existingChat.id}`);
+        navigate(`/app?chat=${existingChat.id}`);
         toast({
           title: "Existing Chat Found",
           description: `Redirected to your existing chat with ${displayName}.`,
@@ -98,7 +98,7 @@ export default function PublicUsers() {
         
         if (chatId) {
           console.log('Chat created successfully, navigating to:', chatId);
-          navigate(`/?chat=${chatId}`);
+          navigate(`/app?chat=${chatId}`);
           toast({
             title: "Chat Created",
             description: `Started a new chat with ${displayName}.`,

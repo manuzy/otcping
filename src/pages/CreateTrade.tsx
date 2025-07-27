@@ -80,7 +80,7 @@ const CreateTrade = () => {
     if (currentStep > 1) {
       setCurrentStep(currentStep - 1);
     } else {
-      navigate("/");
+      navigate("/app");
     }
   };
 
@@ -147,7 +147,7 @@ const CreateTrade = () => {
       });
 
       // Navigate to the new chat
-      navigate(`/?chat=${chatId}`);
+      navigate(`/app?chat=${chatId}`);
     } catch (error) {
       console.error('Error creating trade:', error);
       toast({
