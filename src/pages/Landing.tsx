@@ -48,7 +48,7 @@ const Landing = () => {
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               {isAuthenticated ? <Button size="lg" onClick={() => navigate('/app')} className="text-lg px-8 py-3">
-                  Go to Dashboard
+                  Launch App
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button> : <WalletAuthButton />}
               
@@ -189,7 +189,7 @@ const Landing = () => {
             </p>
             
             {isAuthenticated ? <Button size="lg" onClick={() => navigate('/app')} className="text-lg px-8 py-3">
-                Go to Dashboard
+                Launch App
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button> : <WalletAuthButton />}
           </div>
