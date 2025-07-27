@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { Resend } from "npm:resend@2.0.0";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -25,10 +25,8 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const resendApiKey = Deno.env.get('RESEND_API_KEY')!;
+    const resend = new Resend(resendApiKey);
 
     const { email, testType = 'basic' }: TestEmailRequest = await req.json();
 
@@ -55,23 +53,24 @@ const handler = async (req: Request): Promise<Response> => {
       </html>
     `;
 
-    console.log('Attempting to send test email via Supabase auth.admin.sendEmail...');
+    console.log('Attempting to send test email via Resend...');
 
-    // Use Supabase's auth.admin.sendEmail with the configured SMTP
-    const { error: emailError } = await supabase.auth.admin.sendEmail({
-      email: email,
+    // Use Resend's email sending API
+    const emailResponse = await resend.emails.send({
+      from: 'OTCping <onboarding@resend.dev>',
+      to: [email],
       subject: emailSubject,
       html: emailBody,
     });
 
-    if (emailError) {
-      console.error('Error sending test email:', emailError);
+    if (emailResponse.error) {
+      console.error('Error sending test email:', emailResponse.error);
       
       return new Response(JSON.stringify({ 
         success: false,
         error: 'Failed to send email',
-        details: emailError.message,
-        emailService: 'supabase-auth'
+        details: emailResponse.error.message,
+        emailService: 'resend'
       }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -84,8 +83,9 @@ const handler = async (req: Request): Promise<Response> => {
       success: true, 
       message: 'Test email sent successfully',
       email: email,
+      emailId: emailResponse.data?.id,
       timestamp: new Date().toISOString(),
-      emailService: 'supabase-auth'
+      emailService: 'resend'
     }), {
       status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
