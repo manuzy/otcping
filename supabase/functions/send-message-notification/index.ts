@@ -65,16 +65,17 @@ const handler = async (req: Request): Promise<Response> => {
       .from('messages')
       .select('id')
       .eq('chat_id', chatId)
-      .order('created_at', { ascending: true })
-      .limit(1);
+      .order('created_at', { ascending: true });
 
     if (historyError) {
       console.error('Error checking message history:', historyError);
       throw historyError;
     }
 
+    console.log(`Found ${messageHistory.length} messages in chat ${chatId}`);
+
     // Only send notification for the first message in a chat
-    if (messageHistory.length > 1) {
+    if (messageHistory.length > 0) {
       console.log('Not the first message in chat, skipping notification');
       return new Response(JSON.stringify({ success: false, message: 'Not first message' }), {
         status: 200,

@@ -143,9 +143,13 @@ export function useMessages(chatId: string | null) {
           const senderDisplayName = senderProfile?.display_name || 'Someone';
 
           // Send notification to each participant
+          console.log(`📧 Sending notifications to ${participants.length} participants for chat ${chatId}`);
+          
           for (const participant of participants) {
             try {
-              await supabase.functions.invoke('send-message-notification', {
+              console.log(`📧 Sending notification to user ${participant.user_id} for message: "${content.trim().substring(0, 50)}..."`);
+              
+              const { data: notificationData, error: notificationError } = await supabase.functions.invoke('send-message-notification', {
                 body: {
                   chatId,
                   senderDisplayName,
@@ -153,6 +157,12 @@ export function useMessages(chatId: string | null) {
                   recipientUserId: participant.user_id,
                 },
               });
+
+              if (notificationError) {
+                console.error('⚠️ Failed to send notification:', notificationError);
+              } else {
+                console.log('✅ Notification response:', notificationData);
+              }
             } catch (notificationError) {
               console.error('⚠️ Error sending notification to user:', participant.user_id, notificationError);
               // Don't throw here - notification failures shouldn't break message sending
