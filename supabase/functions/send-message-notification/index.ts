@@ -68,29 +68,43 @@ const handler = async (req: Request): Promise<Response> => {
     
     if (emailFrequency === 'first_only') {
       // Check if the sender has sent any previous messages in this chat
-      // This excludes the current message by using a time-based filter
-      const oneSecondAgo = new Date(Date.now() - 1000).toISOString();
-      const { data: previousMessages, error: historyError } = await supabase
+      // We need to get the current message first to use its timestamp
+      const { data: currentMessage, error: currentMsgError } = await supabase
         .from('messages')
-        .select('id, sender_id, created_at')
+        .select('created_at, sender_id')
         .eq('chat_id', chatId)
-        .lt('created_at', oneSecondAgo)
-        .order('created_at', { ascending: true });
+        .eq('content', messageContent)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
 
-      if (historyError) {
-        console.error('Error checking message history:', historyError);
-        throw historyError;
-      }
+      if (currentMsgError) {
+        console.error('Error getting current message:', currentMsgError);
+        // If we can't find the current message, proceed with sending notification
+      } else {
+        // Check for previous messages from the same sender in this chat
+        const { data: previousMessages, error: historyError } = await supabase
+          .from('messages')
+          .select('id')
+          .eq('chat_id', chatId)
+          .eq('sender_id', currentMessage.sender_id)
+          .lt('created_at', currentMessage.created_at);
 
-      console.log(`Found ${previousMessages.length} previous messages in chat ${chatId}`);
+        if (historyError) {
+          console.error('Error checking message history:', historyError);
+          throw historyError;
+        }
 
-      // Only send notification if this appears to be the first message in the chat
-      if (previousMessages.length > 0) {
-        console.log('Not the first message in chat, skipping notification');
-        return new Response(JSON.stringify({ success: false, message: 'Not first message' }), {
-          status: 200,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
+        console.log(`Found ${previousMessages.length} previous messages from this sender in chat ${chatId}`);
+
+        // Only send notification if this is the first message from this sender in the chat
+        if (previousMessages.length > 0) {
+          console.log('Not the first message from this sender, skipping notification');
+          return new Response(JSON.stringify({ success: false, message: 'Not first message from sender' }), {
+            status: 200,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
       }
     }
     
