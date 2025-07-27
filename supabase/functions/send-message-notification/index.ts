@@ -34,7 +34,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     const { chatId, senderDisplayName, messageContent, recipientUserId }: NotificationRequest = await req.json();
 
-    console.log('Processing notification request:', { chatId, senderDisplayName, recipientUserId });
+    console.log('Processing notification request:', { chatId, senderDisplayName, recipientUserId, messageContent: messageContent.substring(0, 100) + '...' });
 
     // Get recipient's notification settings
     const { data: notificationSettings, error: settingsError } = await supabase
@@ -110,6 +110,8 @@ const handler = async (req: Request): Promise<Response> => {
     `;
 
     // Use Supabase's auth.admin.sendEmail with the configured SMTP
+    console.log('Attempting to send notification email to:', notificationSettings.email);
+    
     const { error: emailError } = await supabase.auth.admin.sendEmail({
       email: notificationSettings.email,
       subject: emailSubject,
@@ -117,7 +119,12 @@ const handler = async (req: Request): Promise<Response> => {
     });
 
     if (emailError) {
-      console.error('Error sending email:', emailError);
+      console.error('Failed to send notification email:', {
+        error: emailError,
+        recipient: notificationSettings.email,
+        chatId: chatId,
+        senderDisplayName: senderDisplayName
+      });
       throw emailError;
     }
 
