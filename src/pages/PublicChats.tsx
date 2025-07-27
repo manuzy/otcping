@@ -56,7 +56,7 @@ export default function PublicChats() {
   return (
     <div className="flex flex-col h-screen bg-background">
       {/* Header */}
-      <div className="border-b border-border p-4">
+      <div className="border-b border-border p-4 sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="flex items-center justify-between mb-4">
           <h1 className="text-2xl font-bold">Public Markets</h1>
           <Button size="sm" className="gap-2">
