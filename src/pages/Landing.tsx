@@ -4,60 +4,35 @@ import { Badge } from "@/components/ui/badge";
 import WalletAuthButton from "@/components/auth/WalletAuthButton";
 import { useWalletAuth } from "@/hooks/useWalletAuth";
 import { useNavigate } from "react-router-dom";
-import { 
-  Shield, 
-  MessageSquare, 
-  TrendingUp, 
-  Users, 
-  CheckCircle, 
-  ArrowRight,
-  Zap,
-  Lock,
-  Globe
-} from "lucide-react";
-
+import { Shield, MessageSquare, TrendingUp, Users, CheckCircle, ArrowRight, Zap, Lock, Globe } from "lucide-react";
 const Landing = () => {
-  const { isAuthenticated } = useWalletAuth();
+  const {
+    isAuthenticated
+  } = useWalletAuth();
   const navigate = useNavigate();
-
-  const features = [
-    {
-      icon: Shield,
-      title: "Secure Wallet Authentication",
-      description: "Connect safely with your crypto wallet using industry-standard security protocols"
-    },
-    {
-      icon: MessageSquare,
-      title: "Direct P2P Communication",
-      description: "Chat directly with trading counterparts in real-time secure messaging"
-    },
-    {
-      icon: TrendingUp,
-      title: "OTC Trading Made Simple",
-      description: "Create and manage over-the-counter trades with transparent pricing"
-    },
-    {
-      icon: Users,
-      title: "Trusted Community",
-      description: "Trade with verified users and build your reputation in the community"
-    }
-  ];
-
-  const benefits = [
-    "No intermediary fees",
-    "Direct peer-to-peer trading",
-    "Secure wallet integration",
-    "Real-time communication",
-    "Transparent pricing",
-    "Community-driven trust"
-  ];
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
+  const features = [{
+    icon: Shield,
+    title: "Secure Wallet Authentication",
+    description: "Connect safely with your crypto wallet using industry-standard security protocols"
+  }, {
+    icon: MessageSquare,
+    title: "Direct P2P Communication",
+    description: "Chat directly with trading counterparts in real-time secure messaging"
+  }, {
+    icon: TrendingUp,
+    title: "OTC Trading Made Simple",
+    description: "Create and manage over-the-counter trades with transparent pricing"
+  }, {
+    icon: Users,
+    title: "Trusted Community",
+    description: "Trade with verified users and build your reputation in the community"
+  }];
+  const benefits = ["No intermediary fees", "Direct peer-to-peer trading", "Secure wallet integration", "Real-time communication", "Transparent pricing", "Community-driven trust"];
+  return <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
       {/* Hero Section */}
       <section className="relative overflow-hidden">
         <div className="container mx-auto px-4 py-20 lg:py-28">
-          <div className="max-w-4xl mx-auto text-center">
+          <div className="max-w-4xl mx-auto text-center py-[10px]">
             <Badge variant="secondary" className="mb-6">
               <Zap className="w-3 h-3 mr-1" />
               Secure P2P Trading Platform
@@ -72,25 +47,14 @@ const Landing = () => {
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              {isAuthenticated ? (
-                <Button 
-                  size="lg" 
-                  onClick={() => navigate('/app')}
-                  className="text-lg px-8 py-3"
-                >
+              {isAuthenticated ? <Button size="lg" onClick={() => navigate('/app')} className="text-lg px-8 py-3">
                   Go to Dashboard
                   <ArrowRight className="ml-2 h-5 w-5" />
-                </Button>
-              ) : (
-                <WalletAuthButton />
-              )}
+                </Button> : <WalletAuthButton />}
               
-              <Button 
-                variant="outline" 
-                size="lg"
-                className="text-lg px-8 py-3"
-                onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })}
-              >
+              <Button variant="outline" size="lg" className="text-lg px-8 py-3" onClick={() => document.getElementById('features')?.scrollIntoView({
+              behavior: 'smooth'
+            })}>
                 Learn More
               </Button>
             </div>
@@ -100,7 +64,7 @@ const Landing = () => {
 
       {/* Features Section */}
       <section id="features" className="py-20 bg-muted/30">
-        <div className="container mx-auto px-4">
+        <div className="container mx-auto px-4 my-[20px]">
           <div className="text-center mb-16">
             <h2 className="text-3xl lg:text-4xl font-bold mb-4">
               Why Choose OTCping?
@@ -111,8 +75,7 @@ const Landing = () => {
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {features.map((feature, index) => (
-              <Card key={index} className="text-center border-0 bg-background/50 backdrop-blur-sm">
+            {features.map((feature, index) => <Card key={index} className="text-center border-0 bg-background/50 backdrop-blur-sm">
                 <CardHeader>
                   <div className="mx-auto w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
                     <feature.icon className="w-6 h-6 text-primary" />
@@ -124,8 +87,7 @@ const Landing = () => {
                     {feature.description}
                   </CardDescription>
                 </CardContent>
-              </Card>
-            ))}
+              </Card>)}
           </div>
         </div>
       </section>
@@ -192,12 +154,10 @@ const Landing = () => {
                 </p>
                 
                 <div className="space-y-4">
-                  {benefits.map((benefit, index) => (
-                    <div key={index} className="flex items-center gap-3">
+                  {benefits.map((benefit, index) => <div key={index} className="flex items-center gap-3">
                       <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
                       <span className="text-lg">{benefit}</span>
-                    </div>
-                  ))}
+                    </div>)}
                 </div>
               </div>
 
@@ -209,9 +169,7 @@ const Landing = () => {
                     Connect with traders worldwide and build lasting business relationships in a secure environment.
                   </p>
                   
-                  {!isAuthenticated && (
-                    <WalletAuthButton />
-                  )}
+                  {!isAuthenticated && <WalletAuthButton />}
                 </div>
               </Card>
             </div>
@@ -230,23 +188,13 @@ const Landing = () => {
               Join thousands of traders who trust OTCping for secure peer-to-peer cryptocurrency trading.
             </p>
             
-            {isAuthenticated ? (
-              <Button 
-                size="lg" 
-                onClick={() => navigate('/app')}
-                className="text-lg px-8 py-3"
-              >
+            {isAuthenticated ? <Button size="lg" onClick={() => navigate('/app')} className="text-lg px-8 py-3">
                 Go to Dashboard
                 <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
-            ) : (
-              <WalletAuthButton />
-            )}
+              </Button> : <WalletAuthButton />}
           </div>
         </div>
       </section>
-    </div>
-  );
+    </div>;
 };
-
 export default Landing;
