@@ -122,7 +122,7 @@ const handler = async (req: Request): Promise<Response> => {
               <p style="margin: 0; font-style: italic;">"${messageContent.substring(0, 200)}${messageContent.length > 200 ? '...' : ''}"</p>
             </div>
             <p>
-              <a href="https://otcping.lovable.app" style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
+              <a href="https://otcping.com" style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
                 Reply on OTCping
               </a>
             </p>
