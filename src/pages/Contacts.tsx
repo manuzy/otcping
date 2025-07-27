@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Search, UserPlus, MessageCircle, TrendingUp, Trash2 } from "lucide-react";
+import { Search, UserPlus, MessageCircle, TrendingUp, Trash2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -9,14 +9,19 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useContacts } from "@/hooks/useContacts";
 import { useOnlinePresence } from "@/hooks/useOnlinePresence";
 import { useWalletAuth } from "@/hooks/useWalletAuth";
+import { useChats } from "@/hooks/useChats";
+import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 
 export default function Contacts() {
   const [searchQuery, setSearchQuery] = useState("");
+  const [creatingChat, setCreatingChat] = useState<{ [userId: string]: boolean }>({});
   const navigate = useNavigate();
+  const { toast } = useToast();
   const { isAuthenticated } = useWalletAuth();
   const { contacts, loading, removeContact } = useContacts();
   const { isUserOnline } = useOnlinePresence();
+  const { createChat, findExistingDirectChat } = useChats();
   
   // Filter contacts based on search query
   const filteredContacts = contacts.filter(contact => 
@@ -28,6 +33,66 @@ export default function Contacts() {
     if (reputation >= 4.5) return "bg-green-100 text-green-800";
     if (reputation >= 3.5) return "bg-yellow-100 text-yellow-800";
     return "bg-red-100 text-red-800";
+  };
+
+  const handleMessage = async (userId: string, displayName: string) => {
+    if (!isAuthenticated) {
+      toast({
+        title: "Authentication Required",
+        description: "Please connect your wallet to send messages",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Prevent multiple simultaneous chat creation attempts
+    if (creatingChat[userId]) {
+      return;
+    }
+
+    setCreatingChat(prev => ({ ...prev, [userId]: true }));
+
+    try {
+      console.log('Checking for existing chat with contact:', userId, displayName);
+      
+      // First, check if a direct chat already exists with this contact
+      const existingChat = await findExistingDirectChat(userId);
+      
+      if (existingChat) {
+        console.log('Found existing chat:', existingChat.id);
+        // Navigate to existing chat
+        navigate(`/app?chat=${existingChat.id}`);
+        toast({
+          title: "Existing Chat Found",
+          description: `Redirected to your existing chat with ${displayName}.`,
+        });
+      } else {
+        console.log('No existing chat found, creating new chat with contact:', userId, displayName);
+        
+        // Create a new direct message chat
+        const chatId = await createChat(`Chat with ${displayName}`, false, undefined, [userId]);
+        
+        if (chatId) {
+          console.log('Chat created successfully, navigating to:', chatId);
+          navigate(`/app?chat=${chatId}`);
+          toast({
+            title: "Chat Created",
+            description: `Started a new chat with ${displayName}.`,
+          });
+        } else {
+          console.error('Chat creation returned null');
+        }
+      }
+    } catch (error) {
+      console.error('Error in handleMessage:', error);
+      toast({
+        title: "Error",
+        description: "Failed to create or find chat. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setCreatingChat(prev => ({ ...prev, [userId]: false }));
+    }
   };
 
   if (!isAuthenticated) {
@@ -107,10 +172,20 @@ export default function Contacts() {
                     </div>
                   </div>
                   
-                  <div className="flex gap-2">
-                    <Button size="sm" variant="outline" className="gap-1">
-                      <MessageCircle className="h-4 w-4" />
-                    </Button>
+                   <div className="flex gap-2">
+                     <Button 
+                       size="sm" 
+                       variant="outline" 
+                       className="gap-1"
+                       onClick={() => handleMessage(contact.id, contact.display_name)}
+                       disabled={creatingChat[contact.id]}
+                     >
+                       {creatingChat[contact.id] ? (
+                         <Loader2 className="h-4 w-4 animate-spin" />
+                       ) : (
+                         <MessageCircle className="h-4 w-4" />
+                       )}
+                     </Button>
                     <Button size="sm" variant="outline" className="gap-1">
                       <TrendingUp className="h-4 w-4" />
                     </Button>
