@@ -46,7 +46,7 @@ export const MainLayout = () => {
   };
 
   return (
-    <div className="flex h-[calc(100vh-4rem)] bg-background">
+    <div className="flex h-screen bg-background">
       {/* Sidebar */}
       <div className={`
         ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
