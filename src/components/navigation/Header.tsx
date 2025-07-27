@@ -19,7 +19,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
 
 const navItems = [
-  { id: 'dashboard', label: 'Dashboard', icon: MessageCircle, path: '/app' },
+  { id: 'dashboard', label: 'Chat', icon: MessageCircle, path: '/app' },
   { id: 'public-chats', label: 'Markets', icon: TrendingUp, path: '/public-chats' },
   { id: 'users', label: 'Traders', icon: Users, path: '/users' },
   { id: 'contacts', label: 'Contacts', icon: UserPlus, path: '/contacts' },
