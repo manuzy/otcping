@@ -63,11 +63,14 @@ const handler = async (req: Request): Promise<Response> => {
       });
     }
 
-    // Check if this is the first message between these users
-    const { data: messageHistory, error: historyError } = await supabase
+    // Check if the sender has sent any previous messages in this chat
+    // This excludes the current message by using a time-based filter
+    const oneSecondAgo = new Date(Date.now() - 1000).toISOString();
+    const { data: previousMessages, error: historyError } = await supabase
       .from('messages')
-      .select('id')
+      .select('id, sender_id, created_at')
       .eq('chat_id', chatId)
+      .lt('created_at', oneSecondAgo)
       .order('created_at', { ascending: true });
 
     if (historyError) {
@@ -75,10 +78,10 @@ const handler = async (req: Request): Promise<Response> => {
       throw historyError;
     }
 
-    console.log(`Found ${messageHistory.length} messages in chat ${chatId}`);
+    console.log(`Found ${previousMessages.length} previous messages in chat ${chatId}`);
 
-    // Only send notification for the first message in a chat
-    if (messageHistory.length > 0) {
+    // Only send notification if this appears to be the first message in the chat
+    if (previousMessages.length > 0) {
       console.log('Not the first message in chat, skipping notification');
       return new Response(JSON.stringify({ success: false, message: 'Not first message' }), {
         status: 200,
