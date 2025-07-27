@@ -57,7 +57,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Use Resend's email sending API
     const emailResponse = await resend.emails.send({
-      from: 'OTCping <onboarding@resend.dev>',
+      from: 'OTCping <no-reply@otcping.com>',
       to: [email],
       subject: emailSubject,
       html: emailBody,

@@ -116,7 +116,7 @@ const handler = async (req: Request): Promise<Response> => {
     console.log('Attempting to send notification email to:', notificationSettings.email);
     
     const emailResponse = await resend.emails.send({
-      from: 'OTCping <onboarding@resend.dev>',
+      from: 'OTCping <no-reply@otcping.com>',
       to: [notificationSettings.email],
       subject: emailSubject,
       html: emailBody,
