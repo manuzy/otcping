@@ -31,7 +31,7 @@ export default function Underground() {
           <ShieldCheck className="h-6 w-6 text-primary" />
           <div>
             <h1 className="text-2xl font-bold">Underground</h1>
-            <p className="text-sm text-muted-foreground">Admin Dashboard</p>
+            
           </div>
         </div>
         <div className="flex items-center gap-2 px-3 py-1 bg-primary/10 rounded-lg border border-primary/20">
