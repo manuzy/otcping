@@ -2,3 +2,6 @@ project_id = "peqqefvohjemxhuyvzbg"
 
 [functions.walletconnect-config]
 verify_jwt = false
+
+[functions.send-message-notification]
+verify_jwt = false

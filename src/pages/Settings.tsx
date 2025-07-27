@@ -7,6 +7,7 @@ import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
+import { useNotificationSettings } from "@/hooks/useNotificationSettings";
 import ProfileManager from "@/components/profile/ProfileManager";
 import { useWalletAuth } from "@/hooks/useWalletAuth";
 import { useAuth } from "@/hooks/useAuth";
@@ -16,17 +17,7 @@ export default function Settings() {
   const { toast } = useToast();
   const { isAuthenticated, address } = useWalletAuth();
   const { user } = useAuth();
-  
-  const [notifications, setNotifications] = useState({
-    email: "",
-    telegram: "",
-    slack: "",
-    phone: "",
-    enableEmail: false,
-    enableTelegram: false,
-    enableSlack: false,
-    enableSMS: false,
-  });
+  const { settings: notificationSettings, loading: notificationLoading, saving: notificationSaving, saveSettings } = useNotificationSettings();
 
   const [privacy, setPrivacy] = useState({
     showOnlineStatus: true,
@@ -89,11 +80,15 @@ export default function Settings() {
     }
   };
 
-  const handleSaveNotifications = () => {
-    toast({
-      title: "Notification settings updated",
-      description: "Your notification preferences have been saved.",
-    });
+  const handleSaveNotifications = async () => {
+    if (!notificationSettings) return;
+    await saveSettings(notificationSettings);
+  };
+
+  const updateNotificationSetting = (key: string, value: any) => {
+    if (notificationSettings) {
+      saveSettings({ [key]: value });
+    }
   };
 
   return (
@@ -140,16 +135,18 @@ export default function Settings() {
                   <Label>Email Notifications</Label>
                 </div>
                 <Switch
-                  checked={notifications.enableEmail}
-                  onCheckedChange={(checked) => setNotifications(prev => ({ ...prev, enableEmail: checked }))}
+                  checked={notificationSettings?.enable_email || false}
+                  onCheckedChange={(checked) => updateNotificationSetting('enable_email', checked)}
+                  disabled={notificationLoading}
                 />
               </div>
-              {notifications.enableEmail && (
+              {notificationSettings?.enable_email && (
                 <Input
                   type="email"
                   placeholder="Enter your email address"
-                  value={notifications.email}
-                  onChange={(e) => setNotifications(prev => ({ ...prev, email: e.target.value }))}
+                  value={notificationSettings?.email || ''}
+                  onChange={(e) => updateNotificationSetting('email', e.target.value)}
+                  disabled={notificationLoading}
                 />
               )}
             </div>
@@ -157,75 +154,60 @@ export default function Settings() {
             <Separator />
 
             {/* Telegram Notifications */}
-            <div className="space-y-3">
+            <div className="space-y-3 opacity-50">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <MessageSquare className="h-4 w-4" />
                   <Label>Telegram Notifications</Label>
+                  <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded">Coming Soon</span>
                 </div>
                 <Switch
-                  checked={notifications.enableTelegram}
-                  onCheckedChange={(checked) => setNotifications(prev => ({ ...prev, enableTelegram: checked }))}
+                  checked={false}
+                  disabled={true}
                 />
               </div>
-              {notifications.enableTelegram && (
-                <Input
-                  placeholder="@username or chat ID"
-                  value={notifications.telegram}
-                  onChange={(e) => setNotifications(prev => ({ ...prev, telegram: e.target.value }))}
-                />
-              )}
             </div>
 
             <Separator />
 
             {/* Slack Notifications */}
-            <div className="space-y-3">
+            <div className="space-y-3 opacity-50">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <MessageSquare className="h-4 w-4" />
                   <Label>Slack Notifications</Label>
+                  <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded">Coming Soon</span>
                 </div>
                 <Switch
-                  checked={notifications.enableSlack}
-                  onCheckedChange={(checked) => setNotifications(prev => ({ ...prev, enableSlack: checked }))}
+                  checked={false}
+                  disabled={true}
                 />
               </div>
-              {notifications.enableSlack && (
-                <Input
-                  placeholder="Slack webhook URL or channel"
-                  value={notifications.slack}
-                  onChange={(e) => setNotifications(prev => ({ ...prev, slack: e.target.value }))}
-                />
-              )}
             </div>
 
             <Separator />
 
             {/* SMS Notifications */}
-            <div className="space-y-3">
+            <div className="space-y-3 opacity-50">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Phone className="h-4 w-4" />
                   <Label>SMS Notifications</Label>
+                  <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded">Coming Soon</span>
                 </div>
                 <Switch
-                  checked={notifications.enableSMS}
-                  onCheckedChange={(checked) => setNotifications(prev => ({ ...prev, enableSMS: checked }))}
+                  checked={false}
+                  disabled={true}
                 />
               </div>
-              {notifications.enableSMS && (
-                <Input
-                  type="tel"
-                  placeholder="+1234567890"
-                  value={notifications.phone}
-                  onChange={(e) => setNotifications(prev => ({ ...prev, phone: e.target.value }))}
-                />
-              )}
             </div>
 
-            <Button onClick={handleSaveNotifications} className="w-full">
-              Save Notification Settings
+            <Button 
+              onClick={handleSaveNotifications} 
+              className="w-full"
+              disabled={notificationLoading || notificationSaving}
+            >
+              {notificationSaving ? 'Saving...' : 'Save Notification Settings'}
             </Button>
           </CardContent>
         </Card>

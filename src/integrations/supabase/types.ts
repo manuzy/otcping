@@ -169,6 +169,42 @@ export type Database = {
           },
         ]
       }
+      notification_settings: {
+        Row: {
+          created_at: string
+          email: string | null
+          enable_email: boolean
+          enable_slack: boolean
+          enable_sms: boolean
+          enable_telegram: boolean
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          enable_email?: boolean
+          enable_slack?: boolean
+          enable_sms?: boolean
+          enable_telegram?: boolean
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          enable_email?: boolean
+          enable_slack?: boolean
+          enable_sms?: boolean
+          enable_telegram?: boolean
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar: string | null

@@ -119,6 +119,51 @@ export function useMessages(chatId: string | null) {
         console.error('⚠️ Error incrementing unread count:', rpcError);
       }
 
+      // Get chat participants to send notifications
+      try {
+        const { data: participants, error: participantsError } = await supabase
+          .from('chat_participants')
+          .select(`
+            user_id,
+            profiles(id, display_name)
+          `)
+          .eq('chat_id', chatId)
+          .neq('user_id', user.id);
+
+        if (participantsError) {
+          console.error('⚠️ Error getting chat participants:', participantsError);
+        } else if (participants && participants.length > 0) {
+          // Get sender's display name
+          const { data: senderProfile } = await supabase
+            .from('profiles')
+            .select('display_name')
+            .eq('id', user.id)
+            .single();
+
+          const senderDisplayName = senderProfile?.display_name || 'Someone';
+
+          // Send notification to each participant
+          for (const participant of participants) {
+            try {
+              await supabase.functions.invoke('send-message-notification', {
+                body: {
+                  chatId,
+                  senderDisplayName,
+                  messageContent: content.trim(),
+                  recipientUserId: participant.user_id,
+                },
+              });
+            } catch (notificationError) {
+              console.error('⚠️ Error sending notification to user:', participant.user_id, notificationError);
+              // Don't throw here - notification failures shouldn't break message sending
+            }
+          }
+        }
+      } catch (error) {
+        console.error('⚠️ Error in notification process:', error);
+        // Don't throw here - notification failures shouldn't break message sending
+      }
+
       return true;
     } catch (error) {
       console.error('❌ Error sending message:', error);
