@@ -71,7 +71,7 @@ export const MainLayout = () => {
       )}
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col mt-16">
         {selectedChat ? (
           <ChatView 
             chat={selectedChat}
