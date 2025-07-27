@@ -202,7 +202,7 @@ export const ChatView = ({ chat, onMenuClick }: ChatViewProps) => {
       </div>
 
       {/* Message Input */}
-      <div className="p-4 border-t border-border">
+      <div className="sticky bottom-0 bg-background p-4 border-t border-border">
         <div className="flex gap-2">
           <Input
             placeholder="Type a message..."
