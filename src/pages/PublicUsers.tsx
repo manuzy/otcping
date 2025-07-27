@@ -256,12 +256,12 @@ export default function PublicUsers() {
                       <Button 
                         size="sm" 
                         variant={contactStates[user.id] ? "secondary" : "outline"} 
-                        className="gap-2"
+                        className={contactStates[user.id] ? "" : "gap-2"}
                         onClick={() => !contactStates[user.id] && handleAddContact(user.id)}
                         disabled={contactStates[user.id]}
                       >
-                        {contactStates[user.id] ? <UserCheck className="h-4 w-4" /> : <UserPlus className="h-4 w-4" />}
-                        {contactStates[user.id] ? "Contact" : "Add"}
+                        {contactStates[user.id] ? <UserCheck className="h-4 w-4 text-green-700" /> : <UserPlus className="h-4 w-4" />}
+                        {contactStates[user.id] ? "" : "Add"}
                       </Button>
                     </div>
                   </div>
