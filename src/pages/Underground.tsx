@@ -4,33 +4,33 @@ import { Navigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ShieldCheck, Mail, Loader2 } from "lucide-react";
 import { EmailTestPanel } from "@/components/debug/EmailTestPanel";
-
 export default function Underground() {
-  const { isAdmin } = useIsAdmin();
-  const { isAuthenticated, user } = useWalletAuth();
+  const {
+    isAdmin
+  } = useIsAdmin();
+  const {
+    isAuthenticated,
+    user
+  } = useWalletAuth();
 
   // Show loading while auth state is being determined
   if (user === undefined) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
+    return <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="h-8 w-8 animate-spin" />
-      </div>
-    );
+      </div>;
   }
 
   // Redirect if not authenticated or not admin
   if (!isAuthenticated || !isAdmin) {
     return <Navigate to="/" replace />;
   }
-
-  return (
-    <div className="flex flex-col h-screen bg-background">
+  return <div className="flex flex-col h-screen bg-background">
       {/* Header */}
       <div className="border-b border-border p-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <ShieldCheck className="h-6 w-6 text-primary" />
           <div>
-            <h1 className="text-2xl font-bold">Underground</h1>
+            <h1 className="text-2xl font-bold">Underground - Admin</h1>
             
           </div>
         </div>
@@ -74,6 +74,5 @@ export default function Underground() {
           </CardContent>
         </Card>
       </div>
-    </div>
-  );
+    </div>;
 }
