@@ -36,7 +36,7 @@ export const Sidebar = ({ selectedChat, onChatSelect, onClose }: SidebarProps) =
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="p-4 border-b border-border">
+      <div className="p-4 border-b border-border sticky top-0 z-10 bg-background">
         <div className="flex items-center justify-end mb-4">
           <Button 
             variant="ghost" 
