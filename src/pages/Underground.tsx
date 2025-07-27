@@ -2,7 +2,7 @@ import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { useWalletAuth } from "@/hooks/useWalletAuth";
 import { Navigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Shield, Mail, Loader2 } from "lucide-react";
+import { ShieldCheck, Mail, Loader2 } from "lucide-react";
 import { EmailTestPanel } from "@/components/debug/EmailTestPanel";
 
 export default function Underground() {
@@ -28,14 +28,14 @@ export default function Underground() {
       {/* Header */}
       <div className="border-b border-border p-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Shield className="h-6 w-6 text-primary" />
+          <ShieldCheck className="h-6 w-6 text-primary" />
           <div>
             <h1 className="text-2xl font-bold">Underground</h1>
             <p className="text-sm text-muted-foreground">Admin Dashboard</p>
           </div>
         </div>
         <div className="flex items-center gap-2 px-3 py-1 bg-primary/10 rounded-lg border border-primary/20">
-          <Shield className="h-4 w-4 text-primary" />
+          <ShieldCheck className="h-4 w-4 text-primary" />
           <span className="text-sm text-primary font-medium">Admin Access</span>
         </div>
       </div>

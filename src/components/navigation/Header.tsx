@@ -1,4 +1,4 @@
-import { MessageCircle, TrendingUp, Users, UserPlus, Settings, Wallet, ChevronDown, Loader2, Shield } from "lucide-react";
+import { MessageCircle, TrendingUp, Users, UserPlus, Settings, Wallet, ChevronDown, Loader2, ShieldCheck } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useAppKit } from '@reown/appkit/react';
@@ -104,7 +104,7 @@ export const Header = () => {
                        )
                      }
                    >
-                     <Shield className="h-4 w-4" />
+                     <ShieldCheck className="h-4 w-4" />
                      Underground
                    </NavLink>
                  )}
