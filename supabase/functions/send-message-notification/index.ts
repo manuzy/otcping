@@ -42,7 +42,7 @@ const handler = async (req: Request): Promise<Response> => {
     // Get recipient's notification settings
     const { data: notificationSettings, error: settingsError } = await supabase
       .from('notification_settings')
-      .select('email, enable_email')
+      .select('email, enable_email, email_frequency')
       .eq('user_id', recipientUserId)
       .single();
 
@@ -63,31 +63,38 @@ const handler = async (req: Request): Promise<Response> => {
       });
     }
 
-    // Check if the sender has sent any previous messages in this chat
-    // This excludes the current message by using a time-based filter
-    const oneSecondAgo = new Date(Date.now() - 1000).toISOString();
-    const { data: previousMessages, error: historyError } = await supabase
-      .from('messages')
-      .select('id, sender_id, created_at')
-      .eq('chat_id', chatId)
-      .lt('created_at', oneSecondAgo)
-      .order('created_at', { ascending: true });
+    // Check the user's email frequency preference
+    const emailFrequency = notificationSettings.email_frequency || 'first_only';
+    
+    if (emailFrequency === 'first_only') {
+      // Check if the sender has sent any previous messages in this chat
+      // This excludes the current message by using a time-based filter
+      const oneSecondAgo = new Date(Date.now() - 1000).toISOString();
+      const { data: previousMessages, error: historyError } = await supabase
+        .from('messages')
+        .select('id, sender_id, created_at')
+        .eq('chat_id', chatId)
+        .lt('created_at', oneSecondAgo)
+        .order('created_at', { ascending: true });
 
-    if (historyError) {
-      console.error('Error checking message history:', historyError);
-      throw historyError;
+      if (historyError) {
+        console.error('Error checking message history:', historyError);
+        throw historyError;
+      }
+
+      console.log(`Found ${previousMessages.length} previous messages in chat ${chatId}`);
+
+      // Only send notification if this appears to be the first message in the chat
+      if (previousMessages.length > 0) {
+        console.log('Not the first message in chat, skipping notification');
+        return new Response(JSON.stringify({ success: false, message: 'Not first message' }), {
+          status: 200,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
     }
-
-    console.log(`Found ${previousMessages.length} previous messages in chat ${chatId}`);
-
-    // Only send notification if this appears to be the first message in the chat
-    if (previousMessages.length > 0) {
-      console.log('Not the first message in chat, skipping notification');
-      return new Response(JSON.stringify({ success: false, message: 'Not first message' }), {
-        status: 200,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
+    
+    console.log(`Email frequency setting: ${emailFrequency} - proceeding with notification`);
 
     // Send email using Supabase's built-in email functionality (SMTP via Resend)
     const emailSubject = `New message from ${senderDisplayName} on OTCping`;

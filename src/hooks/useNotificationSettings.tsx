@@ -11,6 +11,7 @@ interface NotificationSettings {
   enable_telegram: boolean;
   enable_slack: boolean;
   enable_sms: boolean;
+  email_frequency: 'all' | 'first_only';
 }
 
 export const useNotificationSettings = () => {
@@ -37,7 +38,10 @@ export const useNotificationSettings = () => {
       }
 
       if (data) {
-        setSettings(data);
+        setSettings({
+          ...data,
+          email_frequency: (data.email_frequency as 'all' | 'first_only') || 'first_only'
+        });
       } else {
         // Create default settings if none exist
         const defaultSettings: NotificationSettings = {
@@ -47,6 +51,7 @@ export const useNotificationSettings = () => {
           enable_telegram: false,
           enable_slack: false,
           enable_sms: false,
+          email_frequency: 'first_only',
         };
         setSettings(defaultSettings);
       }

@@ -173,6 +173,7 @@ export type Database = {
         Row: {
           created_at: string
           email: string | null
+          email_frequency: string | null
           enable_email: boolean
           enable_slack: boolean
           enable_sms: boolean
@@ -184,6 +185,7 @@ export type Database = {
         Insert: {
           created_at?: string
           email?: string | null
+          email_frequency?: string | null
           enable_email?: boolean
           enable_slack?: boolean
           enable_sms?: boolean
@@ -195,6 +197,7 @@ export type Database = {
         Update: {
           created_at?: string
           email?: string | null
+          email_frequency?: string | null
           enable_email?: boolean
           enable_slack?: boolean
           enable_sms?: boolean

@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
@@ -141,13 +142,37 @@ export default function Settings() {
                 />
               </div>
               {notificationSettings?.enable_email && (
-                <Input
-                  type="email"
-                  placeholder="Enter your email address"
-                  value={notificationSettings?.email || ''}
-                  onChange={(e) => updateNotificationSetting('email', e.target.value)}
-                  disabled={notificationLoading}
-                />
+                <div className="space-y-4">
+                  <Input
+                    type="email"
+                    placeholder="Enter your email address"
+                    value={notificationSettings?.email || ''}
+                    onChange={(e) => updateNotificationSetting('email', e.target.value)}
+                    disabled={notificationLoading}
+                  />
+                  
+                  <div className="space-y-3">
+                    <Label className="text-sm font-medium">Notify for</Label>
+                    <RadioGroup
+                      value={notificationSettings?.email_frequency || 'first_only'}
+                      onValueChange={(value) => updateNotificationSetting('email_frequency', value)}
+                      className="space-y-2"
+                    >
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="all" id="all" />
+                        <Label htmlFor="all" className="text-sm cursor-pointer">
+                          All chat messages
+                        </Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="first_only" id="first_only" />
+                        <Label htmlFor="first_only" className="text-sm cursor-pointer">
+                          Only first message of new user
+                        </Label>
+                      </div>
+                    </RadioGroup>
+                  </div>
+                </div>
               )}
             </div>
 

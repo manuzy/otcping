@@ -22,6 +22,7 @@ export interface NotificationSettings {
   enableTelegram: boolean;
   enableSlack: boolean;
   enableSMS: boolean;
+  emailFrequency: 'all' | 'first_only';
 }
 
 export interface AlertFilter {
