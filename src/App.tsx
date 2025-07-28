@@ -7,7 +7,7 @@ import Index from "./pages/Index";
 import AppPage from "./pages/App";
 import NotFound from "./pages/NotFound";
 import Contacts from "./pages/Contacts";
-import PublicChats from "./pages/PublicChats";
+import PublicTrades from "./pages/PublicTrades";
 import PublicUsers from "./pages/PublicUsers";
 import Settings from "./pages/Settings";
 import CreateTrade from "./pages/CreateTrade";
@@ -35,7 +35,7 @@ const App = () => (
                 <Route path="/" element={<Index />} />
                 <Route path="/app" element={<ProtectedRoute><AppPage /></ProtectedRoute>} />
                 <Route path="/contacts" element={<ProtectedRoute><Contacts /></ProtectedRoute>} />
-                <Route path="/public-chats" element={<ProtectedRoute><PublicChats /></ProtectedRoute>} />
+                <Route path="/public-trades" element={<ProtectedRoute><PublicTrades /></ProtectedRoute>} />
                 <Route path="/users" element={<ProtectedRoute><PublicUsers /></ProtectedRoute>} />
                 <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
                 <Route path="/create-trade" element={<ProtectedRoute><CreateTrade /></ProtectedRoute>} />

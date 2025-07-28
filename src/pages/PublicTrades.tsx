@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useChats } from "@/hooks/useChats";
 import { formatDistanceToNow } from "date-fns";
 
-export default function PublicChats() {
+export default function PublicTrades() {
   const navigate = useNavigate();
   const { chats, loading } = useChats();
   const [searchQuery, setSearchQuery] = useState("");

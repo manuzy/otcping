@@ -20,7 +20,7 @@ import { useIsAdmin } from "@/hooks/useIsAdmin";
 
 const navItems = [
   { id: 'dashboard', label: 'Chat', icon: MessageCircle, path: '/app' },
-  { id: 'public-chats', label: 'Markets', icon: TrendingUp, path: '/public-chats' },
+  { id: 'public-trades', label: 'Markets', icon: TrendingUp, path: '/public-trades' },
   { id: 'users', label: 'Traders', icon: Users, path: '/users' },
   { id: 'contacts', label: 'Contacts', icon: UserPlus, path: '/contacts' },
   { id: 'settings', label: 'Settings', icon: Settings, path: '/settings' },
