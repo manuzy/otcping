@@ -127,6 +127,71 @@ export type Database = {
           },
         ]
       }
+      data_chains: {
+        Row: {
+          chain_id: number
+          chain_id_hex: string
+          created_at: string
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          chain_id: number
+          chain_id_hex: string
+          created_at?: string
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          chain_id?: number
+          chain_id_hex?: string
+          created_at?: string
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      data_tokens: {
+        Row: {
+          address: string
+          chain_id: number
+          created_at: string
+          id: string
+          name: string
+          symbol: string
+          updated_at: string
+        }
+        Insert: {
+          address: string
+          chain_id: number
+          created_at?: string
+          id?: string
+          name: string
+          symbol: string
+          updated_at?: string
+        }
+        Update: {
+          address?: string
+          chain_id?: number
+          created_at?: string
+          id?: string
+          name?: string
+          symbol?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "data_tokens_chain_id_fkey"
+            columns: ["chain_id"]
+            isOneToOne: false
+            referencedRelation: "data_chains"
+            referencedColumns: ["chain_id"]
+          },
+        ]
+      }
       messages: {
         Row: {
           chat_id: string
