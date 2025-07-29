@@ -25,7 +25,10 @@ interface TradeFormData {
   sellAsset: string; // Token address
   buyAsset: string;  // Token address
   usdAmount: string;
+  limitPrice: string;
   expectedExecutionTimestamp: string;
+  expiryType: string;
+  expiryValue: string;
 }
 
 const CreateTrade = () => {
@@ -45,7 +48,10 @@ const CreateTrade = () => {
     sellAsset: "",
     buyAsset: "",
     usdAmount: "",
-    expectedExecutionTimestamp: ""
+    limitPrice: "",
+    expectedExecutionTimestamp: "",
+    expiryType: "",
+    expiryValue: ""
   });
 
   // Get selected chain ID for token filtering
@@ -174,7 +180,7 @@ const CreateTrade = () => {
     }
   };
 
-  const isStep1Valid = formData.chain_id && formData.sellAsset && formData.buyAsset && formData.usdAmount && formData.expectedExecutionTimestamp;
+  const isStep1Valid = formData.chain_id && formData.sellAsset && formData.buyAsset && formData.usdAmount && formData.limitPrice && formData.expectedExecutionTimestamp && formData.expiryType && (formData.expiryType !== "Custom" || formData.expiryValue);
 
   // Prepare chain options
   const chainOptions = chains.map(chain => ({
@@ -192,6 +198,35 @@ const CreateTrade = () => {
     if (tokensError) return "Error loading tokens";
     if (tokens.length === 0) return "No tokens available for this chain";
     return "Select token";
+  };
+
+  // Helper function to calculate expiry timestamp
+  const calculateExpiry = (type: string, customValue?: string) => {
+    if (type === "Custom" && customValue) {
+      return new Date(customValue).toISOString();
+    }
+    
+    const now = new Date();
+    switch (type) {
+      case "1 hour": return new Date(now.getTime() + 60 * 60 * 1000).toISOString();
+      case "1 day": return new Date(now.getTime() + 24 * 60 * 60 * 1000).toISOString();
+      case "3 days": return new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000).toISOString();
+      case "7 days": return new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString();
+      case "28 days": return new Date(now.getTime() + 28 * 24 * 60 * 60 * 1000).toISOString();
+      default: return "";
+    }
+  };
+
+  // Helper function to format expiry display
+  const formatExpiryDisplay = () => {
+    if (formData.expiryType === "Custom" && formData.expiryValue) {
+      return new Date(formData.expiryValue).toLocaleString();
+    }
+    if (formData.expiryType && formData.expiryType !== "Custom") {
+      const expiryTime = calculateExpiry(formData.expiryType);
+      return expiryTime ? new Date(expiryTime).toLocaleString() : formData.expiryType;
+    }
+    return "";
   };
 
   return (
@@ -294,12 +329,52 @@ const CreateTrade = () => {
                 </div>
 
                 <div className="space-y-2">
+                  <Label>Limit price *</Label>
+                  <Input
+                    type="number"
+                    inputMode="decimal"
+                    placeholder="$ 0.00"
+                    value={formData.limitPrice}
+                    onChange={(e) => handleInputChange("limitPrice", e.target.value)}
+                  />
+                </div>
+
+                <div className="space-y-2">
                   <Label>Expected execution *</Label>
                   <Input
                     type="datetime-local"
                     value={formData.expectedExecutionTimestamp}
                     onChange={(e) => handleInputChange("expectedExecutionTimestamp", e.target.value)}
                   />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Expiry *</Label>
+                  <Select 
+                    value={formData.expiryType} 
+                    onValueChange={(value) => handleInputChange("expiryType", value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select expiry time" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="1 hour">1 hour</SelectItem>
+                      <SelectItem value="1 day">1 day</SelectItem>
+                      <SelectItem value="3 days">3 days</SelectItem>
+                      <SelectItem value="7 days">7 days</SelectItem>
+                      <SelectItem value="28 days">28 days</SelectItem>
+                      <SelectItem value="Custom">Custom</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  
+                  {formData.expiryType === "Custom" && (
+                    <Input
+                      type="datetime-local"
+                      value={formData.expiryValue}
+                      onChange={(e) => handleInputChange("expiryValue", e.target.value)}
+                      placeholder="Set custom expiry time"
+                    />
+                  )}
                 </div>
               </>
             )}
@@ -373,8 +448,14 @@ const CreateTrade = () => {
                     <span className="text-muted-foreground">Amount:</span>
                     <span>${formData.usdAmount}</span>
                     
+                    <span className="text-muted-foreground">Limit Price:</span>
+                    <span>${formData.limitPrice}</span>
+                    
                     <span className="text-muted-foreground">Execution:</span>
                     <span>{new Date(formData.expectedExecutionTimestamp).toLocaleString()}</span>
+                    
+                    <span className="text-muted-foreground">Expiry:</span>
+                    <span>{formatExpiryDisplay()}</span>
                   </div>
                 </div>
 
