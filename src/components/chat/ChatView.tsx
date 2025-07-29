@@ -4,12 +4,16 @@ import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { Menu, Send, MoreVertical, Loader2 } from "lucide-react";
+import { Menu, Send, MoreVertical, Loader2, ExternalLink } from "lucide-react";
 import { Chat, Message } from "@/types";
 import { useMessages } from '@/hooks/useMessages';
 import { useChatParticipants } from '@/hooks/useChatParticipants';
 import { useChats } from '@/hooks/useChats';
 import { useAuth } from '@/hooks/useAuth';
+import { useTokens } from '@/hooks/useTokens';
+import { useChains } from '@/hooks/useChains';
+import { getExplorerUrl, truncateAddress } from '@/lib/tokenUtils';
+import { safeParseDate } from '@/lib/utils';
 
 interface ChatViewProps {
   chat: Chat;
@@ -22,6 +26,8 @@ export const ChatView = ({ chat, onMenuClick }: ChatViewProps) => {
   const { messages, loading: messagesLoading, sending, sendMessage } = useMessages(chat.id);
   const { participants } = useChatParticipants(chat.id);
   const { markAsRead } = useChats();
+  const { tokens } = useTokens();
+  const { chains } = useChains();
 
   // Mark messages as read when chat is opened
   useEffect(() => {
@@ -41,6 +47,22 @@ export const ChatView = ({ chat, onMenuClick }: ChatViewProps) => {
 
   const formatTime = (date: Date) => {
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
+
+  // Helper functions for trade data
+  const findToken = (address: string) => {
+    if (!address || !tokens) return null;
+    return tokens.find(token => token.address.toLowerCase() === address.toLowerCase());
+  };
+
+  const formatTradePair = (trade: any) => {
+    const sellToken = findToken(trade.sellAsset || '');
+    const buyToken = findToken(trade.buyAsset || '');
+    
+    if (sellToken && buyToken) {
+      return `${sellToken.symbol}/${buyToken.symbol}`;
+    }
+    return trade.pair || 'Unknown Pair';
   };
 
   // DEBUG: Log all relevant data
@@ -144,41 +166,176 @@ export const ChatView = ({ chat, onMenuClick }: ChatViewProps) => {
         <div className="p-4 border-b border-border">
           <Card>
             <CardContent className="p-4">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                <div>
-                  <p className="text-muted-foreground">Chain</p>
-                  <p className="font-medium">{chat.trade.chain}</p>
+              <div className="space-y-4">
+                {/* Trade Header */}
+                <div className="flex items-center justify-between">
+                  <div className="space-y-1">
+                    <h3 className="text-lg font-semibold">{formatTradePair(chat.trade)}</h3>
+                    <p className="text-sm text-muted-foreground">{chat.trade.chain}</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <Badge 
+                      className={chat.trade.type === 'buy' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}
+                    >
+                      {chat.trade.type.toUpperCase()}
+                    </Badge>
+                    <Badge 
+                      variant="secondary"
+                      className={`${
+                        chat.trade.status === 'active' ? 'bg-green-100 text-green-800' :
+                        chat.trade.status === 'completed' ? 'bg-blue-100 text-blue-800' :
+                        chat.trade.status === 'cancelled' ? 'bg-red-100 text-red-800' :
+                        'bg-gray-100 text-gray-800'
+                      }`}
+                    >
+                      {chat.trade.status}
+                    </Badge>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-muted-foreground">Pair</p>
-                  <p className="font-medium">{chat.trade.pair}</p>
+
+                {/* Token Details */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Sell Token */}
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium text-muted-foreground">Sell Token</p>
+                    {chat.trade.sellAsset && (() => {
+                      const sellToken = findToken(chat.trade.sellAsset);
+                      if (sellToken) {
+                        return (
+                          <div className="space-y-1">
+                            <p className="font-medium">{sellToken.name} ({sellToken.symbol})</p>
+                            <div className="flex items-center gap-2">
+                              <code className="text-xs bg-muted px-2 py-1 rounded">
+                                {truncateAddress(sellToken.address)}
+                              </code>
+                              {chat.trade.chain_id && (
+                                <a
+                                  href={getExplorerUrl(chat.trade.chain_id, sellToken.address)}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1"
+                                >
+                                  <ExternalLink className="h-3 w-3" />
+                                  View
+                                </a>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      }
+                      return <p className="text-sm text-muted-foreground">Token not found</p>;
+                    })()}
+                  </div>
+
+                  {/* Buy Token */}
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium text-muted-foreground">Buy Token</p>
+                    {chat.trade.buyAsset && (() => {
+                      const buyToken = findToken(chat.trade.buyAsset);
+                      if (buyToken) {
+                        return (
+                          <div className="space-y-1">
+                            <p className="font-medium">{buyToken.name} ({buyToken.symbol})</p>
+                            <div className="flex items-center gap-2">
+                              <code className="text-xs bg-muted px-2 py-1 rounded">
+                                {truncateAddress(buyToken.address)}
+                              </code>
+                              {chat.trade.chain_id && (
+                                <a
+                                  href={getExplorerUrl(chat.trade.chain_id, buyToken.address)}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1"
+                                >
+                                  <ExternalLink className="h-3 w-3" />
+                                  View
+                                </a>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      }
+                      return <p className="text-sm text-muted-foreground">Token not found</p>;
+                    })()}
+                  </div>
                 </div>
-                <div>
-                  <p className="text-muted-foreground">Size</p>
-                  <p className="font-medium">{chat.trade.size}</p>
+
+                {/* Trade Details */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                  {chat.trade.usdAmount && (
+                    <div>
+                      <p className="text-muted-foreground">USD Amount</p>
+                      <p className="font-medium">${chat.trade.usdAmount}</p>
+                    </div>
+                  )}
+                  {chat.trade.limitPrice && (
+                    <div>
+                      <p className="text-muted-foreground">Limit Price</p>
+                      <p className="font-medium">{chat.trade.limitPrice}</p>
+                    </div>
+                  )}
+                  <div>
+                    <p className="text-muted-foreground">Size</p>
+                    <p className="font-medium">{chat.trade.size}</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">Price</p>
+                    <p className="font-medium">{chat.trade.price}</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-muted-foreground">Price</p>
-                  <p className="font-medium">{chat.trade.price}</p>
+
+                {/* Additional Details */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                  {chat.trade.expiryTimestamp && (
+                    <div>
+                      <p className="text-muted-foreground">Expiry</p>
+                      <p className="font-medium">
+                        {safeParseDate(chat.trade.expiryTimestamp)?.toLocaleDateString() || 'Invalid date'}
+                      </p>
+                    </div>
+                  )}
+                  {chat.trade.expectedExecution && (
+                    <div>
+                      <p className="text-muted-foreground">Expected Execution</p>
+                      <p className="font-medium">
+                        {safeParseDate(chat.trade.expectedExecution)?.toLocaleDateString() || 'Invalid date'}
+                      </p>
+                    </div>
+                  )}
+                  <div>
+                    <p className="text-muted-foreground">Created</p>
+                    <p className="font-medium">
+                      {safeParseDate(chat.trade.createdAt)?.toLocaleDateString() || 'Invalid date'}
+                    </p>
+                  </div>
                 </div>
-              </div>
-              <div className="mt-3 flex items-center justify-between">
-                <Badge 
-                  className={chat.trade.type === 'buy' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}
-                >
-                  {chat.trade.type.toUpperCase()}
-                </Badge>
-                <Badge 
-                  variant="secondary"
-                  className={`${
-                    chat.trade.status === 'active' ? 'bg-green-100 text-green-800' :
-                    chat.trade.status === 'completed' ? 'bg-blue-100 text-blue-800' :
-                    chat.trade.status === 'cancelled' ? 'bg-red-100 text-red-800' :
-                    'bg-gray-100 text-gray-800'
-                  }`}
-                >
-                  {chat.trade.status}
-                </Badge>
+
+                {/* Trigger Conditions */}
+                {(chat.trade.triggerAsset || chat.trade.triggerCondition || chat.trade.triggerPrice) && (
+                  <div className="pt-2 border-t border-border">
+                    <p className="text-sm font-medium text-muted-foreground mb-2">Trigger Conditions</p>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                      {chat.trade.triggerAsset && (
+                        <div>
+                          <p className="text-muted-foreground">Trigger Asset</p>
+                          <p className="font-medium">{chat.trade.triggerAsset}</p>
+                        </div>
+                      )}
+                      {chat.trade.triggerCondition && (
+                        <div>
+                          <p className="text-muted-foreground">Condition</p>
+                          <p className="font-medium">{chat.trade.triggerCondition}</p>
+                        </div>
+                      )}
+                      {chat.trade.triggerPrice && (
+                        <div>
+                          <p className="text-muted-foreground">Trigger Price</p>
+                          <p className="font-medium">{chat.trade.triggerPrice}</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
