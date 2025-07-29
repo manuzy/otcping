@@ -40,55 +40,70 @@ export function useChats() {
       // Only update state if component is still mounted
       if (isUnmountedRef.current) return;
 
-      // Transform data to match Chat interface
+      // Transform data to match Chat interface with defensive programming
       const transformedChats: Chat[] = (data || []).map(chat => {
-        const lastMessage = chat.messages?.length > 0 
-          ? chat.messages[chat.messages.length - 1] 
-          : undefined;
-        
-        const unreadCount = chat.chat_participants?.find(
-          (p: any) => p.user_id === user.id
-        )?.unread_count || 0;
+        try {
+          const lastMessage = chat.messages?.length > 0 
+            ? chat.messages[chat.messages.length - 1] 
+            : undefined;
+          
+          const unreadCount = chat.chat_participants?.find(
+            (p: any) => p.user_id === user.id
+          )?.unread_count || 0;
 
-        return {
-          id: chat.id,
-          name: chat.name,
-          isPublic: chat.is_public,
-          trade: chat.trade ? {
-            id: chat.trade.id,
-            chain: chat.trade.chain,
-            chain_id: chat.trade.chain_id,
-            pair: chat.trade.pair,
-            size: chat.trade.size,
-            price: chat.trade.price,
-            type: chat.trade.type as 'buy' | 'sell',
-            status: chat.trade.status as 'active' | 'completed' | 'cancelled',
-            createdAt: new Date(chat.trade.created_at),
-            createdBy: chat.trade.created_by,
-            limitPrice: chat.trade.limit_price,
-            usdAmount: chat.trade.usd_amount,
-            sellAsset: chat.trade.sell_asset,
-            buyAsset: chat.trade.buy_asset,
-            expectedExecution: chat.trade.expected_execution ? new Date(chat.trade.expected_execution) : undefined,
-            expiryType: chat.trade.expiry_type,
-            expiryTimestamp: chat.trade.expiry_timestamp ? new Date(chat.trade.expiry_timestamp) : undefined,
-            triggerAsset: chat.trade.trigger_asset,
-            triggerCondition: chat.trade.trigger_condition,
-            triggerPrice: chat.trade.trigger_price
-          } : undefined,
-          participants: [], // Will be populated separately
-          lastMessage: lastMessage ? {
-            id: lastMessage.id,
-            chatId: chat.id,
-            senderId: lastMessage.sender?.id || '',
-            content: lastMessage.content,
-            type: lastMessage.type,
-            timestamp: new Date(lastMessage.created_at)
-          } : undefined,
-          unreadCount,
-          lastActivity: new Date(chat.updated_at)
-        };
-      });
+          return {
+            id: chat.id,
+            name: chat.name || 'Unnamed Chat',
+            isPublic: chat.is_public || false,
+            trade: chat.trade ? {
+              id: chat.trade.id,
+              chain: chat.trade.chain || '',
+              chain_id: chat.trade.chain_id || null,
+              pair: chat.trade.pair || '',
+              size: chat.trade.size || '',
+              price: chat.trade.price || '',
+              type: (chat.trade.type as 'buy' | 'sell') || 'buy',
+              status: (chat.trade.status as 'active' | 'completed' | 'cancelled') || 'active',
+              createdAt: chat.trade.created_at ? new Date(chat.trade.created_at) : new Date(),
+              createdBy: chat.trade.created_by || '',
+              limitPrice: chat.trade.limit_price || undefined,
+              usdAmount: chat.trade.usd_amount || undefined,
+              sellAsset: chat.trade.sell_asset || undefined,
+              buyAsset: chat.trade.buy_asset || undefined,
+              expectedExecution: chat.trade.expected_execution ? new Date(chat.trade.expected_execution) : undefined,
+              expiryType: chat.trade.expiry_type || undefined,
+              expiryTimestamp: chat.trade.expiry_timestamp ? new Date(chat.trade.expiry_timestamp) : undefined,
+              triggerAsset: chat.trade.trigger_asset || undefined,
+              triggerCondition: chat.trade.trigger_condition || undefined,
+              triggerPrice: chat.trade.trigger_price || undefined
+            } : undefined,
+            participants: [], // Will be populated separately
+            lastMessage: lastMessage ? {
+              id: lastMessage.id,
+              chatId: chat.id,
+              senderId: lastMessage.sender?.id || '',
+              content: lastMessage.content || '',
+              type: lastMessage.type || 'message',
+              timestamp: lastMessage.created_at ? new Date(lastMessage.created_at) : new Date()
+            } : undefined,
+            unreadCount,
+            lastActivity: chat.updated_at ? new Date(chat.updated_at) : new Date()
+          };
+        } catch (transformError) {
+          console.error('Error transforming chat data:', transformError, chat);
+          // Return a fallback chat object
+          return {
+            id: chat.id || '',
+            name: chat.name || 'Error Loading Chat',
+            isPublic: false,
+            trade: undefined,
+            participants: [],
+            lastMessage: undefined,
+            unreadCount: 0,
+            lastActivity: new Date()
+          };
+        }
+      }).filter(chat => chat.id); // Filter out any chats that failed to transform
 
       setChats(transformedChats);
     } catch (error) {
