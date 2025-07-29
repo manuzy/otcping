@@ -1,10 +1,12 @@
 import React from 'react';
-import Select, { Props as SelectProps, StylesConfig } from 'react-select';
+import Select, { Props as SelectProps, StylesConfig, components } from 'react-select';
+import { ExternalLink } from 'lucide-react';
 import { cn } from "@/lib/utils";
 
 export interface ReactSelectOption {
   label: string;
   value: string;
+  token?: any;
 }
 
 interface ReactSelectProps extends Omit<SelectProps<ReactSelectOption, false>, 'options' | 'value' | 'onChange'> {
@@ -14,6 +16,8 @@ interface ReactSelectProps extends Omit<SelectProps<ReactSelectOption, false>, '
   placeholder?: string;
   className?: string;
   disabled?: boolean;
+  customOptionRenderer?: (option: ReactSelectOption) => React.ReactNode;
+  getExplorerUrl?: (token: any) => string;
 }
 
 const customStyles: StylesConfig<ReactSelectOption, false> = {
@@ -92,15 +96,48 @@ const customStyles: StylesConfig<ReactSelectOption, false> = {
   }),
 };
 
+// Custom option component for tokens with explorer link
+const CustomOption = ({ data, getExplorerUrl, ...props }: any) => {
+  const handleExplorerClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (data.token && getExplorerUrl) {
+      const url = getExplorerUrl(data.token);
+      window.open(url, '_blank');
+    }
+  };
+
+  return (
+    <components.Option {...props}>
+      <div className="flex items-center justify-between w-full">
+        <span className="flex-1">{data.label}</span>
+        {data.token && getExplorerUrl && (
+          <button
+            onClick={handleExplorerClick}
+            className="ml-2 p-1 rounded hover:bg-muted/50 flex-shrink-0"
+            title="View on explorer"
+          >
+            <ExternalLink className="h-3 w-3" />
+          </button>
+        )}
+      </div>
+    </components.Option>
+  );
+};
+
 export const ReactSelect = React.forwardRef<
   any,
   ReactSelectProps
->(({ options, value, onValueChange, placeholder, className, disabled, ...props }, ref) => {
+>(({ options, value, onValueChange, placeholder, className, disabled, customOptionRenderer, getExplorerUrl, ...props }, ref) => {
   const selectedOption = options.find(option => option.value === value) || null;
 
   const handleChange = (newValue: ReactSelectOption | null) => {
     onValueChange?.(newValue?.value);
   };
+
+  // Use custom components if needed
+  const selectComponents = getExplorerUrl ? {
+    Option: (props: any) => <CustomOption {...props} getExplorerUrl={getExplorerUrl} />
+  } : {};
 
   return (
     <div className={cn("w-full", className)}>
@@ -114,6 +151,7 @@ export const ReactSelect = React.forwardRef<
         isClearable
         isSearchable
         styles={customStyles}
+        components={selectComponents}
         noOptionsMessage={() => "No options found"}
         {...props}
       />

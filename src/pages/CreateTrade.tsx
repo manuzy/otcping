@@ -15,22 +15,15 @@ import { useChats } from "@/hooks/useChats";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useChains } from "@/hooks/useChains";
+import { useTokens } from "@/hooks/useTokens";
+import { tokenToSelectOption, getExplorerUrl } from "@/lib/tokenUtils";
 import { supabase } from "@/integrations/supabase/client";
 
-// Mock data for tokens - TODO: Replace with database
-
-const tokens = [
-  { id: "eth", name: "ETH", symbol: "ETH" },
-  { id: "usdc", name: "USD Coin", symbol: "USDC" },
-  { id: "usdt", name: "Tether", symbol: "USDT" },
-  { id: "wbtc", name: "Wrapped Bitcoin", symbol: "WBTC" },
-  { id: "dai", name: "Dai", symbol: "DAI" }
-];
 
 interface TradeFormData {
   chain_id: string;
-  sellAsset: string;
-  buyAsset: string;
+  sellAsset: string; // Token address
+  buyAsset: string;  // Token address
   usdAmount: string;
   expectedExecutionTimestamp: string;
 }
@@ -55,8 +48,22 @@ const CreateTrade = () => {
     expectedExecutionTimestamp: ""
   });
 
+  // Get selected chain ID for token filtering
+  const selectedChainId = formData.chain_id ? parseInt(chains.find(c => c.id === formData.chain_id)?.chain_id.toString() || '0') : undefined;
+  const { tokens, loading: tokensLoading, error: tokensError } = useTokens(selectedChainId);
+
   const handleInputChange = (field: keyof TradeFormData, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData(prev => {
+      const newData = { ...prev, [field]: value };
+      
+      // Reset token selections when chain changes
+      if (field === 'chain_id') {
+        newData.sellAsset = '';
+        newData.buyAsset = '';
+      }
+      
+      return newData;
+    });
   };
 
   const handleContactToggle = (contactId: string) => {
@@ -100,12 +107,16 @@ const CreateTrade = () => {
         throw new Error("Selected chain not found");
       }
 
+      // Find the selected tokens for display names
+      const sellToken = tokens.find(t => t.address === formData.sellAsset);
+      const buyToken = tokens.find(t => t.address === formData.buyAsset);
+      
       // Create the trade first
       const { data: tradeData, error: tradeError } = await supabase
         .from('trades')
         .insert({
           chain: selectedChain.name,
-          pair: `${formData.sellAsset}/${formData.buyAsset}`,
+          pair: `${sellToken?.symbol || formData.sellAsset}/${buyToken?.symbol || formData.buyAsset}`,
           size: formData.usdAmount,
           price: "Market",
           type: "sell",
@@ -119,7 +130,7 @@ const CreateTrade = () => {
 
       // Create the chat
       const chatName = isPublicChat 
-        ? `${formData.sellAsset}/${formData.buyAsset} Trade` 
+        ? `${sellToken?.symbol || formData.sellAsset}/${buyToken?.symbol || formData.buyAsset} Trade` 
         : "Private Trade Chat";
       
       const chatId = await createChat(chatName, isPublicChat, tradeData.id);
@@ -165,11 +176,23 @@ const CreateTrade = () => {
 
   const isStep1Valid = formData.chain_id && formData.sellAsset && formData.buyAsset && formData.usdAmount && formData.expectedExecutionTimestamp;
 
-  // Prepare chain options for combobox
+  // Prepare chain options
   const chainOptions = chains.map(chain => ({
     label: chain.name,
     value: chain.id
   }));
+
+  // Prepare token options
+  const tokenOptions = tokens.map(tokenToSelectOption);
+
+  // Token loading state or empty state
+  const getTokenSelectPlaceholder = () => {
+    if (!formData.chain_id) return "Select a chain first";
+    if (tokensLoading) return "Loading tokens...";
+    if (tokensError) return "Error loading tokens";
+    if (tokens.length === 0) return "No tokens available for this chain";
+    return "Select token";
+  };
 
   return (
     <div className="min-h-screen bg-background p-4">
@@ -231,27 +254,31 @@ const CreateTrade = () => {
 
                 <div className="space-y-2">
                   <Label>Sell token *</Label>
+                  {tokensError && (
+                    <p className="text-sm text-destructive">Error loading tokens: {tokensError}</p>
+                  )}
                   <ReactSelect
-                    options={tokens.map(token => ({
-                      label: `${token.name} (${token.symbol})`,
-                      value: token.symbol,
-                    }))}
+                    options={tokenOptions}
                     value={formData.sellAsset}
                     onValueChange={(value) => handleInputChange("sellAsset", value || "")}
-                    placeholder="Select token to sell"
+                    placeholder={getTokenSelectPlaceholder()}
+                    disabled={!formData.chain_id || tokensLoading}
+                    getExplorerUrl={(token) => getExplorerUrl(token.chain_id, token.address)}
                   />
                 </div>
 
                 <div className="space-y-2">
                   <Label>Buy token *</Label>
+                  {tokensError && (
+                    <p className="text-sm text-destructive">Error loading tokens: {tokensError}</p>
+                  )}
                   <ReactSelect
-                    options={tokens.map(token => ({
-                      label: `${token.name} (${token.symbol})`,
-                      value: token.symbol,
-                    }))}
+                    options={tokenOptions}
                     value={formData.buyAsset}
                     onValueChange={(value) => handleInputChange("buyAsset", value || "")}
-                    placeholder="Select token to buy"
+                    placeholder={getTokenSelectPlaceholder()}
+                    disabled={!formData.chain_id || tokensLoading}
+                    getExplorerUrl={(token) => getExplorerUrl(token.chain_id, token.address)}
                   />
                 </div>
 
@@ -338,10 +365,10 @@ const CreateTrade = () => {
                     <span>{chains.find(c => c.id === formData.chain_id)?.name}</span>
                     
                     <span className="text-muted-foreground">Sell:</span>
-                    <span>{formData.sellAsset}</span>
+                    <span>{tokens.find(t => t.address === formData.sellAsset)?.symbol || formData.sellAsset}</span>
                     
                     <span className="text-muted-foreground">Buy:</span>
-                    <span>{formData.buyAsset}</span>
+                    <span>{tokens.find(t => t.address === formData.buyAsset)?.symbol || formData.buyAsset}</span>
                     
                     <span className="text-muted-foreground">Amount:</span>
                     <span>${formData.usdAmount}</span>
