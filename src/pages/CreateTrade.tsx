@@ -552,7 +552,7 @@ const CreateTrade = () => {
               <div className="space-y-4">
                 <div className="bg-muted p-4 rounded-lg space-y-2">
                   <h3 className="font-medium">Trade Summary</h3>
-                  <div className="grid grid-cols-2 gap-2 text-sm">
+                  <div className="grid grid-cols-[auto_1fr] gap-4 text-sm">
                     <span className="text-muted-foreground">Chain:</span>
                     <span>{chains.find(c => c.id === formData.chain_id)?.name}</span>
                     
