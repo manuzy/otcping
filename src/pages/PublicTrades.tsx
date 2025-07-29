@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useChats } from "@/hooks/useChats";
 import { useTokens } from "@/hooks/useTokens";
-import { formatDistanceToNow } from "date-fns";
+import { formatDistanceToNow, format } from "date-fns";
 import { formatNumberWithCommas } from "@/lib/utils";
 import { getExplorerUrl } from "@/lib/tokenUtils";
 
