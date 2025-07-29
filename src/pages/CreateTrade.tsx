@@ -19,6 +19,8 @@ import { useTokens } from "@/hooks/useTokens";
 import { tokenToSelectOption, getExplorerUrl } from "@/lib/tokenUtils";
 import { supabase } from "@/integrations/supabase/client";
 import { formatNumberWithCommas, parseFormattedNumber, isValidNumberInput } from "@/lib/utils";
+import { ChevronDown, ChevronRight } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 
 interface TradeFormData {
@@ -30,6 +32,9 @@ interface TradeFormData {
   expectedExecutionTimestamp: string;
   expiryType: string;
   expiryValue: string;
+  triggerAsset: string;
+  triggerCondition: string;
+  triggerPrice: string;
 }
 
 const CreateTrade = () => {
@@ -44,6 +49,7 @@ const CreateTrade = () => {
   const [isPublicChat, setIsPublicChat] = useState(true);
   const [selectedContacts, setSelectedContacts] = useState<string[]>([]);
   const [isPublishing, setIsPublishing] = useState(false);
+  const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
   const [formData, setFormData] = useState<TradeFormData>({
     chain_id: "",
     sellAsset: "",
@@ -52,7 +58,10 @@ const CreateTrade = () => {
     limitPrice: "",
     expectedExecutionTimestamp: "",
     expiryType: "",
-    expiryValue: ""
+    expiryValue: "",
+    triggerAsset: "",
+    triggerCondition: "",
+    triggerPrice: ""
   });
 
   // Get selected chain ID for token filtering
@@ -73,7 +82,7 @@ const CreateTrade = () => {
     });
   };
 
-  const handleNumberInputChange = (field: 'usdAmount' | 'limitPrice', value: string) => {
+  const handleNumberInputChange = (field: 'usdAmount' | 'limitPrice' | 'triggerPrice', value: string) => {
     if (!isValidNumberInput(value)) return;
     
     const cleanValue = parseFormattedNumber(value);
@@ -347,43 +356,99 @@ const CreateTrade = () => {
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <Label>Expected execution *</Label>
-                  <Input
-                    type="datetime-local"
-                    value={formData.expectedExecutionTimestamp}
-                    onChange={(e) => handleInputChange("expectedExecutionTimestamp", e.target.value)}
-                  />
-                </div>
+                {/* Advanced Section */}
+                <Collapsible open={isAdvancedOpen} onOpenChange={setIsAdvancedOpen}>
+                  <CollapsibleTrigger asChild>
+                    <Button variant="ghost" className="w-full justify-start p-0 h-auto">
+                      <div className="flex items-center gap-2">
+                        {isAdvancedOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                        <span className="font-medium">Advanced</span>
+                      </div>
+                    </Button>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="space-y-4 pt-4">
+                    <div className="space-y-2">
+                      <Label>Expected execution *</Label>
+                      <Input
+                        type="datetime-local"
+                        value={formData.expectedExecutionTimestamp}
+                        onChange={(e) => handleInputChange("expectedExecutionTimestamp", e.target.value)}
+                      />
+                    </div>
 
-                <div className="space-y-2">
-                  <Label>Expiry *</Label>
-                  <Select 
-                    value={formData.expiryType} 
-                    onValueChange={(value) => handleInputChange("expiryType", value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select expiry time" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="1 hour">1 hour</SelectItem>
-                      <SelectItem value="1 day">1 day</SelectItem>
-                      <SelectItem value="3 days">3 days</SelectItem>
-                      <SelectItem value="7 days">7 days</SelectItem>
-                      <SelectItem value="28 days">28 days</SelectItem>
-                      <SelectItem value="Custom">Custom</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  
-                  {formData.expiryType === "Custom" && (
-                    <Input
-                      type="datetime-local"
-                      value={formData.expiryValue}
-                      onChange={(e) => handleInputChange("expiryValue", e.target.value)}
-                      placeholder="Set custom expiry time"
-                    />
-                  )}
-                </div>
+                    <div className="space-y-2">
+                      <Label>Expiry *</Label>
+                      <Select 
+                        value={formData.expiryType} 
+                        onValueChange={(value) => handleInputChange("expiryType", value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select expiry time" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="1 hour">1 hour</SelectItem>
+                          <SelectItem value="1 day">1 day</SelectItem>
+                          <SelectItem value="3 days">3 days</SelectItem>
+                          <SelectItem value="7 days">7 days</SelectItem>
+                          <SelectItem value="28 days">28 days</SelectItem>
+                          <SelectItem value="Custom">Custom</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      
+                      {formData.expiryType === "Custom" && (
+                        <Input
+                          type="datetime-local"
+                          value={formData.expiryValue}
+                          onChange={(e) => handleInputChange("expiryValue", e.target.value)}
+                          placeholder="Set custom expiry time"
+                        />
+                      )}
+                    </div>
+
+                    {/* Triggers if section */}
+                    <div className="space-y-2">
+                      <div className="flex flex-row items-center space-x-2 text-sm">
+                        <span className="flex-1 font-medium">Triggers if *</span>
+                        <div className="w-1/5">
+                          <ReactSelect
+                            options={tokenOptions}
+                            value={formData.triggerAsset}
+                            onValueChange={(value) => handleInputChange("triggerAsset", value || "")}
+                            placeholder="Token"
+                            disabled={!formData.chain_id || tokensLoading}
+                            getExplorerUrl={(token) => getExplorerUrl(token.chain_id, token.address)}
+                          />
+                        </div>
+                        <span className="text-muted-foreground">price is</span>
+                        <div className="w-1/5">
+                          <Select 
+                            value={formData.triggerCondition} 
+                            onValueChange={(value) => handleInputChange("triggerCondition", value)}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Condition" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="above">above</SelectItem>
+                              <SelectItem value="below">below</SelectItem>
+                              <SelectItem value="equals">equals</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="w-1/5">
+                          <Input
+                            type="text"
+                            inputMode="decimal"
+                            placeholder="$ 0.00"
+                            value={formatNumberWithCommas(formData.triggerPrice)}
+                            onChange={(e) => handleNumberInputChange("triggerPrice", e.target.value)}
+                          />
+                        </div>
+                        <span className="text-muted-foreground">USD</span>
+                      </div>
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
               </>
             )}
 
@@ -464,6 +529,16 @@ const CreateTrade = () => {
                     
                     <span className="text-muted-foreground">Expiry:</span>
                     <span>{formatExpiryDisplay()}</span>
+                    
+                    {/* Show trigger conditions if set */}
+                    {formData.triggerAsset && formData.triggerCondition && formData.triggerPrice && (
+                      <>
+                        <span className="text-muted-foreground">Trigger:</span>
+                        <span>
+                          {tokens.find(t => t.address === formData.triggerAsset)?.symbol || formData.triggerAsset} price {formData.triggerCondition} £{formatNumberWithCommas(formData.triggerPrice)}
+                        </span>
+                      </>
+                    )}
                   </div>
                 </div>
 
