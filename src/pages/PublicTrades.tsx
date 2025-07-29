@@ -34,13 +34,15 @@ function safeParseDate(dateValue: string | Date | null | undefined): Date | null
 export default function PublicTrades() {
   const navigate = useNavigate();
   const { chats, loading } = useChats();
-  const { tokens } = useTokens();
   const { chains } = useChains();
   const [searchQuery, setSearchQuery] = useState("");
   const [filterChain, setFilterChain] = useState<string>("all");
   const [filterToken, setFilterToken] = useState<string>("all");
   const [filterType, setFilterType] = useState<string>("all");
   const [sortBy, setSortBy] = useState<string>("newest");
+  
+  const selectedChainId = filterChain === "all" ? undefined : parseInt(filterChain);
+  const { tokens } = useTokens(selectedChainId);
 
   // Helper function to find token by address
   const findToken = (address: string) => {
@@ -147,7 +149,10 @@ export default function PublicTrades() {
           </div>
           
           <div className="flex gap-2 overflow-x-auto">
-            <Select value={filterChain} onValueChange={setFilterChain}>
+            <Select value={filterChain} onValueChange={(value) => {
+              setFilterChain(value);
+              setFilterToken("all"); // Reset token filter when chain changes
+            }}>
               <SelectTrigger className="w-32">
                 <SelectValue placeholder="Chain" />
               </SelectTrigger>
