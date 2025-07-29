@@ -308,7 +308,6 @@ export default function PublicTrades() {
                     <span>Created: {formatDistanceToNow(chat.lastActivity, { addSuffix: true })}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span>{chat.participants.length} participants</span>
                     {chat.unreadCount > 0 && (
                       <Badge variant="default" className="text-xs">
                         {chat.unreadCount}
