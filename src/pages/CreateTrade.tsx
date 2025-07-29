@@ -7,21 +7,17 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Combobox } from "@/components/ui/combobox";
 import { ArrowLeft, Check } from "lucide-react";
 import { useAppKitAccount } from '@reown/appkit/react';
 import { useContacts } from "@/hooks/useContacts";
 import { useChats } from "@/hooks/useChats";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import { useChains } from "@/hooks/useChains";
 import { supabase } from "@/integrations/supabase/client";
 
-// Mock data for chains and tokens
-const chains = [
-  { id: "ethereum", name: "Ethereum" },
-  { id: "polygon", name: "Polygon" },
-  { id: "base", name: "Base" },
-  { id: "arbitrum", name: "Arbitrum" }
-];
+// Mock data for tokens - TODO: Replace with database
 
 const tokens = [
   { id: "eth", name: "ETH", symbol: "ETH" },
@@ -32,7 +28,7 @@ const tokens = [
 ];
 
 interface TradeFormData {
-  chain: string;
+  chain_id: string;
   sellAsset: string;
   buyAsset: string;
   usdAmount: string;
@@ -45,13 +41,14 @@ const CreateTrade = () => {
   const { user } = useAuth();
   const { contacts, loading: contactsLoading } = useContacts();
   const { createChat } = useChats();
+  const { chains, loading: chainsLoading, error: chainsError } = useChains();
   const { toast } = useToast();
   const [currentStep, setCurrentStep] = useState(1);
   const [isPublicChat, setIsPublicChat] = useState(true);
   const [selectedContacts, setSelectedContacts] = useState<string[]>([]);
   const [isPublishing, setIsPublishing] = useState(false);
   const [formData, setFormData] = useState<TradeFormData>({
-    chain: "",
+    chain_id: "",
     sellAsset: "",
     buyAsset: "",
     usdAmount: "",
@@ -97,11 +94,17 @@ const CreateTrade = () => {
     setIsPublishing(true);
     
     try {
+      // Find the selected chain name for storage
+      const selectedChain = chains.find(c => c.id === formData.chain_id);
+      if (!selectedChain) {
+        throw new Error("Selected chain not found");
+      }
+
       // Create the trade first
       const { data: tradeData, error: tradeError } = await supabase
         .from('trades')
         .insert({
-          chain: formData.chain,
+          chain: selectedChain.name,
           pair: `${formData.sellAsset}/${formData.buyAsset}`,
           size: formData.usdAmount,
           price: "Market",
@@ -160,7 +163,13 @@ const CreateTrade = () => {
     }
   };
 
-  const isStep1Valid = formData.chain && formData.sellAsset && formData.buyAsset && formData.usdAmount && formData.expectedExecutionTimestamp;
+  const isStep1Valid = formData.chain_id && formData.sellAsset && formData.buyAsset && formData.usdAmount && formData.expectedExecutionTimestamp;
+
+  // Prepare chain options for combobox
+  const chainOptions = chains.map(chain => ({
+    label: chain.name,
+    value: chain.id
+  }));
 
   return (
     <div className="min-h-screen bg-background p-4">
@@ -208,18 +217,18 @@ const CreateTrade = () => {
               <>
                 <div className="space-y-2">
                   <Label>Chain *</Label>
-                  <Select value={formData.chain} onValueChange={(value) => handleInputChange("chain", value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select blockchain" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {chains.map((chain) => (
-                        <SelectItem key={chain.id} value={chain.id}>
-                          {chain.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  {chainsError && (
+                    <p className="text-sm text-destructive">Error loading chains: {chainsError}</p>
+                  )}
+                  <Combobox
+                    options={chainOptions}
+                    value={formData.chain_id}
+                    onValueChange={(value) => handleInputChange("chain_id", value || "")}
+                    placeholder="Select blockchain"
+                    searchPlaceholder="Search chains..."
+                    emptyText="No chains found."
+                    loading={chainsLoading}
+                  />
                 </div>
 
                 <div className="space-y-2">
@@ -334,7 +343,7 @@ const CreateTrade = () => {
                   <h3 className="font-medium">Trade Summary</h3>
                   <div className="grid grid-cols-2 gap-2 text-sm">
                     <span className="text-muted-foreground">Chain:</span>
-                    <span>{chains.find(c => c.id === formData.chain)?.name}</span>
+                    <span>{chains.find(c => c.id === formData.chain_id)?.name}</span>
                     
                     <span className="text-muted-foreground">Sell:</span>
                     <span>{formData.sellAsset}</span>
