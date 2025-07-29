@@ -179,40 +179,55 @@ const CreateTrade = () => {
 
       if (tradeError) throw tradeError;
 
-      // Create the chat
-      const chatName = isPublicChat 
-        ? `${sellToken?.symbol || formData.sellAsset}/${buyToken?.symbol || formData.buyAsset} Trade` 
-        : "Private Trade Chat";
-      
-      const chatId = await createChat(chatName, isPublicChat, tradeData.id);
-      
-      if (!chatId) {
-        throw new Error("Failed to create chat");
+      if (isPublicChat) {
+        // For public trades, just create the trade - no chat created
+        toast({
+          title: "Trade Created",
+          description: "Your trade has been published to the public market!",
+        });
+
+        // Navigate to public trades page
+        navigate("/public-trades");
+      } else {
+        // For private trades, create individual 1-1 chats with each selected contact
+        const chatCreationPromises = selectedContacts.map(async (contactId) => {
+          // Get contact profile for chat name
+          const { data: contactProfile } = await supabase
+            .from('profiles')
+            .select('display_name')
+            .eq('id', contactId)
+            .single();
+
+          const contactName = contactProfile?.display_name || 'Contact';
+          const chatName = `Trade Discussion with ${contactName}`;
+          
+          const chatId = await createChat(chatName, false, tradeData.id, [contactId]);
+          
+          if (chatId) {
+            // Send automated message to each chat
+            await supabase
+              .from('messages')
+              .insert({
+                chat_id: chatId,
+                sender_id: user.id,
+                content: `Hi ${contactName}, looking for a counterpart fulfilling my trade. See more info above`,
+                type: 'system'
+              });
+          }
+          
+          return chatId;
+        });
+
+        await Promise.all(chatCreationPromises);
+
+        toast({
+          title: "Trade Created",
+          description: `Your private trade has been shared with ${selectedContacts.length} contact(s)!`,
+        });
+
+        // Navigate to chats page
+        navigate("/app");
       }
-
-      // Add selected contacts to private chat
-      if (!isPublicChat && selectedContacts.length > 0) {
-        const { error: participantsError } = await supabase
-          .from('chat_participants')
-          .insert(
-            selectedContacts.map(contactId => ({
-              chat_id: chatId,
-              user_id: contactId
-            }))
-          );
-
-        if (participantsError) {
-          console.error("Error adding participants:", participantsError);
-        }
-      }
-
-      toast({
-        title: "Trade Created",
-        description: "Your trade has been published successfully!",
-      });
-
-      // Navigate to the new chat
-      navigate(`/app?chat=${chatId}`);
     } catch (error) {
       console.error('Error creating trade:', error);
       toast({

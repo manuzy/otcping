@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, Filter, Bell, TrendingUp, Clock } from "lucide-react";
+import { Search, Filter, Bell, TrendingUp, Clock, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -10,9 +10,13 @@ import { Combobox, ComboboxOption } from "@/components/ui/combobox";
 import { useChats } from "@/hooks/useChats";
 import { useTokens } from "@/hooks/useTokens";
 import { useChains } from "@/hooks/useChains";
+import { useAuth } from "@/hooks/useAuth";
+import { usePublicUsers } from "@/hooks/usePublicUsers";
+import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow, format } from "date-fns";
 import { formatNumberWithCommas } from "@/lib/utils";
 import { getExplorerUrl } from "@/lib/tokenUtils";
+import { supabase } from "@/integrations/supabase/client";
 
 
 // Date utility function
@@ -33,13 +37,17 @@ function safeParseDate(dateValue: string | Date | null | undefined): Date | null
 
 export default function PublicTrades() {
   const navigate = useNavigate();
-  const { chats, loading } = useChats();
+  const { chats, loading, createChat, findExistingDirectChat } = useChats();
   const { chains } = useChains();
+  const { user } = useAuth();
+  const { users } = usePublicUsers();
+  const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
   const [filterChain, setFilterChain] = useState<string>("all");
   const [filterToken, setFilterToken] = useState<string>("all");
   const [filterType, setFilterType] = useState<string>("all");
   const [sortBy, setSortBy] = useState<string>("newest");
+  const [messagingTrader, setMessagingTrader] = useState<string | null>(null);
   
   const selectedChainId = filterChain === "all" ? undefined : parseInt(filterChain);
   const { tokens } = useTokens(selectedChainId);
@@ -122,6 +130,71 @@ export default function PublicTrades() {
 
   const getTypeColor = (type: string) => {
     return type === "buy" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800";
+  };
+
+  // Handle messaging a trader
+  const handleMessageTrader = async (traderId: string, traderName: string, event: React.MouseEvent) => {
+    event.stopPropagation();
+    
+    if (!user?.id) {
+      toast({
+        title: "Authentication Required",
+        description: "Please sign in to message traders",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (traderId === user.id) {
+      toast({
+        title: "Invalid Action",
+        description: "You cannot message yourself",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setMessagingTrader(traderId);
+    
+    try {
+      // Check if a direct chat already exists
+      const existingChat = await findExistingDirectChat(traderId);
+      
+      if (existingChat) {
+        // Navigate to existing chat
+        navigate(`/app?chat=${existingChat.id}`);
+      } else {
+        // Create new 1-1 chat
+        const chatName = `Chat with ${traderName}`;
+        const chatId = await createChat(chatName, false, undefined, [traderId]);
+        
+        if (chatId) {
+          // Send automated message
+          await supabase
+            .from('messages')
+            .insert({
+              chat_id: chatId,
+              sender_id: user.id,
+              content: `Hi ${traderName}, I'm interested in your trade. Let's discuss details.`,
+              type: 'system'
+            });
+          
+          // Navigate to new chat
+          navigate(`/app?chat=${chatId}`);
+        } else {
+          throw new Error("Failed to create chat");
+        }
+      }
+    } catch (error) {
+      console.error('Error messaging trader:', error);
+      toast({
+        title: "Error",
+        description: "Failed to start conversation. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setMessagingTrader(null);
+    }
   };
 
   return (
@@ -212,8 +285,7 @@ export default function PublicTrades() {
           filteredChats.map((chat) => (
             <Card 
               key={chat.id} 
-              className="hover:shadow-md transition-shadow cursor-pointer"
-              onClick={() => navigate(`/app?chat=${chat.id}`)}
+              className="hover:shadow-md transition-shadow"
             >
               <CardContent className="p-4">
                 <div className="flex items-start justify-between mb-3">
@@ -346,10 +418,21 @@ export default function PublicTrades() {
                     <span>Created: {formatDistanceToNow(chat.lastActivity, { addSuffix: true })}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    {chat.unreadCount > 0 && (
-                      <Badge variant="default" className="text-xs">
-                        {chat.unreadCount}
-                      </Badge>
+                    {chat.trade?.createdBy && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={(e) => {
+                          const traderProfile = users.find(u => u.id === chat.trade?.createdBy);
+                          const traderName = traderProfile?.display_name || 'Trader';
+                          handleMessageTrader(chat.trade.createdBy, traderName, e);
+                        }}
+                        disabled={messagingTrader === chat.trade.createdBy}
+                        className="gap-1"
+                      >
+                        <MessageCircle className="h-3 w-3" />
+                        {messagingTrader === chat.trade.createdBy ? 'Connecting...' : 'Message Trader'}
+                      </Button>
                     )}
                   </div>
                 </div>

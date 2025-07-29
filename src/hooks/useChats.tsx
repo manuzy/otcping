@@ -196,6 +196,30 @@ export function useChats() {
     }
   };
 
+  // Create a new 1-1 chat with automated message support
+  const createChatWithMessage = async (
+    name: string,
+    targetUserId: string,
+    tradeId?: string,
+    automaticMessage?: string
+  ): Promise<string | null> => {
+    const chatId = await createChat(name, false, tradeId, [targetUserId]);
+    
+    if (chatId && automaticMessage && user?.id) {
+      // Send automatic message
+      await supabase
+        .from('messages')
+        .insert({
+          chat_id: chatId,
+          sender_id: user.id,
+          content: automaticMessage,
+          type: 'system'
+        });
+    }
+    
+    return chatId;
+  };
+
   // Create a new chat with connection-level auth validation and explicit client creation
   const createChat = async (
     name: string, 
@@ -500,6 +524,7 @@ export function useChats() {
     chats,
     loading,
     createChat,
+    createChatWithMessage,
     joinChat,
     markAsRead,
     refetch: fetchChats,
