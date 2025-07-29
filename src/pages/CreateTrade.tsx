@@ -225,7 +225,7 @@ const CreateTrade = () => {
     }
   };
 
-  const isStep1Valid = formData.chain_id && formData.sellAsset && formData.buyAsset && formData.usdAmount && formData.limitPrice && formData.expectedExecutionTimestamp && formData.expiryType && (formData.expiryType !== "Custom" || formData.expiryValue);
+  const isStep1Valid = formData.chain_id && formData.sellAsset && formData.buyAsset && formData.usdAmount && formData.limitPrice;
 
   // Prepare chain options
   const chainOptions = chains.map(chain => ({
@@ -403,6 +403,36 @@ const CreateTrade = () => {
                   />
                 </div>
 
+                <div className="space-y-2">
+                  <Label>Expiry</Label>
+                  <Select 
+                    value={formData.expiryType} 
+                    onValueChange={(value) => handleInputChange("expiryType", value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select expiry time" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="1 hour">1 hour</SelectItem>
+                      <SelectItem value="1 day">1 day</SelectItem>
+                      <SelectItem value="3 days">3 days</SelectItem>
+                      <SelectItem value="7 days">7 days</SelectItem>
+                      <SelectItem value="28 days">28 days</SelectItem>
+                      <SelectItem value="Custom">Custom</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  
+                  {formData.expiryType === "Custom" && (
+                    <Input
+                      type="datetime-local"
+                      value={formData.expiryValue}
+                      onChange={(e) => handleInputChange("expiryValue", e.target.value)}
+                      placeholder="Set custom expiry time"
+                      min={getCurrentDateTimeLocal()}
+                    />
+                  )}
+                </div>
+
                 {/* Advanced Section */}
                 <Collapsible open={isAdvancedOpen} onOpenChange={setIsAdvancedOpen}>
                   <CollapsibleTrigger asChild>
@@ -415,7 +445,7 @@ const CreateTrade = () => {
                   </CollapsibleTrigger>
                   <CollapsibleContent className="space-y-4 pt-4">
                     <div className="space-y-2">
-                      <Label>Expected execution *</Label>
+                      <Label>Expected execution</Label>
                       <Input
                         type="datetime-local"
                         value={formData.expectedExecutionTimestamp}
@@ -424,40 +454,10 @@ const CreateTrade = () => {
                       />
                     </div>
 
-                    <div className="space-y-2">
-                      <Label>Expiry *</Label>
-                      <Select 
-                        value={formData.expiryType} 
-                        onValueChange={(value) => handleInputChange("expiryType", value)}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select expiry time" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="1 hour">1 hour</SelectItem>
-                          <SelectItem value="1 day">1 day</SelectItem>
-                          <SelectItem value="3 days">3 days</SelectItem>
-                          <SelectItem value="7 days">7 days</SelectItem>
-                          <SelectItem value="28 days">28 days</SelectItem>
-                          <SelectItem value="Custom">Custom</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      
-                      {formData.expiryType === "Custom" && (
-                        <Input
-                          type="datetime-local"
-                          value={formData.expiryValue}
-                          onChange={(e) => handleInputChange("expiryValue", e.target.value)}
-                          placeholder="Set custom expiry time"
-                          min={getCurrentDateTimeLocal()}
-                        />
-                      )}
-                    </div>
-
                     {/* Triggers if section */}
                     <div className="space-y-2">
                       <div>
-                        <span className="font-medium">Triggers if *</span>
+                        <span className="font-medium">Triggers if</span>
                       </div>
                       <div className="flex flex-row items-center space-x-2 text-sm">
                         <div className="w-48">
