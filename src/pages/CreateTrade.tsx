@@ -562,17 +562,17 @@ const CreateTrade = () => {
                         const sellToken = tokens.find(t => t.address === formData.sellAsset);
                         if (sellToken) {
                           return (
-                            <>
-                               {sellToken.name} ({sellToken.symbol}) - 
-                               <a 
-                                 href={getExplorerUrl(sellToken.chain_id, sellToken.address)}
-                                 target="_blank"
-                                 rel="noopener noreferrer"
-                                 className="text-primary hover:underline ml-1"
-                               >
-                                 {sellToken.address}
-                               </a>
-                            </>
+                            <div className="flex flex-col gap-1">
+                              <span>{sellToken.name} ({sellToken.symbol})</span>
+                              <a 
+                                href={getExplorerUrl(sellToken.chain_id, sellToken.address)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-xs text-primary hover:underline"
+                              >
+                                {sellToken.address}
+                              </a>
+                            </div>
                           );
                         }
                         return formData.sellAsset;
@@ -585,17 +585,17 @@ const CreateTrade = () => {
                         const buyToken = tokens.find(t => t.address === formData.buyAsset);
                         if (buyToken) {
                           return (
-                            <>
-                               {buyToken.name} ({buyToken.symbol}) - 
-                               <a 
-                                 href={getExplorerUrl(buyToken.chain_id, buyToken.address)}
-                                 target="_blank"
-                                 rel="noopener noreferrer"
-                                 className="text-primary hover:underline ml-1"
-                               >
-                                 {buyToken.address}
-                               </a>
-                            </>
+                            <div className="flex flex-col gap-1">
+                              <span>{buyToken.name} ({buyToken.symbol})</span>
+                              <a 
+                                href={getExplorerUrl(buyToken.chain_id, buyToken.address)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-xs text-primary hover:underline"
+                              >
+                                {buyToken.address}
+                              </a>
+                            </div>
                           );
                         }
                         return formData.buyAsset;
