@@ -188,11 +188,6 @@ export default function PublicTrades() {
                       </h3>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <Badge className={getTypeColor(chat.trade?.type || "")}>
-                      {chat.trade?.type?.toUpperCase()}
-                    </Badge>
-                  </div>
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
