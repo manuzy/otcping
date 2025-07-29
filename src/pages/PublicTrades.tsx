@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Combobox, ComboboxOption } from "@/components/ui/combobox";
 import { useChats } from "@/hooks/useChats";
 import { useTokens } from "@/hooks/useTokens";
 import { useChains } from "@/hooks/useChains";
@@ -37,6 +38,7 @@ export default function PublicTrades() {
   const { chains } = useChains();
   const [searchQuery, setSearchQuery] = useState("");
   const [filterChain, setFilterChain] = useState<string>("all");
+  const [filterToken, setFilterToken] = useState<string>("all");
   const [filterType, setFilterType] = useState<string>("all");
   const [sortBy, setSortBy] = useState<string>("newest");
 
@@ -44,6 +46,15 @@ export default function PublicTrades() {
   const findToken = (address: string) => {
     return tokens.find(token => token.address.toLowerCase() === address.toLowerCase());
   };
+
+  // Create token options for the combobox
+  const tokenOptions: ComboboxOption[] = [
+    { value: "all", label: "All Tokens" },
+    ...tokens.map(token => ({
+      value: token.address.toLowerCase(),
+      label: `${token.name} (${token.symbol}) - ${token.address.slice(0, 8)}...`
+    }))
+  ];
 
   // Helper function to format trade pair with token symbols only
   const formatTradePair = (sellAsset: string, buyAsset: string) => {
@@ -64,9 +75,28 @@ export default function PublicTrades() {
       const matchesSearch = chat.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                           chat.trade?.pair.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesChain = filterChain === "all" || chat.trade?.chain === filterChain;
+      
+      // Token filtering logic combined with buy/sell type
+      let matchesToken = filterToken === "all";
+      if (!matchesToken && chat.trade) {
+        const selectedTokenAddress = filterToken.toLowerCase();
+        
+        if (filterType === "buy") {
+          // Only check buy asset when "buy" is selected
+          matchesToken = chat.trade.buyAsset?.toLowerCase() === selectedTokenAddress;
+        } else if (filterType === "sell") {
+          // Only check sell asset when "sell" is selected
+          matchesToken = chat.trade.sellAsset?.toLowerCase() === selectedTokenAddress;
+        } else {
+          // Check both buy and sell assets when "all" is selected
+          matchesToken = chat.trade.buyAsset?.toLowerCase() === selectedTokenAddress ||
+                        chat.trade.sellAsset?.toLowerCase() === selectedTokenAddress;
+        }
+      }
+      
       const matchesType = filterType === "all" || chat.trade?.type === filterType;
       
-      return matchesSearch && matchesChain && matchesType;
+      return matchesSearch && matchesChain && matchesToken && matchesType;
     })
     .sort((a, b) => {
       switch (sortBy) {
@@ -131,6 +161,14 @@ export default function PublicTrades() {
               </SelectContent>
             </Select>
             
+            <Combobox
+              options={tokenOptions}
+              value={filterToken}
+              onValueChange={(value) => setFilterToken(value || "all")}
+              placeholder="Select token..."
+              searchPlaceholder="Search tokens..."
+              className="w-48"
+            />
             <Select value={filterType} onValueChange={setFilterType}>
               <SelectTrigger className="w-24">
                 <SelectValue placeholder="Type" />
