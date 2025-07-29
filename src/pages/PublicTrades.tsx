@@ -179,7 +179,7 @@ export default function PublicTrades() {
                           : chat.trade?.pair
                         }
                       </h3>
-                      <p className="text-sm text-muted-foreground">{chat.name}</p>
+                      
                     </div>
                   </div>
                   <div className="text-right">
