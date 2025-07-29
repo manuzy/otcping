@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { Menu, Send, MoreVertical, Loader2, ExternalLink } from "lucide-react";
+import { Menu, Send, MoreVertical, Loader2, ExternalLink, Clock, TrendingUp } from "lucide-react";
 import { Chat, Message } from "@/types";
 import { useMessages } from '@/hooks/useMessages';
 import { useChatParticipants } from '@/hooks/useChatParticipants';
@@ -14,6 +14,7 @@ import { useTokens } from '@/hooks/useTokens';
 import { useChains } from '@/hooks/useChains';
 import { getExplorerUrl } from '@/lib/tokenUtils';
 import { safeParseDate, formatNumberWithCommas } from '@/lib/utils';
+import { format } from 'date-fns';
 
 interface ChatViewProps {
   chat: Chat;
@@ -185,37 +186,33 @@ export const ChatView = ({ chat, onMenuClick }: ChatViewProps) => {
         <div className="p-4 border-b border-border">
           <Card>
             <CardContent className="p-6">
-              <div className="flex items-start justify-between mb-4">
+              <div className="flex items-start justify-between mb-3">
                 <div>
-                  <h3 className="text-lg font-semibold text-foreground">
+                  <h3 className="text-lg font-semibold">
                     {formatTradePair(chat.trade)}
                   </h3>
                   <p className="text-sm text-muted-foreground">{chat.trade.chain}</p>
                 </div>
-                <div className="flex gap-2">
-                  <Badge className={getTypeColor(chat.trade.type)}>
-                    {chat.trade.type?.toUpperCase()}
-                  </Badge>
-                  <Badge className={getStatusColor(chat.trade.status)}>
-                    {chat.trade.status?.toUpperCase()}
-                  </Badge>
-                </div>
+                <Badge className={getTypeColor(chat.trade.type)}>
+                  {chat.trade.type?.toUpperCase()}
+                </Badge>
               </div>
 
-              <div className="grid grid-cols-2 gap-4 mb-4 text-sm">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3 text-sm">
                 <div>
-                  <span className="text-muted-foreground">SELL</span>
-                  <div className="mt-1">
+                  <div className="flex flex-col gap-1">
+                    <span className="text-xs text-muted-foreground mb-1">SELL</span>
                     {chat.trade.sellAsset && (() => {
                       const sellToken = findToken(chat.trade.sellAsset);
                       return sellToken ? (
                         <div>
-                          <p className="font-medium">{sellToken.name} ({sellToken.symbol})</p>
+                          <p className="font-semibold">{sellToken.name} ({sellToken.symbol})</p>
                           <a
                             href={getExplorerUrl(chat.trade.chain_id || 1, sellToken.address)}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-xs text-blue-600 hover:text-blue-800 break-all"
+                            className="text-xs text-primary hover:underline break-all"
+                            onClick={(e) => e.stopPropagation()}
                           >
                             {sellToken.address}
                           </a>
@@ -227,18 +224,19 @@ export const ChatView = ({ chat, onMenuClick }: ChatViewProps) => {
                   </div>
                 </div>
                 <div>
-                  <span className="text-muted-foreground">BUY</span>
-                  <div className="mt-1">
+                  <div className="flex flex-col gap-1">
+                    <span className="text-xs text-muted-foreground mb-1">BUY</span>
                     {chat.trade.buyAsset && (() => {
                       const buyToken = findToken(chat.trade.buyAsset);
                       return buyToken ? (
                         <div>
-                          <p className="font-medium">{buyToken.name} ({buyToken.symbol})</p>
+                          <p className="font-semibold">{buyToken.name} ({buyToken.symbol})</p>
                           <a
                             href={getExplorerUrl(chat.trade.chain_id || 1, buyToken.address)}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-xs text-blue-600 hover:text-blue-800 break-all"
+                            className="text-xs text-primary hover:underline break-all"
+                            onClick={(e) => e.stopPropagation()}
                           >
                             {buyToken.address}
                           </a>
@@ -251,53 +249,61 @@ export const ChatView = ({ chat, onMenuClick }: ChatViewProps) => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4 text-sm">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3 text-sm">
+                <div>
+                  <span className="text-xs text-muted-foreground">Status</span>
+                  <div className="mt-1">
+                    <Badge className={getStatusColor(chat.trade.status)}>
+                      {chat.trade.status?.toUpperCase()}
+                    </Badge>
+                  </div>
+                </div>
                 {chat.trade.usdAmount && (
                   <div>
-                    <span className="text-muted-foreground">USD Amount</span>
-                    <p className="font-medium">${formatNumberWithCommas(chat.trade.usdAmount)}</p>
+                    <span className="text-xs text-muted-foreground">USD Amount</span>
+                    <p className="font-semibold">${formatNumberWithCommas(chat.trade.usdAmount)}</p>
                   </div>
                 )}
                 {chat.trade.limitPrice && (
                   <div>
-                    <span className="text-muted-foreground">Limit Price</span>
-                    <p className="font-medium">{formatNumberWithCommas(chat.trade.limitPrice)}</p>
+                    <span className="text-xs text-muted-foreground">Limit Price</span>
+                    <p className="font-semibold">{formatNumberWithCommas(chat.trade.limitPrice)}</p>
                   </div>
                 )}
                 <div>
-                  <span className="text-muted-foreground">Size</span>
-                  <p className="font-medium">{formatNumberWithCommas(chat.trade.size)}</p>
+                  <span className="text-xs text-muted-foreground">Size</span>
+                  <p className="font-semibold">{formatNumberWithCommas(chat.trade.size)}</p>
                 </div>
                 <div>
-                  <span className="text-muted-foreground">Price</span>
-                  <p className="font-medium">{formatNumberWithCommas(chat.trade.price)}</p>
+                  <span className="text-xs text-muted-foreground">Price</span>
+                  <p className="font-semibold">{formatNumberWithCommas(chat.trade.price)}</p>
                 </div>
               </div>
 
               <div className="space-y-2 text-xs text-muted-foreground">
                 {chat.trade.expiryTimestamp && (
                   <div className="flex items-center gap-2">
-                    <span>⏰</span>
-                    <span>Expires: {safeParseDate(chat.trade.expiryTimestamp)?.toLocaleDateString() || 'Invalid date'}</span>
+                    <Clock className="h-3 w-3" />
+                    <span>Expires: {safeParseDate(chat.trade.expiryTimestamp) ? format(safeParseDate(chat.trade.expiryTimestamp)!, "dd/MM/yyyy, HH:mm:ss") : 'Invalid date'}</span>
                   </div>
                 )}
                 {chat.trade.expectedExecution && (
                   <div className="flex items-center gap-2">
-                    <span>🎯</span>
-                    <span>Expected: {safeParseDate(chat.trade.expectedExecution)?.toLocaleDateString() || 'Invalid date'}</span>
+                    <TrendingUp className="h-3 w-3" />
+                    <span>Expected: {safeParseDate(chat.trade.expectedExecution) ? format(safeParseDate(chat.trade.expectedExecution)!, "dd/MM/yyyy, HH:mm:ss") : 'Invalid date'}</span>
                   </div>
                 )}
                 {(chat.trade.triggerAsset || chat.trade.triggerCondition || chat.trade.triggerPrice) && (
                   <div className="flex items-center gap-2">
-                    <span>⚡</span>
+                    <TrendingUp className="h-3 w-3" />
                     <span>
                       Trigger: {chat.trade.triggerAsset} {chat.trade.triggerCondition} {chat.trade.triggerPrice}
                     </span>
                   </div>
                 )}
                 <div className="flex items-center gap-2">
-                  <span>📅</span>
-                  <span>Created: {safeParseDate(chat.trade.createdAt)?.toLocaleDateString() || 'Invalid date'}</span>
+                  <Clock className="h-3 w-3" />
+                  <span>Created: {safeParseDate(chat.trade.createdAt) ? format(safeParseDate(chat.trade.createdAt)!, "dd/MM/yyyy, HH:mm:ss") : 'Invalid date'}</span>
                 </div>
               </div>
             </CardContent>
