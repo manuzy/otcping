@@ -7,7 +7,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useChats } from "@/hooks/useChats";
+import { useTokens } from "@/hooks/useTokens";
 import { formatDistanceToNow } from "date-fns";
+import { formatNumberWithCommas } from "@/lib/utils";
+import { getExplorerUrl } from "@/lib/tokenUtils";
 
 
 // Date utility function
@@ -29,10 +32,27 @@ function safeParseDate(dateValue: string | Date | null | undefined): Date | null
 export default function PublicTrades() {
   const navigate = useNavigate();
   const { chats, loading } = useChats();
+  const { tokens } = useTokens();
   const [searchQuery, setSearchQuery] = useState("");
   const [filterChain, setFilterChain] = useState<string>("all");
   const [filterType, setFilterType] = useState<string>("all");
   const [sortBy, setSortBy] = useState<string>("newest");
+
+  // Helper function to find token by address
+  const findToken = (address: string) => {
+    return tokens.find(token => token.address.toLowerCase() === address.toLowerCase());
+  };
+
+  // Helper function to format trade pair with full token names
+  const formatTradePair = (sellAsset: string, buyAsset: string) => {
+    const sellToken = findToken(sellAsset);
+    const buyToken = findToken(buyAsset);
+    
+    if (sellToken && buyToken) {
+      return `${sellToken.name} (${sellToken.symbol}) / ${buyToken.name} (${buyToken.symbol})`;
+    }
+    return `${sellAsset} / ${buyAsset}`;
+  };
 
   // Get public chats with trades
   const publicChats = chats.filter(chat => chat.isPublic && chat.trade);
@@ -153,7 +173,12 @@ export default function PublicTrades() {
                   <div className="flex items-center gap-3">
                     <TrendingUp className="h-8 w-8 text-primary" />
                     <div>
-                      <h3 className="font-semibold">{chat.trade?.pair}</h3>
+                      <h3 className="font-semibold">
+                        {chat.trade?.sellAsset && chat.trade?.buyAsset 
+                          ? formatTradePair(chat.trade.sellAsset, chat.trade.buyAsset)
+                          : chat.trade?.pair
+                        }
+                      </h3>
                       <p className="text-sm text-muted-foreground">{chat.name}</p>
                     </div>
                   </div>
@@ -164,14 +189,74 @@ export default function PublicTrades() {
                   </div>
                 </div>
                 
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  {/* Sell Token */}
+                  {chat.trade?.sellAsset && (
+                    <div>
+                      <p className="text-xs text-muted-foreground mb-1">SELL</p>
+                      {(() => {
+                        const sellToken = findToken(chat.trade.sellAsset);
+                        if (sellToken) {
+                          return (
+                            <div className="flex flex-col gap-1">
+                              <span className="font-semibold">{sellToken.name} ({sellToken.symbol})</span>
+                              <a 
+                                href={getExplorerUrl(sellToken.chain_id, sellToken.address)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-xs text-primary hover:underline"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                {sellToken.address}
+                              </a>
+                            </div>
+                          );
+                        }
+                        return <span className="font-semibold">{chat.trade.sellAsset}</span>;
+                      })()}
+                    </div>
+                  )}
+                  
+                  {/* Buy Token */}
+                  {chat.trade?.buyAsset && (
+                    <div>
+                      <p className="text-xs text-muted-foreground mb-1">BUY</p>
+                      {(() => {
+                        const buyToken = findToken(chat.trade.buyAsset);
+                        if (buyToken) {
+                          return (
+                            <div className="flex flex-col gap-1">
+                              <span className="font-semibold">{buyToken.name} ({buyToken.symbol})</span>
+                              <a 
+                                href={getExplorerUrl(buyToken.chain_id, buyToken.address)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-xs text-primary hover:underline"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                {buyToken.address}
+                              </a>
+                            </div>
+                          );
+                        }
+                        return <span className="font-semibold">{chat.trade.buyAsset}</span>;
+                      })()}
+                    </div>
+                  )}
+                </div>
+                
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
                   <div>
                     <p className="text-xs text-muted-foreground">USD Amount</p>
-                    <p className="font-semibold">${chat.trade?.usdAmount || chat.trade?.size}</p>
+                    <p className="font-semibold">
+                      ${formatNumberWithCommas(chat.trade?.usdAmount || chat.trade?.size || "0")}
+                    </p>
                   </div>
                   <div>
                     <p className="text-xs text-muted-foreground">Limit Price</p>
-                    <p className="font-semibold">{chat.trade?.limitPrice || chat.trade?.price}</p>
+                    <p className="font-semibold">
+                      ${formatNumberWithCommas(chat.trade?.limitPrice || chat.trade?.price || "0")}
+                    </p>
                   </div>
                   <div>
                     <p className="text-xs text-muted-foreground">Chain</p>
@@ -203,7 +288,10 @@ export default function PublicTrades() {
                   
                   {chat.trade?.triggerAsset && chat.trade?.triggerCondition && chat.trade?.triggerPrice && (
                     <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                      <span>🔔 Triggers if price is {chat.trade.triggerCondition} ${chat.trade.triggerPrice}</span>
+                      <span>🔔 Triggers if {(() => {
+                        const triggerToken = findToken(chat.trade.triggerAsset);
+                        return triggerToken ? `${triggerToken.name} (${triggerToken.symbol})` : chat.trade.triggerAsset;
+                      })()} price is {chat.trade.triggerCondition} ${formatNumberWithCommas(chat.trade.triggerPrice)}</span>
                     </div>
                   )}
                 </div>
