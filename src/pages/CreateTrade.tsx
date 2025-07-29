@@ -421,9 +421,11 @@ const CreateTrade = () => {
 
                     {/* Triggers if section */}
                     <div className="space-y-2">
+                      <div>
+                        <span className="font-medium">Triggers if *</span>
+                      </div>
                       <div className="flex flex-row items-center space-x-2 text-sm">
-                        <span className="flex-1 font-medium">Triggers if *</span>
-                        <div className="w-1/5">
+                        <div className="w-48">
                           <ReactSelect
                             options={triggerTokenOptions}
                             value={formData.triggerAsset}
@@ -434,7 +436,7 @@ const CreateTrade = () => {
                           />
                         </div>
                         <span className="text-muted-foreground">price is</span>
-                        <div className="w-1/5">
+                        <div className="w-28">
                           <Select 
                             value={formData.triggerCondition} 
                             onValueChange={(value) => handleInputChange("triggerCondition", value)}
@@ -449,7 +451,7 @@ const CreateTrade = () => {
                             </SelectContent>
                           </Select>
                         </div>
-                        <div className="w-1/5">
+                        <div className="w-32">
                           <Input
                             type="text"
                             inputMode="decimal"
