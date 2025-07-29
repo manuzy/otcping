@@ -8,7 +8,23 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useChats } from "@/hooks/useChats";
 import { formatDistanceToNow } from "date-fns";
-import { safeParseDate } from "@/lib/utils";
+
+
+// Date utility function
+function safeParseDate(dateValue: string | Date | null | undefined): Date | null {
+  if (!dateValue) return null;
+  
+  if (dateValue instanceof Date) {
+    return isNaN(dateValue.getTime()) ? null : dateValue;
+  }
+  
+  try {
+    const parsedDate = new Date(dateValue);
+    return isNaN(parsedDate.getTime()) ? null : parsedDate;
+  } catch {
+    return null;
+  }
+}
 
 export default function PublicTrades() {
   const navigate = useNavigate();
