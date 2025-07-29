@@ -182,8 +182,10 @@ export default function PublicTrades() {
                           ? formatTradePair(chat.trade.sellAsset, chat.trade.buyAsset)
                           : chat.trade?.pair
                         }
+                        {chat.trade?.chain && (
+                          <span className="text-muted-foreground"> on {chat.trade.chain}</span>
+                        )}
                       </h3>
-                      
                     </div>
                   </div>
                   <div className="text-right">
