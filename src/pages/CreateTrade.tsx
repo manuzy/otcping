@@ -276,6 +276,11 @@ const CreateTrade = () => {
     }
   };
 
+  // Helper function to get current datetime in local format for min attribute
+  const getCurrentDateTimeLocal = () => {
+    return new Date().toISOString().slice(0, 16);
+  };
+
   // Helper function to format expiry display
   const formatExpiryDisplay = () => {
     if (formData.expiryType === "Custom" && formData.expiryValue) {
@@ -415,6 +420,7 @@ const CreateTrade = () => {
                         type="datetime-local"
                         value={formData.expectedExecutionTimestamp}
                         onChange={(e) => handleInputChange("expectedExecutionTimestamp", e.target.value)}
+                        min={getCurrentDateTimeLocal()}
                       />
                     </div>
 
@@ -443,6 +449,7 @@ const CreateTrade = () => {
                           value={formData.expiryValue}
                           onChange={(e) => handleInputChange("expiryValue", e.target.value)}
                           placeholder="Set custom expiry time"
+                          min={getCurrentDateTimeLocal()}
                         />
                       )}
                     </div>
