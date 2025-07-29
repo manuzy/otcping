@@ -563,10 +563,10 @@ const CreateTrade = () => {
                     <span>{tokens.find(t => t.address === formData.buyAsset)?.symbol || formData.buyAsset}</span>
                     
                     <span className="text-muted-foreground">Amount:</span>
-                    <span>£{formatNumberWithCommas(formData.usdAmount)}</span>
+                    <span>${formatNumberWithCommas(formData.usdAmount)}</span>
                     
                     <span className="text-muted-foreground">Limit Price:</span>
-                    <span>£{formatNumberWithCommas(formData.limitPrice)}</span>
+                    <span>${formatNumberWithCommas(formData.limitPrice)}</span>
                     
                     <span className="text-muted-foreground">Execution:</span>
                     <span>{new Date(formData.expectedExecutionTimestamp).toLocaleString()}</span>
@@ -579,7 +579,7 @@ const CreateTrade = () => {
                       <>
                         <span className="text-muted-foreground">Trigger:</span>
                         <span>
-                          {tokens.find(t => t.address === formData.triggerAsset)?.symbol || formData.triggerAsset} price {formData.triggerCondition} £{formatNumberWithCommas(formData.triggerPrice)}
+                          {tokens.find(t => t.address === formData.triggerAsset)?.symbol || formData.triggerAsset} price {formData.triggerCondition} ${formatNumberWithCommas(formData.triggerPrice)}
                         </span>
                       </>
                     )}

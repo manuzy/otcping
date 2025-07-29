@@ -30,3 +30,20 @@ export function isValidNumberInput(value: string): boolean {
   const cleanValue = parseFormattedNumber(value);
   return /^\d*\.?\d*$/.test(cleanValue);
 }
+
+// Date utility functions
+export function safeParseDate(dateValue: string | Date | null | undefined): Date | null {
+  if (!dateValue) return null;
+  
+  if (dateValue instanceof Date) {
+    return isNaN(dateValue.getTime()) ? null : dateValue;
+  }
+  
+  try {
+    // Handle different date string formats
+    const parsedDate = new Date(dateValue);
+    return isNaN(parsedDate.getTime()) ? null : parsedDate;
+  } catch {
+    return null;
+  }
+}

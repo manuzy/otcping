@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useChats } from "@/hooks/useChats";
 import { formatDistanceToNow } from "date-fns";
+import { safeParseDate } from "@/lib/utils";
 
 export default function PublicTrades() {
   const navigate = useNavigate();
@@ -170,17 +171,17 @@ export default function PublicTrades() {
 
                 {/* Additional trade information */}
                 <div className="space-y-2 mb-3">
-                  {chat.trade?.expiryTimestamp && (
+                  {chat.trade?.expiryTimestamp && safeParseDate(chat.trade.expiryTimestamp) && (
                     <div className="flex items-center gap-1 text-xs text-muted-foreground">
                       <Clock className="h-3 w-3" />
-                      <span>Expires: {formatDistanceToNow(chat.trade.expiryTimestamp, { addSuffix: true })}</span>
+                      <span>Expires: {formatDistanceToNow(safeParseDate(chat.trade.expiryTimestamp)!, { addSuffix: true })}</span>
                     </div>
                   )}
                   
-                  {chat.trade?.expectedExecution && (
+                  {chat.trade?.expectedExecution && safeParseDate(chat.trade.expectedExecution) && (
                     <div className="flex items-center gap-1 text-xs text-muted-foreground">
                       <TrendingUp className="h-3 w-3" />
-                      <span>Expected execution: {formatDistanceToNow(chat.trade.expectedExecution, { addSuffix: true })}</span>
+                      <span>Expected execution: {formatDistanceToNow(safeParseDate(chat.trade.expectedExecution)!, { addSuffix: true })}</span>
                     </div>
                   )}
                   
