@@ -275,14 +275,14 @@ export default function PublicTrades() {
                   {chat.trade?.expiryTimestamp && safeParseDate(chat.trade.expiryTimestamp) && (
                     <div className="flex items-center gap-1 text-xs text-muted-foreground">
                       <Clock className="h-3 w-3" />
-                      <span>Expires: {formatDistanceToNow(safeParseDate(chat.trade.expiryTimestamp)!, { addSuffix: true })}</span>
+                      <span>Expires: {format(safeParseDate(chat.trade.expiryTimestamp)!, "dd/MM/yyyy, HH:mm:ss")}</span>
                     </div>
                   )}
                   
                   {chat.trade?.expectedExecution && safeParseDate(chat.trade.expectedExecution) && (
                     <div className="flex items-center gap-1 text-xs text-muted-foreground">
                       <TrendingUp className="h-3 w-3" />
-                      <span>Expected execution: {formatDistanceToNow(safeParseDate(chat.trade.expectedExecution)!, { addSuffix: true })}</span>
+                      <span>Expected execution: {format(safeParseDate(chat.trade.expectedExecution)!, "dd/MM/yyyy, HH:mm:ss")}</span>
                     </div>
                   )}
                   
