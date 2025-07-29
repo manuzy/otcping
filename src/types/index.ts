@@ -42,6 +42,7 @@ export interface AlertFilter {
 export interface Trade {
   id: string;
   chain: string;
+  chain_id?: number;
   pair: string;
   size: string;
   price: string;

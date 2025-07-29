@@ -74,7 +74,7 @@ export default function PublicTrades() {
     .filter(chat => {
       const matchesSearch = chat.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                           chat.trade?.pair.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesChain = filterChain === "all" || chat.trade?.chain === filterChain;
+      const matchesChain = filterChain === "all" || chat.trade?.chain_id?.toString() === filterChain;
       
       // Token filtering logic combined with buy/sell type
       let matchesToken = filterToken === "all";
@@ -154,7 +154,7 @@ export default function PublicTrades() {
               <SelectContent>
                 <SelectItem value="all">All Chains</SelectItem>
                 {chains.map((chain) => (
-                  <SelectItem key={chain.id} value={chain.name.toLowerCase()}>
+                  <SelectItem key={chain.id} value={chain.chain_id.toString()}>
                     {chain.name}
                   </SelectItem>
                 ))}

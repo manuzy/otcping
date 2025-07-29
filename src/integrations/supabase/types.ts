@@ -319,6 +319,7 @@ export type Database = {
         Row: {
           buy_asset: string | null
           chain: string
+          chain_id: number | null
           created_at: string
           created_by: string
           expected_execution: string | null
@@ -341,6 +342,7 @@ export type Database = {
         Insert: {
           buy_asset?: string | null
           chain: string
+          chain_id?: number | null
           created_at?: string
           created_by: string
           expected_execution?: string | null
@@ -363,6 +365,7 @@ export type Database = {
         Update: {
           buy_asset?: string | null
           chain?: string
+          chain_id?: number | null
           created_at?: string
           created_by?: string
           expected_execution?: string | null
@@ -383,6 +386,13 @@ export type Database = {
           usd_amount?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_trades_chain_id"
+            columns: ["chain_id"]
+            isOneToOne: false
+            referencedRelation: "data_chains"
+            referencedColumns: ["chain_id"]
+          },
           {
             foreignKeyName: "trades_created_by_fkey"
             columns: ["created_by"]
