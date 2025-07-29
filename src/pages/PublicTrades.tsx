@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useChats } from "@/hooks/useChats";
 import { useTokens } from "@/hooks/useTokens";
+import { useChains } from "@/hooks/useChains";
 import { formatDistanceToNow, format } from "date-fns";
 import { formatNumberWithCommas } from "@/lib/utils";
 import { getExplorerUrl } from "@/lib/tokenUtils";
@@ -33,6 +34,7 @@ export default function PublicTrades() {
   const navigate = useNavigate();
   const { chats, loading } = useChats();
   const { tokens } = useTokens();
+  const { chains } = useChains();
   const [searchQuery, setSearchQuery] = useState("");
   const [filterChain, setFilterChain] = useState<string>("all");
   const [filterType, setFilterType] = useState<string>("all");
@@ -121,9 +123,11 @@ export default function PublicTrades() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Chains</SelectItem>
-                <SelectItem value="ethereum">Ethereum</SelectItem>
-                <SelectItem value="polygon">Polygon</SelectItem>
-                <SelectItem value="bsc">BSC</SelectItem>
+                {chains.map((chain) => (
+                  <SelectItem key={chain.id} value={chain.name.toLowerCase()}>
+                    {chain.name}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
             
