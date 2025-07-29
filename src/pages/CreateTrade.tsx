@@ -563,15 +563,15 @@ const CreateTrade = () => {
                         if (sellToken) {
                           return (
                             <>
-                              {sellToken.name} ({sellToken.symbol}) - 
-                              <a 
-                                href={getExplorerUrl(sellToken.chain_id, sellToken.address)}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-primary hover:underline ml-1"
-                              >
-                                {truncateAddress(sellToken.address)}
-                              </a>
+                               {sellToken.name} ({sellToken.symbol}) - 
+                               <a 
+                                 href={getExplorerUrl(sellToken.chain_id, sellToken.address)}
+                                 target="_blank"
+                                 rel="noopener noreferrer"
+                                 className="text-primary hover:underline ml-1"
+                               >
+                                 {sellToken.address}
+                               </a>
                             </>
                           );
                         }
@@ -586,15 +586,15 @@ const CreateTrade = () => {
                         if (buyToken) {
                           return (
                             <>
-                              {buyToken.name} ({buyToken.symbol}) - 
-                              <a 
-                                href={getExplorerUrl(buyToken.chain_id, buyToken.address)}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-primary hover:underline ml-1"
-                              >
-                                {truncateAddress(buyToken.address)}
-                              </a>
+                               {buyToken.name} ({buyToken.symbol}) - 
+                               <a 
+                                 href={getExplorerUrl(buyToken.chain_id, buyToken.address)}
+                                 target="_blank"
+                                 rel="noopener noreferrer"
+                                 className="text-primary hover:underline ml-1"
+                               >
+                                 {buyToken.address}
+                               </a>
                             </>
                           );
                         }
@@ -624,16 +624,7 @@ const CreateTrade = () => {
                             if (triggerToken) {
                               return (
                                 <>
-                                  {triggerToken.name} ({triggerToken.symbol}) - 
-                                  <a 
-                                    href={getExplorerUrl(triggerToken.chain_id, triggerToken.address)}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-primary hover:underline"
-                                  >
-                                    {truncateAddress(triggerToken.address)}
-                                  </a>
-                                  {' price '}{formData.triggerCondition} ${formatNumberWithCommas(formData.triggerPrice)}
+                                   {triggerToken.name} ({triggerToken.symbol}) price {formData.triggerCondition} ${formatNumberWithCommas(formData.triggerPrice)}
                                 </>
                               );
                             }
