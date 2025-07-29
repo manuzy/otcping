@@ -18,6 +18,7 @@ import { useChains } from "@/hooks/useChains";
 import { useTokens } from "@/hooks/useTokens";
 import { tokenToSelectOption, getExplorerUrl } from "@/lib/tokenUtils";
 import { supabase } from "@/integrations/supabase/client";
+import { formatNumberWithCommas, parseFormattedNumber, isValidNumberInput } from "@/lib/utils";
 
 
 interface TradeFormData {
@@ -70,6 +71,13 @@ const CreateTrade = () => {
       
       return newData;
     });
+  };
+
+  const handleNumberInputChange = (field: 'usdAmount' | 'limitPrice', value: string) => {
+    if (!isValidNumberInput(value)) return;
+    
+    const cleanValue = parseFormattedNumber(value);
+    setFormData(prev => ({ ...prev, [field]: cleanValue }));
   };
 
   const handleContactToggle = (contactId: string) => {
@@ -320,22 +328,22 @@ const CreateTrade = () => {
                 <div className="space-y-2">
                   <Label>USD amount *</Label>
                   <Input
-                    type="number"
+                    type="text"
                     inputMode="decimal"
                     placeholder="$ 0.00"
-                    value={formData.usdAmount}
-                    onChange={(e) => handleInputChange("usdAmount", e.target.value)}
+                    value={formatNumberWithCommas(formData.usdAmount)}
+                    onChange={(e) => handleNumberInputChange("usdAmount", e.target.value)}
                   />
                 </div>
 
                 <div className="space-y-2">
                   <Label>Limit price *</Label>
                   <Input
-                    type="number"
+                    type="text"
                     inputMode="decimal"
                     placeholder="$ 0.00"
-                    value={formData.limitPrice}
-                    onChange={(e) => handleInputChange("limitPrice", e.target.value)}
+                    value={formatNumberWithCommas(formData.limitPrice)}
+                    onChange={(e) => handleNumberInputChange("limitPrice", e.target.value)}
                   />
                 </div>
 
@@ -446,10 +454,10 @@ const CreateTrade = () => {
                     <span>{tokens.find(t => t.address === formData.buyAsset)?.symbol || formData.buyAsset}</span>
                     
                     <span className="text-muted-foreground">Amount:</span>
-                    <span>${formData.usdAmount}</span>
+                    <span>£{formatNumberWithCommas(formData.usdAmount)}</span>
                     
                     <span className="text-muted-foreground">Limit Price:</span>
-                    <span>${formData.limitPrice}</span>
+                    <span>£{formatNumberWithCommas(formData.limitPrice)}</span>
                     
                     <span className="text-muted-foreground">Execution:</span>
                     <span>{new Date(formData.expectedExecutionTimestamp).toLocaleString()}</span>
