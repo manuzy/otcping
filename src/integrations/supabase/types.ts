@@ -317,40 +317,70 @@ export type Database = {
       }
       trades: {
         Row: {
+          buy_asset: string | null
           chain: string
           created_at: string
           created_by: string
+          expected_execution: string | null
+          expiry_timestamp: string | null
+          expiry_type: string | null
           id: string
+          limit_price: string | null
           pair: string
           price: string
+          sell_asset: string | null
           size: string
           status: Database["public"]["Enums"]["trade_status"]
+          trigger_asset: string | null
+          trigger_condition: string | null
+          trigger_price: string | null
           type: Database["public"]["Enums"]["trade_type"]
           updated_at: string
+          usd_amount: string | null
         }
         Insert: {
+          buy_asset?: string | null
           chain: string
           created_at?: string
           created_by: string
+          expected_execution?: string | null
+          expiry_timestamp?: string | null
+          expiry_type?: string | null
           id?: string
+          limit_price?: string | null
           pair: string
           price: string
+          sell_asset?: string | null
           size: string
           status?: Database["public"]["Enums"]["trade_status"]
+          trigger_asset?: string | null
+          trigger_condition?: string | null
+          trigger_price?: string | null
           type: Database["public"]["Enums"]["trade_type"]
           updated_at?: string
+          usd_amount?: string | null
         }
         Update: {
+          buy_asset?: string | null
           chain?: string
           created_at?: string
           created_by?: string
+          expected_execution?: string | null
+          expiry_timestamp?: string | null
+          expiry_type?: string | null
           id?: string
+          limit_price?: string | null
           pair?: string
           price?: string
+          sell_asset?: string | null
           size?: string
           status?: Database["public"]["Enums"]["trade_status"]
+          trigger_asset?: string | null
+          trigger_condition?: string | null
+          trigger_price?: string | null
           type?: Database["public"]["Enums"]["trade_type"]
           updated_at?: string
+          usd_amount?: string | null
         }
         Relationships: [
           {

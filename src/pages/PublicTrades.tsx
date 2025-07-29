@@ -149,12 +149,12 @@ export default function PublicTrades() {
                 
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
                   <div>
-                    <p className="text-xs text-muted-foreground">Size</p>
-                    <p className="font-semibold">{chat.trade?.size}</p>
+                    <p className="text-xs text-muted-foreground">USD Amount</p>
+                    <p className="font-semibold">${chat.trade?.usdAmount || chat.trade?.size}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-muted-foreground">Price</p>
-                    <p className="font-semibold">{chat.trade?.price}</p>
+                    <p className="text-xs text-muted-foreground">Limit Price</p>
+                    <p className="font-semibold">{chat.trade?.limitPrice || chat.trade?.price}</p>
                   </div>
                   <div>
                     <p className="text-xs text-muted-foreground">Chain</p>
@@ -166,6 +166,29 @@ export default function PublicTrades() {
                       {chat.trade?.status}
                     </Badge>
                   </div>
+                </div>
+
+                {/* Additional trade information */}
+                <div className="space-y-2 mb-3">
+                  {chat.trade?.expiryTimestamp && (
+                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                      <Clock className="h-3 w-3" />
+                      <span>Expires: {formatDistanceToNow(chat.trade.expiryTimestamp, { addSuffix: true })}</span>
+                    </div>
+                  )}
+                  
+                  {chat.trade?.expectedExecution && (
+                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                      <TrendingUp className="h-3 w-3" />
+                      <span>Expected execution: {formatDistanceToNow(chat.trade.expectedExecution, { addSuffix: true })}</span>
+                    </div>
+                  )}
+                  
+                  {chat.trade?.triggerAsset && chat.trade?.triggerCondition && chat.trade?.triggerPrice && (
+                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                      <span>🔔 Triggers if price is {chat.trade.triggerCondition} ${chat.trade.triggerPrice}</span>
+                    </div>
+                  )}
                 </div>
                 
                 <div className="flex items-center justify-between text-xs text-muted-foreground">

@@ -49,6 +49,16 @@ export interface Trade {
   status: 'active' | 'completed' | 'cancelled';
   createdAt: Date;
   createdBy: string;
+  limitPrice?: string;
+  usdAmount?: string;
+  sellAsset?: string;
+  buyAsset?: string;
+  expectedExecution?: Date;
+  expiryType?: string;
+  expiryTimestamp?: Date;
+  triggerAsset?: string;
+  triggerCondition?: string;
+  triggerPrice?: string;
 }
 
 export interface Message {

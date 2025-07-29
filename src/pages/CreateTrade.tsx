@@ -134,6 +134,24 @@ const CreateTrade = () => {
       const sellToken = tokens.find(t => t.address === formData.sellAsset);
       const buyToken = tokens.find(t => t.address === formData.buyAsset);
       
+      // Calculate expiry timestamp
+      let expiryTimestamp = null;
+      if (formData.expiryType !== "Never") {
+        const now = new Date();
+        if (formData.expiryType === "Custom" && formData.expiryValue) {
+          // For custom, assume the value is in hours
+          expiryTimestamp = new Date(now.getTime() + parseInt(formData.expiryValue) * 60 * 60 * 1000).toISOString();
+        } else {
+          const hours = {
+            '1 hour': 1,
+            '1 day': 24,
+            '1 week': 168,
+            '1 month': 720
+          }[formData.expiryType] || 0;
+          expiryTimestamp = new Date(now.getTime() + hours * 60 * 60 * 1000).toISOString();
+        }
+      }
+
       // Create the trade first
       const { data: tradeData, error: tradeError } = await supabase
         .from('trades')
@@ -141,10 +159,20 @@ const CreateTrade = () => {
           chain: selectedChain.name,
           pair: `${sellToken?.symbol || formData.sellAsset}/${buyToken?.symbol || formData.buyAsset}`,
           size: formData.usdAmount,
-          price: "Market",
+          price: formData.limitPrice || "Market",
           type: "sell",
           status: "active",
-          created_by: user.id
+          created_by: user.id,
+          limit_price: formData.limitPrice,
+          usd_amount: formData.usdAmount,
+          sell_asset: formData.sellAsset,
+          buy_asset: formData.buyAsset,
+          expected_execution: formData.expectedExecutionTimestamp || null,
+          expiry_type: formData.expiryType,
+          expiry_timestamp: expiryTimestamp,
+          trigger_asset: formData.triggerAsset,
+          trigger_condition: formData.triggerCondition,
+          trigger_price: formData.triggerPrice
         })
         .select()
         .single();

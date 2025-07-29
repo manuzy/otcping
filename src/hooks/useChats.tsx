@@ -63,7 +63,17 @@ export function useChats() {
             type: chat.trade.type as 'buy' | 'sell',
             status: chat.trade.status as 'active' | 'completed' | 'cancelled',
             createdAt: new Date(chat.trade.created_at),
-            createdBy: chat.trade.created_by
+            createdBy: chat.trade.created_by,
+            limitPrice: chat.trade.limit_price,
+            usdAmount: chat.trade.usd_amount,
+            sellAsset: chat.trade.sell_asset,
+            buyAsset: chat.trade.buy_asset,
+            expectedExecution: chat.trade.expected_execution ? new Date(chat.trade.expected_execution) : undefined,
+            expiryType: chat.trade.expiry_type,
+            expiryTimestamp: chat.trade.expiry_timestamp ? new Date(chat.trade.expiry_timestamp) : undefined,
+            triggerAsset: chat.trade.trigger_asset,
+            triggerCondition: chat.trade.trigger_condition,
+            triggerPrice: chat.trade.trigger_price
           } : undefined,
           participants: [], // Will be populated separately
           lastMessage: lastMessage ? {
