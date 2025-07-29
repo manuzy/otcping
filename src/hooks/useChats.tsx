@@ -57,6 +57,7 @@ export function useChats() {
           trade: chat.trade ? {
             id: chat.trade.id,
             chain: chat.trade.chain,
+            chain_id: chat.trade.chain_id,
             pair: chat.trade.pair,
             size: chat.trade.size,
             price: chat.trade.price,
