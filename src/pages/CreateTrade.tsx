@@ -457,7 +457,7 @@ const CreateTrade = () => {
                     {/* Triggers if section */}
                     <div className="space-y-2">
                       <div>
-                        <span className="font-medium">Triggers if</span>
+                        <Label>Triggers if</Label>
                       </div>
                       <div className="flex flex-row items-center space-x-2 text-sm">
                         <div className="w-48">
