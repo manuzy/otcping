@@ -188,12 +188,11 @@ export const ChatView = ({ chat, onMenuClick }: ChatViewProps) => {
             <CardContent className="p-6">
               <div className="flex items-center gap-3 mb-4">
                 <TrendingUp className="h-8 w-8 text-primary" />
-                <div className="flex-1">
-                  <h3 className="text-lg font-semibold">
-                    {formatTradePair(chat.trade)}
-                  </h3>
-                  <p className="text-sm text-muted-foreground">{chat.trade.chain}</p>
-                </div>
+                 <div className="flex-1">
+                   <h3 className="text-lg font-semibold">
+                     {formatTradePair(chat.trade)} on {chat.trade.chain}
+                   </h3>
+                 </div>
                 <Badge className={getTypeColor(chat.trade.type)}>
                   {chat.trade.type?.toUpperCase()}
                 </Badge>
@@ -246,36 +245,28 @@ export const ChatView = ({ chat, onMenuClick }: ChatViewProps) => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3 text-sm">
-                <div>
-                  <span className="text-xs text-muted-foreground">Status</span>
-                  <div>
-                    <Badge className={getStatusColor(chat.trade.status)}>
-                      {chat.trade.status?.toUpperCase()}
-                    </Badge>
-                  </div>
-                </div>
-                {chat.trade.usdAmount && (
-                  <div>
-                    <span className="text-xs text-muted-foreground">USD Amount</span>
-                    <p className="font-semibold">${formatNumberWithCommas(chat.trade.usdAmount)}</p>
-                  </div>
-                )}
-                {chat.trade.limitPrice && (
-                  <div>
-                    <span className="text-xs text-muted-foreground">Limit Price</span>
-                    <p className="font-semibold">{formatNumberWithCommas(chat.trade.limitPrice)}</p>
-                  </div>
-                )}
-                <div>
-                  <span className="text-xs text-muted-foreground">Size</span>
-                  <p className="font-semibold">{formatNumberWithCommas(chat.trade.size)}</p>
-                </div>
-                <div>
-                  <span className="text-xs text-muted-foreground">Price</span>
-                  <p className="font-semibold">{formatNumberWithCommas(chat.trade.price)}</p>
-                </div>
-              </div>
+               <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-3 text-sm">
+                 {chat.trade.usdAmount && (
+                   <div>
+                     <span className="text-xs text-muted-foreground">USD Amount</span>
+                     <p className="font-semibold">${formatNumberWithCommas(chat.trade.usdAmount)}</p>
+                   </div>
+                 )}
+                 {chat.trade.limitPrice && (
+                   <div>
+                     <span className="text-xs text-muted-foreground">Limit Price</span>
+                     <p className="font-semibold">{formatNumberWithCommas(chat.trade.limitPrice)}</p>
+                   </div>
+                 )}
+                 <div>
+                   <span className="text-xs text-muted-foreground">Status</span>
+                   <div>
+                     <Badge className={getStatusColor(chat.trade.status)}>
+                       {chat.trade.status?.toUpperCase()}
+                     </Badge>
+                   </div>
+                 </div>
+               </div>
 
               <div className="space-y-2 mb-3 text-xs text-muted-foreground">
                 {chat.trade.expiryTimestamp && (
