@@ -16,7 +16,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useChains } from "@/hooks/useChains";
 import { useTokens } from "@/hooks/useTokens";
-import { tokenToSelectOption, tokenToTriggerSelectOption, getExplorerUrl } from "@/lib/tokenUtils";
+import { tokenToSelectOption, tokenToTriggerSelectOption, getExplorerUrl, formatTokenDisplay, truncateAddress } from "@/lib/tokenUtils";
 import { supabase } from "@/integrations/supabase/client";
 import { formatNumberWithCommas, parseFormattedNumber, isValidNumberInput } from "@/lib/utils";
 import { ChevronDown, ChevronRight } from "lucide-react";
@@ -557,10 +557,50 @@ const CreateTrade = () => {
                     <span>{chains.find(c => c.id === formData.chain_id)?.name}</span>
                     
                     <span className="text-muted-foreground">Sell:</span>
-                    <span>{tokens.find(t => t.address === formData.sellAsset)?.symbol || formData.sellAsset}</span>
+                    <span>
+                      {(() => {
+                        const sellToken = tokens.find(t => t.address === formData.sellAsset);
+                        if (sellToken) {
+                          return (
+                            <>
+                              {sellToken.name} ({sellToken.symbol}) - 
+                              <a 
+                                href={getExplorerUrl(sellToken.chain_id, sellToken.address)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-primary hover:underline ml-1"
+                              >
+                                {truncateAddress(sellToken.address)}
+                              </a>
+                            </>
+                          );
+                        }
+                        return formData.sellAsset;
+                      })()}
+                    </span>
                     
                     <span className="text-muted-foreground">Buy:</span>
-                    <span>{tokens.find(t => t.address === formData.buyAsset)?.symbol || formData.buyAsset}</span>
+                    <span>
+                      {(() => {
+                        const buyToken = tokens.find(t => t.address === formData.buyAsset);
+                        if (buyToken) {
+                          return (
+                            <>
+                              {buyToken.name} ({buyToken.symbol}) - 
+                              <a 
+                                href={getExplorerUrl(buyToken.chain_id, buyToken.address)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-primary hover:underline ml-1"
+                              >
+                                {truncateAddress(buyToken.address)}
+                              </a>
+                            </>
+                          );
+                        }
+                        return formData.buyAsset;
+                      })()}
+                    </span>
                     
                     <span className="text-muted-foreground">Amount:</span>
                     <span>${formatNumberWithCommas(formData.usdAmount)}</span>
@@ -579,7 +619,26 @@ const CreateTrade = () => {
                       <>
                         <span className="text-muted-foreground">Trigger:</span>
                         <span>
-                          {tokens.find(t => t.address === formData.triggerAsset)?.symbol || formData.triggerAsset} price {formData.triggerCondition} ${formatNumberWithCommas(formData.triggerPrice)}
+                          {(() => {
+                            const triggerToken = tokens.find(t => t.address === formData.triggerAsset);
+                            if (triggerToken) {
+                              return (
+                                <>
+                                  {triggerToken.name} ({triggerToken.symbol}) - 
+                                  <a 
+                                    href={getExplorerUrl(triggerToken.chain_id, triggerToken.address)}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-primary hover:underline"
+                                  >
+                                    {truncateAddress(triggerToken.address)}
+                                  </a>
+                                  {' price '}{formData.triggerCondition} ${formatNumberWithCommas(formData.triggerPrice)}
+                                </>
+                              );
+                            }
+                            return `${formData.triggerAsset} price ${formData.triggerCondition} $${formatNumberWithCommas(formData.triggerPrice)}`;
+                          })()}
                         </span>
                       </>
                     )}
