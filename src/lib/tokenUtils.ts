@@ -26,9 +26,21 @@ export const formatTokenDisplay = (token: Token): string => {
   return `${token.name} (${token.symbol}) - ${truncateAddress(token.address)}`;
 };
 
+// Format token name only for trigger display
+export const formatTokenNameOnly = (token: Token): string => {
+  return token.name;
+};
+
 // Convert token to ReactSelect option format
 export const tokenToSelectOption = (token: Token) => ({
   label: formatTokenDisplay(token),
+  value: token.address,
+  token: token,
+});
+
+// Convert token to trigger ReactSelect option format (name only)
+export const tokenToTriggerSelectOption = (token: Token) => ({
+  label: formatTokenNameOnly(token),
   value: token.address,
   token: token,
 });

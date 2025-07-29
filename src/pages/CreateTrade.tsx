@@ -16,7 +16,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useChains } from "@/hooks/useChains";
 import { useTokens } from "@/hooks/useTokens";
-import { tokenToSelectOption, getExplorerUrl } from "@/lib/tokenUtils";
+import { tokenToSelectOption, tokenToTriggerSelectOption, getExplorerUrl } from "@/lib/tokenUtils";
 import { supabase } from "@/integrations/supabase/client";
 import { formatNumberWithCommas, parseFormattedNumber, isValidNumberInput } from "@/lib/utils";
 import { ChevronDown, ChevronRight } from "lucide-react";
@@ -207,6 +207,20 @@ const CreateTrade = () => {
 
   // Prepare token options
   const tokenOptions = tokens.map(tokenToSelectOption);
+
+  // Prepare trigger token options (only sell and buy tokens)
+  const triggerTokenOptions = (() => {
+    if (!formData.sellAsset || !formData.buyAsset) return [];
+    
+    const sellToken = tokens.find(t => t.address === formData.sellAsset);
+    const buyToken = tokens.find(t => t.address === formData.buyAsset);
+    
+    const options = [];
+    if (sellToken) options.push(tokenToTriggerSelectOption(sellToken));
+    if (buyToken) options.push(tokenToTriggerSelectOption(buyToken));
+    
+    return options;
+  })();
 
   // Token loading state or empty state
   const getTokenSelectPlaceholder = () => {
@@ -411,11 +425,11 @@ const CreateTrade = () => {
                         <span className="flex-1 font-medium">Triggers if *</span>
                         <div className="w-1/5">
                           <ReactSelect
-                            options={tokenOptions}
+                            options={triggerTokenOptions}
                             value={formData.triggerAsset}
                             onValueChange={(value) => handleInputChange("triggerAsset", value || "")}
-                            placeholder="Token"
-                            disabled={!formData.chain_id || tokensLoading}
+                            placeholder={!formData.sellAsset || !formData.buyAsset ? "Select sell/buy tokens first" : "Select token"}
+                            disabled={!formData.sellAsset || !formData.buyAsset}
                             getExplorerUrl={(token) => getExplorerUrl(token.chain_id, token.address)}
                           />
                         </div>
