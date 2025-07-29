@@ -124,6 +124,34 @@ const CustomOption = ({ data, getExplorerUrl, ...props }: any) => {
   );
 };
 
+// Custom SingleValue component with explorer link for selected token
+const CustomSingleValue = ({ data, getExplorerUrl, ...props }: any) => {
+  const handleExplorerClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (data.token && getExplorerUrl) {
+      const url = getExplorerUrl(data.token);
+      window.open(url, '_blank');
+    }
+  };
+
+  return (
+    <components.SingleValue {...props}>
+      <div className="flex items-center gap-2">
+        {data.token && getExplorerUrl && (
+          <button
+            onClick={handleExplorerClick}
+            className="p-1 rounded hover:bg-muted/50 flex-shrink-0"
+            title="View on explorer"
+          >
+            <ExternalLink className="h-3.5 w-3.5" />
+          </button>
+        )}
+        <span className="truncate">{data.label}</span>
+      </div>
+    </components.SingleValue>
+  );
+};
+
 export const ReactSelect = React.forwardRef<
   any,
   ReactSelectProps
@@ -136,7 +164,8 @@ export const ReactSelect = React.forwardRef<
 
   // Use custom components if needed
   const selectComponents = getExplorerUrl ? {
-    Option: (props: any) => <CustomOption {...props} getExplorerUrl={getExplorerUrl} />
+    Option: (props: any) => <CustomOption {...props} getExplorerUrl={getExplorerUrl} />,
+    SingleValue: (props: any) => <CustomSingleValue {...props} getExplorerUrl={getExplorerUrl} />
   } : {};
 
   return (
