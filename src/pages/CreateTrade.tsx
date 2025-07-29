@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Combobox } from "@/components/ui/combobox";
+import { ReactSelect } from "@/components/ui/react-select";
 import { ArrowLeft, Check } from "lucide-react";
 import { useAppKitAccount } from '@reown/appkit/react';
 import { useContacts } from "@/hooks/useContacts";
@@ -220,47 +220,39 @@ const CreateTrade = () => {
                   {chainsError && (
                     <p className="text-sm text-destructive">Error loading chains: {chainsError}</p>
                   )}
-                  <Combobox
+                  <ReactSelect
                     options={chainOptions}
                     value={formData.chain_id}
                     onValueChange={(value) => handleInputChange("chain_id", value || "")}
                     placeholder="Select blockchain"
-                    searchPlaceholder="Search chains..."
-                    emptyText="No chains found."
-                    loading={chainsLoading}
+                    disabled={chainsLoading}
                   />
                 </div>
 
                 <div className="space-y-2">
                   <Label>Sell token *</Label>
-                  <Select value={formData.sellAsset} onValueChange={(value) => handleInputChange("sellAsset", value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select token to sell" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {tokens.map((token) => (
-                        <SelectItem key={token.id} value={token.symbol}>
-                          {token.name} ({token.symbol})
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <ReactSelect
+                    options={tokens.map(token => ({
+                      label: `${token.name} (${token.symbol})`,
+                      value: token.symbol,
+                    }))}
+                    value={formData.sellAsset}
+                    onValueChange={(value) => handleInputChange("sellAsset", value || "")}
+                    placeholder="Select token to sell"
+                  />
                 </div>
 
                 <div className="space-y-2">
                   <Label>Buy token *</Label>
-                  <Select value={formData.buyAsset} onValueChange={(value) => handleInputChange("buyAsset", value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select token to buy" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {tokens.map((token) => (
-                        <SelectItem key={token.id} value={token.symbol}>
-                          {token.name} ({token.symbol})
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <ReactSelect
+                    options={tokens.map(token => ({
+                      label: `${token.name} (${token.symbol})`,
+                      value: token.symbol,
+                    }))}
+                    value={formData.buyAsset}
+                    onValueChange={(value) => handleInputChange("buyAsset", value || "")}
+                    placeholder="Select token to buy"
+                  />
                 </div>
 
                 <div className="space-y-2">
