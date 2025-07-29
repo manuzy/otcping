@@ -43,15 +43,15 @@ export default function PublicTrades() {
     return tokens.find(token => token.address.toLowerCase() === address.toLowerCase());
   };
 
-  // Helper function to format trade pair with full token names
+  // Helper function to format trade pair with token symbols only
   const formatTradePair = (sellAsset: string, buyAsset: string) => {
     const sellToken = findToken(sellAsset);
     const buyToken = findToken(buyAsset);
     
     if (sellToken && buyToken) {
-      return `${sellToken.name} (${sellToken.symbol}) / ${buyToken.name} (${buyToken.symbol})`;
+      return `${sellToken.symbol}/${buyToken.symbol}`;
     }
-    return `${sellAsset} / ${buyAsset}`;
+    return `${sellAsset}/${buyAsset}`;
   };
 
   // Get public chats with trades
