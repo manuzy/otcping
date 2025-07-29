@@ -14,7 +14,7 @@ import { useTokens } from '@/hooks/useTokens';
 import { useChains } from '@/hooks/useChains';
 import { getExplorerUrl } from '@/lib/tokenUtils';
 import { safeParseDate, formatNumberWithCommas } from '@/lib/utils';
-import { format } from 'date-fns';
+import { format, formatDistanceToNow } from 'date-fns';
 
 interface ChatViewProps {
   chat: Chat;
@@ -186,8 +186,9 @@ export const ChatView = ({ chat, onMenuClick }: ChatViewProps) => {
         <div className="p-4 border-b border-border">
           <Card>
             <CardContent className="p-6">
-              <div className="flex items-start justify-between mb-3">
-                <div>
+              <div className="flex items-center gap-3 mb-4">
+                <TrendingUp className="h-8 w-8 text-primary" />
+                <div className="flex-1">
                   <h3 className="text-lg font-semibold">
                     {formatTradePair(chat.trade)}
                   </h3>
@@ -198,61 +199,57 @@ export const ChatView = ({ chat, onMenuClick }: ChatViewProps) => {
                 </Badge>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3 text-sm">
-                <div>
-                  <div className="flex flex-col gap-1">
-                    <span className="text-xs text-muted-foreground mb-1">SELL</span>
-                    {chat.trade.sellAsset && (() => {
-                      const sellToken = findToken(chat.trade.sellAsset);
-                      return sellToken ? (
-                        <div>
-                          <p className="font-semibold">{sellToken.name} ({sellToken.symbol})</p>
-                          <a
-                            href={getExplorerUrl(chat.trade.chain_id || 1, sellToken.address)}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-xs text-primary hover:underline break-all"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            {sellToken.address}
-                          </a>
-                        </div>
-                      ) : (
-                        <p className="text-muted-foreground">Unknown Token</p>
-                      );
-                    })()}
-                  </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 text-sm">
+                <div className="flex flex-col gap-1">
+                  <span className="text-xs text-muted-foreground mb-1">SELL</span>
+                  {chat.trade.sellAsset && (() => {
+                    const sellToken = findToken(chat.trade.sellAsset);
+                    return sellToken ? (
+                      <div>
+                        <p className="font-semibold">{sellToken.name} ({sellToken.symbol})</p>
+                        <a
+                          href={getExplorerUrl(chat.trade.chain_id || 1, sellToken.address)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs text-primary hover:underline"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          {sellToken.address}
+                        </a>
+                      </div>
+                    ) : (
+                      <p className="text-muted-foreground">Unknown Token</p>
+                    );
+                  })()}
                 </div>
-                <div>
-                  <div className="flex flex-col gap-1">
-                    <span className="text-xs text-muted-foreground mb-1">BUY</span>
-                    {chat.trade.buyAsset && (() => {
-                      const buyToken = findToken(chat.trade.buyAsset);
-                      return buyToken ? (
-                        <div>
-                          <p className="font-semibold">{buyToken.name} ({buyToken.symbol})</p>
-                          <a
-                            href={getExplorerUrl(chat.trade.chain_id || 1, buyToken.address)}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-xs text-primary hover:underline break-all"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            {buyToken.address}
-                          </a>
-                        </div>
-                      ) : (
-                        <p className="text-muted-foreground">Unknown Token</p>
-                      );
-                    })()}
-                  </div>
+                <div className="flex flex-col gap-1">
+                  <span className="text-xs text-muted-foreground mb-1">BUY</span>
+                  {chat.trade.buyAsset && (() => {
+                    const buyToken = findToken(chat.trade.buyAsset);
+                    return buyToken ? (
+                      <div>
+                        <p className="font-semibold">{buyToken.name} ({buyToken.symbol})</p>
+                        <a
+                          href={getExplorerUrl(chat.trade.chain_id || 1, buyToken.address)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs text-primary hover:underline"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          {buyToken.address}
+                        </a>
+                      </div>
+                    ) : (
+                      <p className="text-muted-foreground">Unknown Token</p>
+                    );
+                  })()}
                 </div>
               </div>
 
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3 text-sm">
                 <div>
                   <span className="text-xs text-muted-foreground">Status</span>
-                  <div className="mt-1">
+                  <div>
                     <Badge className={getStatusColor(chat.trade.status)}>
                       {chat.trade.status?.toUpperCase()}
                     </Badge>
@@ -280,31 +277,32 @@ export const ChatView = ({ chat, onMenuClick }: ChatViewProps) => {
                 </div>
               </div>
 
-              <div className="space-y-2 text-xs text-muted-foreground">
+              <div className="space-y-2 mb-3 text-xs text-muted-foreground">
                 {chat.trade.expiryTimestamp && (
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1">
                     <Clock className="h-3 w-3" />
                     <span>Expires: {safeParseDate(chat.trade.expiryTimestamp) ? format(safeParseDate(chat.trade.expiryTimestamp)!, "dd/MM/yyyy, HH:mm:ss") : 'Invalid date'}</span>
                   </div>
                 )}
                 {chat.trade.expectedExecution && (
-                  <div className="flex items-center gap-2">
-                    <TrendingUp className="h-3 w-3" />
-                    <span>Expected: {safeParseDate(chat.trade.expectedExecution) ? format(safeParseDate(chat.trade.expectedExecution)!, "dd/MM/yyyy, HH:mm:ss") : 'Invalid date'}</span>
+                  <div className="flex items-center gap-1">
+                    <Clock className="h-3 w-3" />
+                    <span>Expected execution: {safeParseDate(chat.trade.expectedExecution) ? format(safeParseDate(chat.trade.expectedExecution)!, "dd/MM/yyyy, HH:mm:ss") : 'Invalid date'}</span>
                   </div>
                 )}
                 {(chat.trade.triggerAsset || chat.trade.triggerCondition || chat.trade.triggerPrice) && (
-                  <div className="flex items-center gap-2">
-                    <TrendingUp className="h-3 w-3" />
+                  <div className="flex items-center gap-1">
+                    <span>🔔</span>
                     <span>
                       Trigger: {chat.trade.triggerAsset} {chat.trade.triggerCondition} {chat.trade.triggerPrice}
                     </span>
                   </div>
                 )}
-                <div className="flex items-center gap-2">
-                  <Clock className="h-3 w-3" />
-                  <span>Created: {safeParseDate(chat.trade.createdAt) ? format(safeParseDate(chat.trade.createdAt)!, "dd/MM/yyyy, HH:mm:ss") : 'Invalid date'}</span>
-                </div>
+              </div>
+              
+              <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                <Clock className="h-3 w-3" />
+                <span>Created {safeParseDate(chat.trade.createdAt) ? formatDistanceToNow(safeParseDate(chat.trade.createdAt)!, { addSuffix: true }) : 'Invalid date'}</span>
               </div>
             </CardContent>
           </Card>
