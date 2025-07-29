@@ -17,6 +17,8 @@ import WalletAuthButton from "@/components/auth/WalletAuthButton";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
+import { useTotalUnreadCount } from "@/hooks/useTotalUnreadCount";
+import { Badge } from "@/components/ui/badge";
 
 const navItems = [
   { id: 'dashboard', label: 'Chat', icon: MessageCircle, path: '/app' },
@@ -31,6 +33,7 @@ export const Header = () => {
   const { isConnected, address, isAuthenticated } = useWalletAuth();
   const { signOut, user } = useAuth();
   const { isAdmin } = useIsAdmin();
+  const { totalUnreadCount } = useTotalUnreadCount();
   const [profile, setProfile] = useState<{ display_name: string; avatar?: string } | null>(null);
 
   useEffect(() => {
@@ -73,21 +76,29 @@ export const Header = () => {
                 {navItems.map((item) => {
                   const Icon = item.icon;
                   return (
-                    <NavLink
-                      key={item.id}
-                      to={item.path}
-                      className={({ isActive }) =>
-                        cn(
-                          "flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors",
-                          isActive
-                            ? "bg-primary/10 text-primary"
-                            : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-                        )
-                      }
-                    >
-                      <Icon className="h-4 w-4" />
-                      {item.label}
-                     </NavLink>
+                     <NavLink
+                       key={item.id}
+                       to={item.path}
+                       className={({ isActive }) =>
+                         cn(
+                           "flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors relative",
+                           isActive
+                             ? "bg-primary/10 text-primary"
+                             : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                         )
+                       }
+                     >
+                       <Icon className="h-4 w-4" />
+                       {item.label}
+                       {item.id === 'dashboard' && totalUnreadCount > 0 && (
+                         <Badge 
+                           variant="destructive" 
+                           className="absolute -top-1 -right-1 h-5 w-5 text-xs p-0 flex items-center justify-center rounded-full"
+                         >
+                           {totalUnreadCount > 99 ? '99+' : totalUnreadCount}
+                         </Badge>
+                       )}
+                      </NavLink>
                    );
                  })}
                  
