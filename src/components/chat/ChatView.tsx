@@ -26,7 +26,7 @@ interface ChatViewProps {
 
 export const ChatView = ({ chat, onMenuClick }: ChatViewProps) => {
   const [message, setMessage] = useState("");
-  const [isPlacingOrder, setIsPlacingOrder] = useState(false);
+  const [orderState, setOrderState] = useState<'idle' | 'preparing' | 'signing' | 'submitting'>('idle');
   const { user } = useAuth();
   const { messages, loading: messagesLoading, sending, sendMessage } = useMessages(chat.id);
   const { participants } = useChatParticipants(chat.id);
@@ -62,15 +62,45 @@ export const ChatView = ({ chat, onMenuClick }: ChatViewProps) => {
       return;
     }
 
-    setIsPlacingOrder(true);
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     
     try {
+      // Step 1: Preparing order
+      setOrderState('preparing');
+      toast({
+        title: "Preparing Order",
+        description: "Setting up your limit order parameters...",
+      });
+
+      // Brief delay to show preparing state
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      // Step 2: Waiting for signature
+      setOrderState('signing');
+      toast({
+        title: "Please Sign Transaction",
+        description: isMobile 
+          ? "Open your wallet app to sign the limit order transaction"
+          : "Check your wallet extension to sign the limit order transaction",
+      });
+
       const orderHash = await limitOrderService.createAndSubmitLimitOrder(
         chat.trade,
         tokens,
         walletClient
       );
 
+      // Step 3: Processing/submitting
+      setOrderState('submitting');
+      toast({
+        title: "Processing Order",
+        description: "Submitting your signed order to 1inch protocol...",
+      });
+
+      // Brief delay to show processing state
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // Success
       toast({
         title: "Order Placed Successfully",
         description: `Your limit order has been submitted to 1inch. Order hash: ${orderHash.slice(0, 10)}...`,
@@ -81,13 +111,30 @@ export const ChatView = ({ chat, onMenuClick }: ChatViewProps) => {
       
     } catch (error) {
       console.error('Failed to place order:', error);
+      
+      // Provide specific error messaging based on the error type
+      let errorTitle = "Failed to Place Order";
+      let errorDescription = "Unknown error occurred";
+      
+      if (error instanceof Error) {
+        if (error.message.includes('User rejected') || error.message.includes('denied')) {
+          errorTitle = "Transaction Cancelled";
+          errorDescription = "You cancelled the transaction in your wallet.";
+        } else if (error.message.includes('insufficient')) {
+          errorTitle = "Insufficient Balance";
+          errorDescription = "You don't have enough tokens or ETH for gas fees.";
+        } else {
+          errorDescription = error.message;
+        }
+      }
+      
       toast({
-        title: "Failed to Place Order",
-        description: error instanceof Error ? error.message : "Unknown error occurred",
+        title: errorTitle,
+        description: errorDescription,
         variant: "destructive",
       });
     } finally {
-      setIsPlacingOrder(false);
+      setOrderState('idle');
     }
   };
 
@@ -346,15 +393,28 @@ export const ChatView = ({ chat, onMenuClick }: ChatViewProps) => {
                     size="sm"
                     variant="outline"
                     onClick={handlePlaceOrder}
-                    disabled={isPlacingOrder || !walletClient}
+                    disabled={orderState !== 'idle' || !walletClient}
                     className="gap-1"
                   >
-                    {isPlacingOrder ? (
+                    {orderState === 'preparing' && (
                       <>
                         <div className="h-3 w-3 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-                        Placing...
+                        Preparing...
                       </>
-                    ) : (
+                    )}
+                    {orderState === 'signing' && (
+                      <>
+                        <div className="h-3 w-3 animate-pulse rounded-full bg-yellow-500" />
+                        Waiting for Signature
+                      </>
+                    )}
+                    {orderState === 'submitting' && (
+                      <>
+                        <div className="h-3 w-3 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                        Submitting...
+                      </>
+                    )}
+                    {orderState === 'idle' && (
                       <>
                         <ShoppingCart className="h-3 w-3" />
                         Place Order
