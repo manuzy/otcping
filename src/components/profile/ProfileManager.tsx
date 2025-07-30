@@ -16,6 +16,7 @@ import { useLicenses } from '@/hooks/useLicenses';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2, User, AlertCircle, CheckCircle, Shuffle, X } from 'lucide-react';
 import { sanitizeText, validateAvatarUrl, sanitizeDisplayName } from '@/components/ui/input-sanitizer';
+import { FileUpload } from '@/components/ui/file-upload';
 
 interface Profile {
   id: string;
@@ -258,56 +259,65 @@ export default function ProfileManager() {
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Avatar Section */}
-        <div className="flex items-center gap-4">
-          <div className="relative">
-            <Avatar className="h-20 w-20">
-              <AvatarImage src={profile.avatar} />
-              <AvatarFallback>
-                {profile.display_name.charAt(0).toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
-            {user && isUserOnline(user.id) && (
-              <div className="absolute bottom-0 right-0 h-5 w-5 bg-green-500 rounded-full border-2 border-background" />
-            )}
-          </div>
-          <div className="flex-1 space-y-2">
-            <Label htmlFor="avatar">Avatar URL</Label>
-            <div className="space-y-2">
-              <div className="flex gap-2">
-                <Input
-                  id="avatar"
-                  value={profile.avatar || ''}
-                  onChange={(e) => handleAvatarChange(e.target.value)}
-                  placeholder="Enter avatar URL or click random"
-                  className={`flex-1 ${avatarValidation && !avatarValidation.isValid ? 'border-destructive' : ''}`}
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="default"
-                  onClick={handleRandomAvatar}
-                  className="shrink-0"
-                >
-                  <Shuffle className="h-4 w-4 mr-2" />
-                  Random
-                </Button>
-              </div>
-              {avatarValidation && (
-                <div className={`flex items-center gap-2 text-sm ${avatarValidation.isValid ? 'text-green-600' : 'text-destructive'}`}>
-                  {avatarValidation.isValid ? (
-                    <CheckCircle className="h-4 w-4" />
-                  ) : (
-                    <AlertCircle className="h-4 w-4" />
-                  )}
-                  {avatarValidation.isValid ? 'Valid avatar URL' : avatarValidation.error}
-                </div>
-              )}
-              {profile.avatar && (
-                <div className="text-xs text-muted-foreground">
-                  Preview will appear in the avatar above when the URL is valid
-                </div>
+        <div className="space-y-4">
+          <div className="flex items-center gap-4">
+            <div className="relative">
+              <Avatar className="h-20 w-20">
+                <AvatarImage src={profile.avatar} />
+                <AvatarFallback>
+                  {profile.display_name.charAt(0).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              {user && isUserOnline(user.id) && (
+                <div className="absolute bottom-0 right-0 h-5 w-5 bg-green-500 rounded-full border-2 border-background" />
               )}
             </div>
+            <div className="flex-1">
+              <Label>Profile Image</Label>
+              <p className="text-sm text-muted-foreground mb-3">
+                Upload an image or use a URL
+              </p>
+            </div>
+          </div>
+          
+          {/* File Upload */}
+          <FileUpload
+            currentImage={profile.avatar}
+            onImageUpload={handleAvatarChange}
+          />
+          
+          {/* URL Input Alternative */}
+          <div className="space-y-2">
+            <Label htmlFor="avatar">Or use Avatar URL</Label>
+            <div className="flex gap-2">
+              <Input
+                id="avatar"
+                value={profile.avatar || ''}
+                onChange={(e) => handleAvatarChange(e.target.value)}
+                placeholder="Enter avatar URL"
+                className={`flex-1 ${avatarValidation && !avatarValidation.isValid ? 'border-destructive' : ''}`}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="default"
+                onClick={handleRandomAvatar}
+                className="shrink-0"
+              >
+                <Shuffle className="h-4 w-4 mr-2" />
+                Random
+              </Button>
+            </div>
+            {avatarValidation && (
+              <div className={`flex items-center gap-2 text-sm ${avatarValidation.isValid ? 'text-green-600' : 'text-destructive'}`}>
+                {avatarValidation.isValid ? (
+                  <CheckCircle className="h-4 w-4" />
+                ) : (
+                  <AlertCircle className="h-4 w-4" />
+                )}
+                {avatarValidation.isValid ? 'Valid avatar URL' : avatarValidation.error}
+              </div>
+            )}
           </div>
         </div>
 
