@@ -296,18 +296,20 @@ export const ChatView = ({ chat, onMenuClick }: ChatViewProps) => {
                   <Clock className="h-3 w-3" />
                   <span>Created {safeParseDate(chat.trade.createdAt) ? formatDistanceToNow(safeParseDate(chat.trade.createdAt)!, { addSuffix: true }) : 'Invalid date'}</span>
                 </div>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => {
-                    console.log('Place order clicked for trade:', chat.trade?.id);
-                    // TODO: Implement order placement logic
-                  }}
-                  className="gap-1"
-                >
-                  <ShoppingCart className="h-3 w-3" />
-                  Place Order
-                </Button>
+                {user?.id === chat.trade?.createdBy && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      console.log('Place order clicked for trade:', chat.trade?.id);
+                      // TODO: Implement order placement logic
+                    }}
+                    className="gap-1"
+                  >
+                    <ShoppingCart className="h-3 w-3" />
+                    Place Order
+                  </Button>
+                )}
               </div>
             </CardContent>
           </Card>
