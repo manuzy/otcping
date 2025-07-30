@@ -70,7 +70,7 @@ serve(async (req) => {
     };
 
     // Submit to 1inch Limit Order API
-    const response = await fetch('https://api.1inch.dev/orderbook/v4.0/1/order', {
+    const response = await fetch('https://api.1inch.dev/orderbook/v4.0/1', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${apiKey}`,
