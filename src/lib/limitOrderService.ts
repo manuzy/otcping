@@ -1,9 +1,11 @@
 import type { WalletClient } from 'viem';
 import { Trade } from '@/types';
 import { Token } from '@/hooks/useTokens';
+import { parseUnits, keccak256, toHex } from 'viem';
 
 export class LimitOrderService {
   private readonly MAINNET_CHAIN_ID = 1;
+  private readonly LIMIT_ORDER_CONTRACT = '0x1111111254eeb25477b68fb85ed929f73a960582'; // 1inch v5 contract
 
   async createAndSubmitLimitOrder(
     trade: Trade, 
@@ -25,32 +27,89 @@ export class LimitOrderService {
       throw new Error('Token not found in database');
     }
 
-    // For now, we'll simulate the order creation process
-    // In a real implementation, you would:
-    // 1. Import the actual 1inch SDK with correct types
-    // 2. Initialize the SDK with the wallet client
-    // 3. Create the limit order with proper parameters
-    // 4. Submit it to the 1inch protocol
+    try {
+      // Parse amounts with proper decimals (using token decimals)
+      const sellAmount = parseUnits(trade.size, 18); // TODO: Use actual token decimals
+      const limitPrice = parseFloat(trade.limitPrice || '0');
+      const buyAmount = parseUnits((parseFloat(trade.size) * limitPrice).toString(), 18);
 
-    const orderParams = this.mapTradeToOrderParams(trade, sellToken, buyToken);
-    
-    console.log('Creating 1inch limit order with params:', {
-      makerAsset: sellToken.address,
-      takerAsset: buyToken.address,
-      makingAmount: orderParams.makerAmount,
-      takingAmount: orderParams.takerAmount,
-      maker: walletClient.account.address,
-      expiration: orderParams.expiration,
-    });
+      // Create the typed data for EIP-712 signing
+      const domain = {
+        name: '1inch Limit Order Protocol',
+        version: '4',
+        chainId: this.MAINNET_CHAIN_ID,
+        verifyingContract: this.LIMIT_ORDER_CONTRACT as `0x${string}`,
+      };
 
-    // Simulate network delay
-    await new Promise(resolve => setTimeout(resolve, 2000));
+      const types = {
+        Order: [
+          { name: 'salt', type: 'uint256' },
+          { name: 'makerAsset', type: 'address' },
+          { name: 'takerAsset', type: 'address' },
+          { name: 'maker', type: 'address' },
+          { name: 'receiver', type: 'address' },
+          { name: 'allowedSender', type: 'address' },
+          { name: 'makingAmount', type: 'uint256' },
+          { name: 'takingAmount', type: 'uint256' },
+          { name: 'offsets', type: 'uint256' },
+          { name: 'interactions', type: 'bytes' },
+        ],
+      };
 
-    // Return a mock order hash for demonstration
-    // In production, this would be the actual transaction hash
-    const orderHash = `0x${Math.random().toString(16).substring(2).padStart(64, '0')}`;
+      // Generate a random salt
+      const salt = BigInt(Math.floor(Math.random() * Number.MAX_SAFE_INTEGER));
 
-    return orderHash;
+      const orderData = {
+        salt,
+        makerAsset: sellToken.address as `0x${string}`,
+        takerAsset: buyToken.address as `0x${string}`,
+        maker: walletClient.account.address,
+        receiver: '0x0000000000000000000000000000000000000000' as `0x${string}`,
+        allowedSender: '0x0000000000000000000000000000000000000000' as `0x${string}`,
+        makingAmount: sellAmount,
+        takingAmount: buyAmount,
+        offsets: BigInt(0),
+        interactions: '0x' as `0x${string}`,
+      };
+
+      console.log('Creating 1inch limit order with params:', {
+        sellToken: sellToken.symbol,
+        buyToken: buyToken.symbol,
+        sellAmount: trade.size,
+        buyAmount: (parseFloat(trade.size) * limitPrice).toString(),
+        limitPrice: trade.limitPrice,
+        maker: walletClient.account.address,
+      });
+
+      // Sign the typed data with the wallet - this will prompt user to sign!
+      const signature = await walletClient.signTypedData({
+        account: walletClient.account,
+        domain,
+        types,
+        primaryType: 'Order',
+        message: orderData,
+      });
+
+      console.log('Order signed successfully!', { signature });
+
+      // TODO: Submit to 1inch API for actual order placement
+      // For now, we'll return a mock order hash
+      const orderHash = keccak256(toHex(JSON.stringify(orderData)));
+
+      console.log('1inch limit order created and signed:', {
+        orderHash,
+        signature,
+        sellToken: sellToken.symbol,
+        buyToken: buyToken.symbol,
+        sellAmount: trade.size,
+        limitPrice: trade.limitPrice,
+      });
+
+      return orderHash;
+    } catch (error) {
+      console.error('Failed to create 1inch limit order:', error);
+      throw new Error(`Failed to create limit order: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
   }
 
   private validateOrderData(trade: Trade): void {
