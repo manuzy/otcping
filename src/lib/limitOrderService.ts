@@ -93,6 +93,23 @@ export class LimitOrderService {
 
       console.log('Order signed successfully!', { signature });
 
+      console.log('Submitting order to edge function with data:', {
+        orderData: {
+          salt: orderData.salt.toString(),
+          makerAsset: orderData.makerAsset,
+          takerAsset: orderData.takerAsset,
+          maker: orderData.maker,
+          receiver: orderData.receiver,
+          allowedSender: orderData.allowedSender,
+          makingAmount: orderData.makingAmount.toString(),
+          takingAmount: orderData.takingAmount.toString(),
+          offsets: orderData.offsets.toString(),
+          interactions: orderData.interactions,
+        },
+        signature,
+        chainId: this.MAINNET_CHAIN_ID
+      });
+
       // Submit to 1inch API via our edge function
       const { data: submitResult, error: submitError } = await supabase.functions.invoke(
         'submit-1inch-order',
@@ -110,14 +127,19 @@ export class LimitOrderService {
               offsets: orderData.offsets.toString(),
               interactions: orderData.interactions,
             },
-            signature
+            signature,
+            chainId: this.MAINNET_CHAIN_ID
           }
         }
       );
 
       if (submitError || !submitResult?.success) {
-        console.error('Failed to submit order to 1inch:', submitError);
-        throw new Error(submitResult?.error || 'Failed to submit order to 1inch API');
+        console.error('Failed to submit order to 1inch:', {
+          submitError,
+          submitResult
+        });
+        const errorMessage = submitResult?.error || submitError?.message || 'Failed to submit order to 1inch API';
+        throw new Error(errorMessage);
       }
 
       const orderHash = submitResult.orderHash;
