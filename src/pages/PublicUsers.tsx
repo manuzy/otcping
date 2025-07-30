@@ -303,9 +303,9 @@ export default function PublicUsers() {
                          <Star className="h-3 w-3 mr-1" />
                          {user.reputation.toFixed(1)}
                        </Badge>
-                       <Badge className={getKycBadgeColor(user.kycLevel)}>
-                         {user.kycLevel}
-                       </Badge>
+                        <Badge className={getKycBadgeColor(user.kycLevel)}>
+                          KYC {user.kycLevel}
+                        </Badge>
                        <Badge className={getTraderTypeBadgeColor(user.traderType)}>
                          {user.traderType}
                        </Badge>
