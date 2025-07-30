@@ -50,11 +50,17 @@ const customStyles: StylesConfig<ReactSelectOption, false> = {
     border: '1px solid hsl(var(--border))',
     borderRadius: '6px',
     boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
-    zIndex: 50,
+    zIndex: 9999,
+    position: 'relative',
+  }),
+  menuPortal: (provided) => ({
+    ...provided,
+    zIndex: 9999,
   }),
   menuList: (provided) => ({
     ...provided,
     padding: '4px',
+    maxHeight: '200px',
   }),
   option: (provided, state) => ({
     ...provided,
@@ -62,12 +68,14 @@ const customStyles: StylesConfig<ReactSelectOption, false> = {
       ? 'hsl(var(--accent))' 
       : state.isSelected 
         ? 'hsl(var(--primary))' 
-        : 'transparent',
+        : 'hsl(var(--popover))',
     color: state.isSelected 
       ? 'hsl(var(--primary-foreground))' 
-      : 'hsl(var(--foreground))',
+      : 'hsl(var(--popover-foreground))',
     borderRadius: '4px',
     margin: '2px 0',
+    padding: '8px 12px',
+    cursor: 'pointer',
     '&:active': {
       backgroundColor: 'hsl(var(--accent))',
     },
@@ -89,10 +97,12 @@ const customStyles: StylesConfig<ReactSelectOption, false> = {
   noOptionsMessage: (provided) => ({
     ...provided,
     color: 'hsl(var(--muted-foreground))',
+    padding: '8px 12px',
   }),
   loadingMessage: (provided) => ({
     ...provided,
     color: 'hsl(var(--muted-foreground))',
+    padding: '8px 12px',
   }),
 };
 
@@ -169,7 +179,7 @@ export const ReactSelect = React.forwardRef<
   } : {};
 
   return (
-    <div className={cn("w-full", className)}>
+    <div className={cn("w-full relative", className)}>
       <Select
         ref={ref}
         options={options}
@@ -182,6 +192,8 @@ export const ReactSelect = React.forwardRef<
         styles={customStyles}
         components={selectComponents}
         noOptionsMessage={() => "No options found"}
+        menuPortalTarget={document.body}
+        menuPosition="fixed"
         {...props}
       />
     </div>

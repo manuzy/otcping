@@ -352,48 +352,54 @@ const CreateTrade = () => {
             {/* Step 1: Trade Details */}
             {currentStep === 1 && (
               <>
-                <div className="space-y-2">
+                <div className="space-y-2 relative z-[100]">
                   <Label>Chain *</Label>
                   {chainsError && (
                     <p className="text-sm text-destructive">Error loading chains: {chainsError}</p>
                   )}
-                  <ReactSelect
-                    options={chainOptions}
-                    value={formData.chain_id}
-                    onValueChange={(value) => handleInputChange("chain_id", value || "")}
-                    placeholder="Select blockchain"
-                    disabled={chainsLoading}
-                  />
+                  <div className="w-full">
+                    <ReactSelect
+                      options={chainOptions}
+                      value={formData.chain_id}
+                      onValueChange={(value) => handleInputChange("chain_id", value || "")}
+                      placeholder="Select blockchain"
+                      disabled={chainsLoading}
+                    />
+                  </div>
                 </div>
 
-                <div className="space-y-2">
+                <div className="space-y-2 relative z-[99]">
                   <Label>Sell token *</Label>
                   {tokensError && (
                     <p className="text-sm text-destructive">Error loading tokens: {tokensError}</p>
                   )}
-                  <ReactSelect
-                    options={tokenOptions}
-                    value={formData.sellAsset}
-                    onValueChange={(value) => handleInputChange("sellAsset", value || "")}
-                    placeholder={getTokenSelectPlaceholder()}
-                    disabled={!formData.chain_id || tokensLoading}
-                    getExplorerUrl={(token) => getExplorerUrl(token.chain_id, token.address)}
-                  />
+                  <div className="w-full">
+                    <ReactSelect
+                      options={tokenOptions}
+                      value={formData.sellAsset}
+                      onValueChange={(value) => handleInputChange("sellAsset", value || "")}
+                      placeholder={getTokenSelectPlaceholder()}
+                      disabled={!formData.chain_id || tokensLoading}
+                      getExplorerUrl={(token) => getExplorerUrl(token.chain_id, token.address)}
+                    />
+                  </div>
                 </div>
 
-                <div className="space-y-2">
+                <div className="space-y-2 relative z-[98]">
                   <Label>Buy token *</Label>
                   {tokensError && (
                     <p className="text-sm text-destructive">Error loading tokens: {tokensError}</p>
                   )}
-                  <ReactSelect
-                    options={tokenOptions}
-                    value={formData.buyAsset}
-                    onValueChange={(value) => handleInputChange("buyAsset", value || "")}
-                    placeholder={getTokenSelectPlaceholder()}
-                    disabled={!formData.chain_id || tokensLoading}
-                    getExplorerUrl={(token) => getExplorerUrl(token.chain_id, token.address)}
-                  />
+                  <div className="w-full">
+                    <ReactSelect
+                      options={tokenOptions}
+                      value={formData.buyAsset}
+                      onValueChange={(value) => handleInputChange("buyAsset", value || "")}
+                      placeholder={getTokenSelectPlaceholder()}
+                      disabled={!formData.chain_id || tokensLoading}
+                      getExplorerUrl={(token) => getExplorerUrl(token.chain_id, token.address)}
+                    />
+                  </div>
                 </div>
 
                 <div className="space-y-2">
