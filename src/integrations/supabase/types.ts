@@ -354,6 +354,39 @@ export type Database = {
         }
         Relationships: []
       }
+      ratings: {
+        Row: {
+          comment: string | null
+          created_at: string
+          id: string
+          rated_user_id: string
+          rater_id: string
+          rating_value: number
+          trade_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string
+          id?: string
+          rated_user_id: string
+          rater_id: string
+          rating_value: number
+          trade_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string
+          id?: string
+          rated_user_id?: string
+          rater_id?: string
+          rating_value?: number
+          trade_id?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       trades: {
         Row: {
           buy_asset: string | null
@@ -488,6 +521,10 @@ export type Database = {
           nonce_value: string
         }
         Returns: Json
+      }
+      calculate_user_reputation: {
+        Args: { user_id: string }
+        Returns: undefined
       }
       cleanup_expired_sessions: {
         Args: Record<PropertyKey, never>

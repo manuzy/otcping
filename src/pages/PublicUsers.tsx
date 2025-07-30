@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, Star, TrendingUp, MessageCircle, UserPlus, UserCheck, Loader2 } from "lucide-react";
+import { Search, Star, TrendingUp, MessageCircle, UserPlus, UserCheck, Loader2, StarIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -17,6 +17,9 @@ import { useWalletAuth } from "@/hooks/useWalletAuth";
 import { useChats } from "@/hooks/useChats";
 import { useToast } from "@/components/ui/use-toast";
 import { formatDistanceToNow } from "date-fns";
+import { StarRating } from "@/components/rating/StarRating";
+import { RatingModal } from "@/components/rating/RatingModal";
+import { useRatings } from "@/hooks/useRatings";
 
 export default function PublicUsers() {
   const { toast } = useToast();
@@ -43,6 +46,9 @@ export default function PublicUsers() {
   const { createChat, findExistingDirectChat } = useChats();
   const [contactStates, setContactStates] = useState<{ [userId: string]: boolean }>({});
   const [creatingChat, setCreatingChat] = useState<{ [userId: string]: boolean }>({});
+  const [ratingModalOpen, setRatingModalOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<any>(null);
+  const { submitRating } = useRatings();
 
   // Check contact status for all users
   useEffect(() => {
@@ -152,6 +158,17 @@ export default function PublicUsers() {
     } finally {
       setCreatingChat(prev => ({ ...prev, [userId]: false }));
     }
+  };
+
+  const handleRateUser = (userToRate: any) => {
+    setSelectedUser(userToRate);
+    setRatingModalOpen(true);
+  };
+
+  const handleSubmitRating = async (rating: number, comment?: string) => {
+    if (!selectedUser) return { success: false, error: 'No user selected' };
+    
+    return await submitRating(selectedUser.id, rating, comment);
   };
 
   if (!isAuthenticated) {
@@ -299,10 +316,9 @@ export default function PublicUsers() {
                   <div className="flex-1 min-w-0">
                      <div className="flex items-center gap-2 mb-2 flex-wrap">
                        <h3 className="font-semibold text-lg">{user.displayName}</h3>
-                       <Badge className={getReputationColor(user.reputation)}>
-                         <Star className="h-3 w-3 mr-1" />
-                         {user.reputation.toFixed(1)}
-                       </Badge>
+                        <div className="flex items-center">
+                          <StarRating rating={user.reputation} size="sm" />
+                        </div>
                         <Badge className={getKycBadgeColor(user.kycLevel)}>
                           KYC {user.kycLevel}
                         </Badge>
@@ -374,10 +390,17 @@ export default function PublicUsers() {
                         )}
                         {creatingChat[user.id] ? "Creating..." : "Message"}
                       </Button>
-                      <Button size="sm" variant="outline" className="gap-2">
-                        <TrendingUp className="h-4 w-4" />
-                        Trade
-                      </Button>
+                       <Button size="sm" variant="outline" className="gap-2">
+                         <TrendingUp className="h-4 w-4" />
+                         Trade
+                       </Button>
+                       <Button
+                         size="sm"
+                         variant="outline"
+                         onClick={() => handleRateUser(user)}
+                       >
+                         <StarIcon className="h-4 w-4" />
+                       </Button>
                       <Button 
                         size="sm" 
                         variant={contactStates[user.id] ? "secondary" : "outline"} 
@@ -396,6 +419,17 @@ export default function PublicUsers() {
           ))
         )}
       </div>
+
+      <RatingModal
+        isOpen={ratingModalOpen}
+        onClose={() => {
+          setRatingModalOpen(false);
+          setSelectedUser(null);
+        }}
+        userDisplayName={selectedUser?.displayName || ''}
+        userId={selectedUser?.id || ''}
+        onSubmitRating={handleSubmitRating}
+      />
     </div>
   );
 }
