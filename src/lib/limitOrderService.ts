@@ -18,8 +18,8 @@ export class LimitOrderService {
     this.validateOrderData(trade);
 
     // Find token addresses
-    const sellToken = this.findTokenBySymbol(trade.sellAsset, tokens);
-    const buyToken = this.findTokenBySymbol(trade.buyAsset, tokens);
+    const sellToken = this.findTokenByAddress(trade.sellAsset, tokens);
+    const buyToken = this.findTokenByAddress(trade.buyAsset, tokens);
 
     if (!sellToken || !buyToken) {
       throw new Error('Token not found in database');
@@ -67,10 +67,10 @@ export class LimitOrderService {
     }
   }
 
-  private findTokenBySymbol(symbol: string | undefined, tokens: Token[]): Token | undefined {
-    if (!symbol) return undefined;
+  private findTokenByAddress(address: string | undefined, tokens: Token[]): Token | undefined {
+    if (!address) return undefined;
     return tokens.find(token => 
-      token.symbol.toLowerCase() === symbol.toLowerCase() &&
+      token.address.toLowerCase() === address.toLowerCase() &&
       token.chain_id === this.MAINNET_CHAIN_ID
     );
   }
