@@ -180,7 +180,7 @@ export default function ProfileManager() {
         description: sanitizeText(profile.description || '', 500),
         avatar: avatarUrl,
         is_public: profile.is_public,
-        kyc_level: profile.kyc_level || 'Level 0',
+        
         trader_type: profile.trader_type || 'Degen',
         licenses: profile.licenses || [],
       };
@@ -380,20 +380,15 @@ export default function ProfileManager() {
           <h3 className="text-lg font-medium">Trading Information</h3>
           
           <div>
-            <Label htmlFor="kycLevel">KYC Level</Label>
-            <Select 
-              value={profile.kyc_level || 'Level 0'} 
-              onValueChange={(value) => setProfile({ ...profile, kyc_level: value as 'Level 0' | 'Level 1' | 'Level 2' })}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select KYC level" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Level 0">Level 0 - Basic</SelectItem>
-                <SelectItem value="Level 1">Level 1 - Verified</SelectItem>
-                <SelectItem value="Level 2">Level 2 - Enhanced</SelectItem>
-              </SelectContent>
-            </Select>
+            <Label>KYC Level</Label>
+            <Input
+              value={`${profile.kyc_level || 'Level 0'} - Set by administrators`}
+              disabled
+              className="bg-muted"
+            />
+            <p className="text-sm text-muted-foreground mt-1">
+              KYC verification is managed by administrators
+            </p>
           </div>
 
           <div>
