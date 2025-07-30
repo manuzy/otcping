@@ -15,6 +15,9 @@ import { useChains } from '@/hooks/useChains';
 import { getExplorerUrl } from '@/lib/tokenUtils';
 import { safeParseDate, formatNumberWithCommas } from '@/lib/utils';
 import { format, formatDistanceToNow } from 'date-fns';
+import { limitOrderService } from '@/lib/limitOrderService';
+import { useWalletClient } from 'wagmi';
+import { useToast } from '@/hooks/use-toast';
 
 interface ChatViewProps {
   chat: Chat;
@@ -23,12 +26,15 @@ interface ChatViewProps {
 
 export const ChatView = ({ chat, onMenuClick }: ChatViewProps) => {
   const [message, setMessage] = useState("");
+  const [isPlacingOrder, setIsPlacingOrder] = useState(false);
   const { user } = useAuth();
   const { messages, loading: messagesLoading, sending, sendMessage } = useMessages(chat.id);
   const { participants } = useChatParticipants(chat.id);
   const { markAsRead } = useChats();
   const { tokens } = useTokens();
   const { chains } = useChains();
+  const { data: walletClient } = useWalletClient();
+  const { toast } = useToast();
 
   // Mark messages as read when chat is opened
   useEffect(() => {
@@ -43,6 +49,45 @@ export const ChatView = ({ chat, onMenuClick }: ChatViewProps) => {
     const success = await sendMessage(message.trim());
     if (success) {
       setMessage("");
+    }
+  };
+
+  const handlePlaceOrder = async () => {
+    if (!chat.trade || !walletClient || !user) {
+      toast({
+        title: "Error",
+        description: "Missing trade data or wallet connection",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsPlacingOrder(true);
+    
+    try {
+      const orderHash = await limitOrderService.createAndSubmitLimitOrder(
+        chat.trade,
+        tokens,
+        walletClient
+      );
+
+      toast({
+        title: "Order Placed Successfully",
+        description: `Your limit order has been submitted to 1inch. Order hash: ${orderHash.slice(0, 10)}...`,
+      });
+
+      // Send a system message to the chat about the order
+      await sendMessage(`🎯 Limit order placed on 1inch protocol. Order hash: ${orderHash}`);
+      
+    } catch (error) {
+      console.error('Failed to place order:', error);
+      toast({
+        title: "Failed to Place Order",
+        description: error instanceof Error ? error.message : "Unknown error occurred",
+        variant: "destructive",
+      });
+    } finally {
+      setIsPlacingOrder(false);
     }
   };
 
@@ -300,14 +345,21 @@ export const ChatView = ({ chat, onMenuClick }: ChatViewProps) => {
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => {
-                      console.log('Place order clicked for trade:', chat.trade?.id);
-                      // TODO: Implement order placement logic
-                    }}
+                    onClick={handlePlaceOrder}
+                    disabled={isPlacingOrder || !walletClient}
                     className="gap-1"
                   >
-                    <ShoppingCart className="h-3 w-3" />
-                    Place Order
+                    {isPlacingOrder ? (
+                      <>
+                        <div className="h-3 w-3 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                        Placing...
+                      </>
+                    ) : (
+                      <>
+                        <ShoppingCart className="h-3 w-3" />
+                        Place Order
+                      </>
+                    )}
                   </Button>
                 )}
               </div>
