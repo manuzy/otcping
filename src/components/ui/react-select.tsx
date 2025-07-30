@@ -24,32 +24,32 @@ const customStyles: StylesConfig<ReactSelectOption, false> = {
   control: (provided, state) => ({
     ...provided,
     minHeight: '40px',
-    border: '1px solid hsl(var(--border))',
+    border: `1px solid var(--border)`,
     borderRadius: '6px',
-    backgroundColor: 'hsl(var(--background))',
-    boxShadow: state.isFocused ? '0 0 0 2px hsl(var(--ring))' : 'none',
+    backgroundColor: `var(--background)`,
+    boxShadow: state.isFocused ? `0 0 0 2px var(--ring)` : 'none',
     '&:hover': {
-      borderColor: 'hsl(var(--border))',
+      borderColor: `var(--border)`,
     },
   }),
   input: (provided) => ({
     ...provided,
-    color: 'hsl(var(--foreground))',
+    color: `var(--foreground)`,
   }),
   placeholder: (provided) => ({
     ...provided,
-    color: 'hsl(var(--muted-foreground))',
+    color: `var(--muted-foreground)`,
   }),
   singleValue: (provided) => ({
     ...provided,
-    color: 'hsl(var(--foreground))',
+    color: `var(--foreground)`,
   }),
   menu: (provided) => ({
     ...provided,
-    backgroundColor: 'hsl(var(--popover))',
-    border: '1px solid hsl(var(--border))',
+    backgroundColor: `var(--popover)`,
+    border: `1px solid var(--border)`,
     borderRadius: '6px',
-    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+    boxShadow: 'var(--shadow-lg)',
     zIndex: 9999,
     position: 'relative',
   }),
@@ -65,43 +65,43 @@ const customStyles: StylesConfig<ReactSelectOption, false> = {
   option: (provided, state) => ({
     ...provided,
     backgroundColor: state.isFocused 
-      ? 'hsl(var(--accent))' 
+      ? `var(--accent)` 
       : state.isSelected 
-        ? 'hsl(var(--primary))' 
-        : 'hsl(var(--popover))',
+        ? `var(--primary)` 
+        : `var(--popover)`,
     color: state.isSelected 
-      ? 'hsl(var(--primary-foreground))' 
-      : 'hsl(var(--popover-foreground))',
+      ? `var(--primary-foreground)` 
+      : `var(--popover-foreground)`,
     borderRadius: '4px',
     margin: '2px 0',
     padding: '8px 12px',
     cursor: 'pointer',
     '&:active': {
-      backgroundColor: 'hsl(var(--accent))',
+      backgroundColor: `var(--accent)`,
     },
   }),
   dropdownIndicator: (provided) => ({
     ...provided,
-    color: 'hsl(var(--muted-foreground))',
+    color: `var(--muted-foreground)`,
     '&:hover': {
-      color: 'hsl(var(--foreground))',
+      color: `var(--foreground)`,
     },
   }),
   clearIndicator: (provided) => ({
     ...provided,
-    color: 'hsl(var(--muted-foreground))',
+    color: `var(--muted-foreground)`,
     '&:hover': {
-      color: 'hsl(var(--foreground))',
+      color: `var(--foreground)`,
     },
   }),
   noOptionsMessage: (provided) => ({
     ...provided,
-    color: 'hsl(var(--muted-foreground))',
+    color: `var(--muted-foreground)`,
     padding: '8px 12px',
   }),
   loadingMessage: (provided) => ({
     ...provided,
-    color: 'hsl(var(--muted-foreground))',
+    color: `var(--muted-foreground)`,
     padding: '8px 12px',
   }),
 };
