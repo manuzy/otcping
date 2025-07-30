@@ -39,7 +39,7 @@ const Landing = () => {
             </Badge>
             
             <h1 className="text-4xl lg:text-6xl font-bold mb-6 leading-tight bg-gradient-to-r from-primary to-primary bg-clip-text text-transparent">
-              Welcome to OTCping
+              Welcome to <span className="font-extrabold">OTCping</span>
             </h1>
             
             <p className="text-xl lg:text-2xl text-muted-foreground mb-8 max-w-2xl mx-auto">
