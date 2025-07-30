@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { Menu, Send, MoreVertical, Loader2, ExternalLink, Clock, TrendingUp } from "lucide-react";
+import { Menu, Send, MoreVertical, Loader2, ExternalLink, Clock, TrendingUp, ShoppingCart } from "lucide-react";
 import { Chat, Message } from "@/types";
 import { useMessages } from '@/hooks/useMessages';
 import { useChatParticipants } from '@/hooks/useChatParticipants';
@@ -291,9 +291,23 @@ export const ChatView = ({ chat, onMenuClick }: ChatViewProps) => {
                 )}
               </div>
               
-              <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                <Clock className="h-3 w-3" />
-                <span>Created {safeParseDate(chat.trade.createdAt) ? formatDistanceToNow(safeParseDate(chat.trade.createdAt)!, { addSuffix: true }) : 'Invalid date'}</span>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                  <Clock className="h-3 w-3" />
+                  <span>Created {safeParseDate(chat.trade.createdAt) ? formatDistanceToNow(safeParseDate(chat.trade.createdAt)!, { addSuffix: true }) : 'Invalid date'}</span>
+                </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    console.log('Place order clicked for trade:', chat.trade?.id);
+                    // TODO: Implement order placement logic
+                  }}
+                  className="gap-1"
+                >
+                  <ShoppingCart className="h-3 w-3" />
+                  Place Order
+                </Button>
               </div>
             </CardContent>
           </Card>
