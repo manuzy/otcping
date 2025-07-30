@@ -1,33 +1,47 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from './useAuth';
-import { ContactProfile } from './useContacts';
+import { useWalletAuth } from './useWalletAuth';
+import { User } from '@/types';
 
 export type SortOption = 'reputation' | 'trades' | 'success' | 'newest';
 
 export function usePublicUsers() {
-  const [users, setUsers] = useState<ContactProfile[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<SortOption>('reputation');
-  const { user } = useAuth();
+  const [kycFilter, setKycFilter] = useState<'all' | 'Level 0' | 'Level 1' | 'Level 2'>('all');
+  const [traderTypeFilter, setTraderTypeFilter] = useState<'all' | 'Degen' | 'Institutional'>('all');
+  const { user } = useWalletAuth();
 
   // Fetch public users
   const fetchPublicUsers = async () => {
     try {
+      setLoading(true);
+      
       let query = supabase
         .from('profiles')
         .select('*')
         .eq('is_public', true);
 
       // Exclude current user
-      if (user) {
+      if (user?.id) {
         query = query.neq('id', user.id);
       }
 
       // Add search filter
       if (searchQuery.trim()) {
-        query = query.ilike('display_name', `%${searchQuery.trim()}%`);
+        query = query.or(`display_name.ilike.%${searchQuery}%,wallet_address.ilike.%${searchQuery}%`);
+      }
+
+      // Apply KYC filter
+      if (kycFilter !== 'all') {
+        query = query.eq('kyc_level', kycFilter);
+      }
+
+      // Apply trader type filter
+      if (traderTypeFilter !== 'all') {
+        query = query.eq('trader_type', traderTypeFilter);
       }
 
       // Add sorting
@@ -61,7 +75,25 @@ export function usePublicUsers() {
         });
       }
 
-      setUsers(sortedData);
+      const formattedUsers: User[] = sortedData.map(profile => ({
+        id: profile.id,
+        walletAddress: profile.wallet_address || '',
+        displayName: profile.display_name,
+        avatar: profile.avatar || '',
+        isOnline: false, // Will be updated with real-time data
+        description: profile.description || '',
+        isPublic: profile.is_public,
+        reputation: profile.reputation,
+        successfulTrades: profile.successful_trades,
+        totalTrades: profile.total_trades,
+        joinedAt: new Date(profile.created_at),
+        contacts: [], // Will be populated by contact checking
+        kycLevel: profile.kyc_level as 'Level 0' | 'Level 1' | 'Level 2',
+        traderType: profile.trader_type as 'Degen' | 'Institutional',
+        licenses: profile.licenses || [],
+      }));
+
+      setUsers(formattedUsers);
     } catch (error) {
       console.error('Error fetching public users:', error);
       setUsers([]);
@@ -90,7 +122,7 @@ export function usePublicUsers() {
 
   useEffect(() => {
     fetchPublicUsers();
-  }, [user, searchQuery, sortBy]);
+  }, [user?.id, searchQuery, sortBy, kycFilter, traderTypeFilter]);
 
   // Set up real-time subscription for profile changes
   useEffect(() => {
@@ -121,6 +153,10 @@ export function usePublicUsers() {
     setSearchQuery,
     sortBy,
     setSortBy,
+    kycFilter,
+    setKycFilter,
+    traderTypeFilter,
+    setTraderTypeFilter,
     checkIsContact,
     refetch: fetchPublicUsers
   };

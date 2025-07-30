@@ -11,6 +11,17 @@ export interface User {
   totalTrades: number;
   joinedAt: Date;
   contacts: string[]; // user IDs
+  kycLevel: 'Level 0' | 'Level 1' | 'Level 2';
+  traderType: 'Degen' | 'Institutional';
+  licenses: string[]; // License IDs
+}
+
+export interface License {
+  id: string;
+  regionCode: string;
+  region: string;
+  licenseName: string;
+  description: string;
 }
 
 export interface NotificationSettings {

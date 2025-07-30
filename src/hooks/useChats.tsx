@@ -515,7 +515,10 @@ export function useChats() {
           successfulTrades: 0,
           totalTrades: 0,
           joinedAt: new Date(),
-          contacts: []
+          contacts: [],
+          kycLevel: 'Level 0' as 'Level 0' | 'Level 1' | 'Level 2',
+          traderType: 'Degen' as 'Degen' | 'Institutional',
+          licenses: []
         }));
 
         return {

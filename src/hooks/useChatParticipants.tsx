@@ -63,7 +63,10 @@ export function useChatParticipants(chatId: string | null) {
               successful_trades,
               total_trades,
               created_at,
-              wallet_address
+              wallet_address,
+              kyc_level,
+              trader_type,
+              licenses
             )
           `)
           .eq('chat_id', chatId)
@@ -93,7 +96,10 @@ export function useChatParticipants(chatId: string | null) {
             successfulTrades: participant.profiles.successful_trades || 0,
             totalTrades: participant.profiles.total_trades || 0,
             joinedAt: new Date(participant.profiles.created_at),
-            contacts: [] // Not needed for participants view
+            contacts: [], // Not needed for participants view
+            kycLevel: (participant.profiles.kyc_level as 'Level 0' | 'Level 1' | 'Level 2') || 'Level 0',
+            traderType: (participant.profiles.trader_type as 'Degen' | 'Institutional') || 'Degen',
+            licenses: participant.profiles.licenses || [],
           }));
 
         if (mountedRef.current) {

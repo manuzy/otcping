@@ -154,6 +154,36 @@ export type Database = {
         }
         Relationships: []
       }
+      data_licenses: {
+        Row: {
+          created_at: string
+          description: string
+          id: string
+          license_name: string
+          region: string
+          region_code: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          id?: string
+          license_name: string
+          region: string
+          region_code: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          id?: string
+          license_name?: string
+          region?: string
+          region_code?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       data_tokens: {
         Row: {
           address: string
@@ -281,9 +311,12 @@ export type Database = {
           display_name: string
           id: string
           is_public: boolean
+          kyc_level: Database["public"]["Enums"]["kyc_level"]
+          licenses: string[]
           reputation: number
           successful_trades: number
           total_trades: number
+          trader_type: Database["public"]["Enums"]["trader_type"]
           updated_at: string
           wallet_address: string | null
         }
@@ -294,9 +327,12 @@ export type Database = {
           display_name: string
           id: string
           is_public?: boolean
+          kyc_level?: Database["public"]["Enums"]["kyc_level"]
+          licenses?: string[]
           reputation?: number
           successful_trades?: number
           total_trades?: number
+          trader_type?: Database["public"]["Enums"]["trader_type"]
           updated_at?: string
           wallet_address?: string | null
         }
@@ -307,9 +343,12 @@ export type Database = {
           display_name?: string
           id?: string
           is_public?: boolean
+          kyc_level?: Database["public"]["Enums"]["kyc_level"]
+          licenses?: string[]
           reputation?: number
           successful_trades?: number
           total_trades?: number
+          trader_type?: Database["public"]["Enums"]["trader_type"]
           updated_at?: string
           wallet_address?: string | null
         }
@@ -468,9 +507,11 @@ export type Database = {
       }
     }
     Enums: {
+      kyc_level: "Level 0" | "Level 1" | "Level 2"
       message_type: "message" | "trade_action" | "system"
       trade_status: "active" | "completed" | "cancelled"
       trade_type: "buy" | "sell"
+      trader_type: "Degen" | "Institutional"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -598,9 +639,11 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      kyc_level: ["Level 0", "Level 1", "Level 2"],
       message_type: ["message", "trade_action", "system"],
       trade_status: ["active", "completed", "cancelled"],
       trade_type: ["buy", "sell"],
+      trader_type: ["Degen", "Institutional"],
     },
   },
 } as const

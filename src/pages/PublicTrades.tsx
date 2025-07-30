@@ -424,7 +424,7 @@ export default function PublicTrades() {
                         variant="outline"
                         onClick={(e) => {
                           const traderProfile = users.find(u => u.id === chat.trade?.createdBy);
-                          const traderName = traderProfile?.display_name || 'Trader';
+                          const traderName = traderProfile?.displayName || 'Trader';
                           handleMessageTrader(chat.trade.createdBy, traderName, e);
                         }}
                         disabled={messagingTrader === chat.trade.createdBy}

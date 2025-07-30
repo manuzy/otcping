@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { LicenseBadges } from "@/components/ui/license-badges";
 import { usePublicUsers, SortOption } from "@/hooks/usePublicUsers";
 import { useContacts } from "@/hooks/useContacts";
 import { useOnlinePresence } from "@/hooks/useOnlinePresence";
@@ -19,7 +20,19 @@ export default function PublicUsers() {
   const { toast } = useToast();
   const navigate = useNavigate();
   const { isAuthenticated } = useWalletAuth();
-  const { users, loading, searchQuery, setSearchQuery, sortBy, setSortBy, checkIsContact } = usePublicUsers();
+  const { 
+    users, 
+    loading, 
+    searchQuery, 
+    setSearchQuery, 
+    sortBy, 
+    setSortBy, 
+    kycFilter,
+    setKycFilter,
+    traderTypeFilter,
+    setTraderTypeFilter,
+    checkIsContact 
+  } = usePublicUsers();
   const { addContact } = useContacts();
   const { isUserOnline } = useOnlinePresence();
   const { createChat, findExistingDirectChat } = useChats();
@@ -50,6 +63,23 @@ export default function PublicUsers() {
   const getSuccessRate = (successful: number, total: number) => {
     if (total === 0) return 0;
     return Math.round((successful / total) * 100);
+  };
+
+  const getKycBadgeColor = (level: string) => {
+    switch (level) {
+      case 'Level 0': return "bg-gray-100 text-gray-800";
+      case 'Level 1': return "bg-blue-100 text-blue-800";
+      case 'Level 2': return "bg-green-100 text-green-800";
+      default: return "bg-gray-100 text-gray-800";
+    }
+  };
+
+  const getTraderTypeBadgeColor = (type: string) => {
+    switch (type) {
+      case 'Degen': return "bg-purple-100 text-purple-800";
+      case 'Institutional': return "bg-indigo-100 text-indigo-800";
+      default: return "bg-gray-100 text-gray-800";
+    }
   };
 
   const handleAddContact = async (userId: string) => {
@@ -145,17 +175,42 @@ export default function PublicUsers() {
             />
           </div>
           
-          <Select value={sortBy} onValueChange={(value: SortOption) => setSortBy(value)}>
-            <SelectTrigger className="w-40">
-              <SelectValue placeholder="Sort by" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="reputation">Reputation</SelectItem>
-              <SelectItem value="trades">Total Trades</SelectItem>
-              <SelectItem value="success">Success Rate</SelectItem>
-              <SelectItem value="newest">Newest</SelectItem>
-            </SelectContent>
-          </Select>
+          <div className="flex gap-3 flex-wrap">
+            <Select value={sortBy} onValueChange={(value: SortOption) => setSortBy(value)}>
+              <SelectTrigger className="w-40">
+                <SelectValue placeholder="Sort by" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="reputation">Reputation</SelectItem>
+                <SelectItem value="trades">Total Trades</SelectItem>
+                <SelectItem value="success">Success Rate</SelectItem>
+                <SelectItem value="newest">Newest</SelectItem>
+              </SelectContent>
+            </Select>
+            
+            <Select value={kycFilter} onValueChange={(value) => setKycFilter(value as typeof kycFilter)}>
+              <SelectTrigger className="w-32">
+                <SelectValue placeholder="KYC Level" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All KYC</SelectItem>
+                <SelectItem value="Level 0">Level 0</SelectItem>
+                <SelectItem value="Level 1">Level 1</SelectItem>
+                <SelectItem value="Level 2">Level 2</SelectItem>
+              </SelectContent>
+            </Select>
+            
+            <Select value={traderTypeFilter} onValueChange={(value) => setTraderTypeFilter(value as typeof traderTypeFilter)}>
+              <SelectTrigger className="w-36">
+                <SelectValue placeholder="Trader Type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Types</SelectItem>
+                <SelectItem value="Degen">Degen</SelectItem>
+                <SelectItem value="Institutional">Institutional</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       </div>
 
@@ -175,63 +230,76 @@ export default function PublicUsers() {
               <CardContent className="p-4">
                 <div className="flex items-start gap-4">
                   <div className="relative">
-                    <Avatar className="h-16 w-16">
-                      <AvatarImage src={user.avatar} alt={user.display_name} />
-                      <AvatarFallback>{user.display_name.charAt(0)}</AvatarFallback>
-                    </Avatar>
+                     <Avatar className="h-16 w-16">
+                       <AvatarImage src={user.avatar} alt={user.displayName} />
+                       <AvatarFallback>{user.displayName.charAt(0)}</AvatarFallback>
+                     </Avatar>
                     {isUserOnline(user.id) && (
                       <div className="absolute bottom-0 right-0 h-4 w-4 bg-green-500 rounded-full border-2 border-background" />
                     )}
                   </div>
                   
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-2">
-                      <h3 className="font-semibold text-lg">{user.display_name}</h3>
-                      <Badge className={getReputationColor(user.reputation)}>
-                        <Star className="h-3 w-3 mr-1" />
-                        {user.reputation.toFixed(1)}
-                      </Badge>
-                      {isUserOnline(user.id) && (
-                        <Badge variant="secondary" className="text-green-600">
-                          Online
-                        </Badge>
-                      )}
-                    </div>
+                     <div className="flex items-center gap-2 mb-2 flex-wrap">
+                       <h3 className="font-semibold text-lg">{user.displayName}</h3>
+                       <Badge className={getReputationColor(user.reputation)}>
+                         <Star className="h-3 w-3 mr-1" />
+                         {user.reputation.toFixed(1)}
+                       </Badge>
+                       <Badge className={getKycBadgeColor(user.kycLevel)}>
+                         {user.kycLevel}
+                       </Badge>
+                       <Badge className={getTraderTypeBadgeColor(user.traderType)}>
+                         {user.traderType}
+                       </Badge>
+                       {isUserOnline(user.id) && (
+                         <Badge variant="secondary" className="text-green-600">
+                           Online
+                         </Badge>
+                       )}
+                     </div>
                     
-                    {user.wallet_address && (
-                      <div className="mb-2">
-                        <a 
-                          href={`https://etherscan.io/address/${user.wallet_address}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="font-mono text-xs text-primary hover:underline"
-                        >
-                          {user.wallet_address}
-                        </a>
-                      </div>
-                    )}
+                     {user.walletAddress && (
+                       <div className="mb-2">
+                         <a 
+                           href={`https://etherscan.io/address/${user.walletAddress}`}
+                           target="_blank"
+                           rel="noopener noreferrer"
+                           className="font-mono text-xs text-primary hover:underline"
+                         >
+                           {user.walletAddress}
+                         </a>
+                       </div>
+                     )}
                     
-                    <p className="text-muted-foreground mb-3 text-sm">
-                      {user.description || "No description provided"}
-                    </p>
+                     <p className="text-muted-foreground mb-2 text-sm">
+                       {user.description || "No description provided"}
+                     </p>
+
+                     {user.licenses.length > 0 && (
+                       <div className="mb-3">
+                         <p className="text-xs text-muted-foreground mb-1">Licenses</p>
+                         <LicenseBadges licenseIds={user.licenses} />
+                       </div>
+                     )}
                     
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-3 text-sm">
-                      <div>
-                        <p className="text-xs text-muted-foreground">Total Trades</p>
-                        <p className="font-semibold">{user.total_trades}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-muted-foreground">Success Rate</p>
-                        <p className="font-semibold text-green-600">
-                          {getSuccessRate(user.successful_trades, user.total_trades)}%
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-muted-foreground">Member Since</p>
-                        <p className="font-semibold">
-                          {formatDistanceToNow(new Date(user.created_at), { addSuffix: true })}
-                        </p>
-                      </div>
+                       <div>
+                         <p className="text-xs text-muted-foreground">Total Trades</p>
+                         <p className="font-semibold">{user.totalTrades}</p>
+                       </div>
+                       <div>
+                         <p className="text-xs text-muted-foreground">Success Rate</p>
+                         <p className="font-semibold text-green-600">
+                           {getSuccessRate(user.successfulTrades, user.totalTrades)}%
+                         </p>
+                       </div>
+                       <div>
+                         <p className="text-xs text-muted-foreground">Member Since</p>
+                         <p className="font-semibold">
+                           {formatDistanceToNow(user.joinedAt, { addSuffix: true })}
+                         </p>
+                       </div>
                     </div>
                     
                     <div className="flex gap-2">
@@ -239,7 +307,7 @@ export default function PublicUsers() {
                         size="sm" 
                         variant="outline" 
                         className="gap-2"
-                        onClick={() => handleMessage(user.id, user.display_name)}
+                        onClick={() => handleMessage(user.id, user.displayName)}
                         disabled={creatingChat[user.id]}
                       >
                         {creatingChat[user.id] ? (

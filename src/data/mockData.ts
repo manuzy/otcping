@@ -14,6 +14,9 @@ export const mockUsers: User[] = [
     totalTrades: 152,
     joinedAt: new Date('2023-01-15'),
     contacts: ["2", "3"],
+    kycLevel: 'Level 2',
+    traderType: 'Institutional',
+    licenses: [],
   },
   {
     id: "2",
@@ -28,6 +31,9 @@ export const mockUsers: User[] = [
     totalTrades: 95,
     joinedAt: new Date('2023-03-22'),
     contacts: ["1", "4", "5"],
+    kycLevel: 'Level 1',
+    traderType: 'Degen',
+    licenses: [],
   },
   {
     id: "3",
@@ -42,6 +48,9 @@ export const mockUsers: User[] = [
     totalTrades: 215,
     joinedAt: new Date('2022-11-08'),
     contacts: ["1", "5"],
+    kycLevel: 'Level 2',
+    traderType: 'Institutional',
+    licenses: [],
   },
   {
     id: "4",
@@ -56,6 +65,9 @@ export const mockUsers: User[] = [
     totalTrades: 68,
     joinedAt: new Date('2023-06-10'),
     contacts: ["2"],
+    kycLevel: 'Level 1',
+    traderType: 'Degen',
+    licenses: [],
   },
   {
     id: "5",
@@ -70,6 +82,9 @@ export const mockUsers: User[] = [
     totalTrades: 42,
     joinedAt: new Date('2023-08-14'),
     contacts: ["2", "3"],
+    kycLevel: 'Level 0',
+    traderType: 'Degen',
+    licenses: [],
   },
   {
     id: "6",
@@ -84,6 +99,9 @@ export const mockUsers: User[] = [
     totalTrades: 85,
     joinedAt: new Date('2023-05-01'),
     contacts: ["1", "2", "3"],
+    kycLevel: 'Level 1',
+    traderType: 'Degen',
+    licenses: [],
   },
 ];
 
