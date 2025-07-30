@@ -2,6 +2,7 @@ import type { WalletClient } from 'viem';
 import { Trade } from '@/types';
 import { Token } from '@/hooks/useTokens';
 import { parseUnits, keccak256, toHex } from 'viem';
+import { supabase } from '@/integrations/supabase/client';
 
 export class LimitOrderService {
   private readonly MAINNET_CHAIN_ID = 1;
@@ -92,13 +93,36 @@ export class LimitOrderService {
 
       console.log('Order signed successfully!', { signature });
 
-      // TODO: Submit to 1inch API for actual order placement
-      // For now, we'll return a mock order hash
-      const orderHash = keccak256(toHex(JSON.stringify(orderData)));
+      // Submit to 1inch API via our edge function
+      const { data: submitResult, error: submitError } = await supabase.functions.invoke(
+        'submit-1inch-order',
+        {
+          body: {
+            orderData: {
+              salt: orderData.salt.toString(),
+              makerAsset: orderData.makerAsset,
+              takerAsset: orderData.takerAsset,
+              maker: orderData.maker,
+              receiver: orderData.receiver,
+              allowedSender: orderData.allowedSender,
+              makingAmount: orderData.makingAmount.toString(),
+              takingAmount: orderData.takingAmount.toString(),
+              offsets: orderData.offsets.toString(),
+              interactions: orderData.interactions,
+            },
+            signature
+          }
+        }
+      );
 
-      console.log('1inch limit order created and signed:', {
+      if (submitError || !submitResult?.success) {
+        console.error('Failed to submit order to 1inch:', submitError);
+        throw new Error(submitResult?.error || 'Failed to submit order to 1inch API');
+      }
+
+      const orderHash = submitResult.orderHash;
+      console.log('1inch limit order submitted successfully:', {
         orderHash,
-        signature,
         sellToken: sellToken.symbol,
         buyToken: buyToken.symbol,
         sellAmount: trade.size,

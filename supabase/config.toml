@@ -8,3 +8,6 @@ verify_jwt = false
 
 [functions.test-email]
 verify_jwt = false
+
+[functions.submit-1inch-order]
+verify_jwt = false
