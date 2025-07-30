@@ -7,8 +7,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ReactSelect } from "@/components/ui/react-select";
 import { LicenseBadges } from "@/components/ui/license-badges";
 import { usePublicUsers, SortOption } from "@/hooks/usePublicUsers";
+import { useLicenses } from "@/hooks/useLicenses";
 import { useContacts } from "@/hooks/useContacts";
 import { useOnlinePresence } from "@/hooks/useOnlinePresence";
 import { useWalletAuth } from "@/hooks/useWalletAuth";
@@ -20,19 +22,22 @@ export default function PublicUsers() {
   const { toast } = useToast();
   const navigate = useNavigate();
   const { isAuthenticated } = useWalletAuth();
-  const { 
-    users, 
-    loading, 
-    searchQuery, 
-    setSearchQuery, 
-    sortBy, 
-    setSortBy, 
+  const {
+    users,
+    loading,
+    searchQuery,
+    setSearchQuery,
+    sortBy,
+    setSortBy,
     kycFilter,
     setKycFilter,
     traderTypeFilter,
     setTraderTypeFilter,
-    checkIsContact 
+    licenseFilter,
+    setLicenseFilter,
+    checkIsContact
   } = usePublicUsers();
+  const { licenses } = useLicenses();
   const { addContact } = useContacts();
   const { isUserOnline } = useOnlinePresence();
   const { createChat, findExistingDirectChat } = useChats();
@@ -208,6 +213,58 @@ export default function PublicUsers() {
                 <SelectItem value="all">All Types</SelectItem>
                 <SelectItem value="Degen">Degen</SelectItem>
                 <SelectItem value="Institutional">Institutional</SelectItem>
+              </SelectContent>
+            </Select>
+            
+            {licenseFilter.length > 0 && (
+              <div className="flex flex-wrap gap-1">
+                {licenseFilter.map(licenseId => {
+                  const license = licenses.find(l => l.id === licenseId);
+                  return license ? (
+                    <Badge key={licenseId} variant="secondary" className="text-xs">
+                      {license.licenseName}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-4 w-4 p-0 ml-1"
+                        onClick={() => setLicenseFilter(prev => prev.filter(id => id !== licenseId))}
+                      >
+                        ×
+                      </Button>
+                    </Badge>
+                  ) : null;
+                })}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 text-xs"
+                  onClick={() => setLicenseFilter([])}
+                >
+                  Clear all
+                </Button>
+              </div>
+            )}
+            
+            <Select 
+              value={licenseFilter.length > 0 ? "filtered" : "all"} 
+              onValueChange={(value) => {
+                if (value === "all") {
+                  setLicenseFilter([]);
+                } else if (value !== "filtered") {
+                  setLicenseFilter(prev => prev.includes(value) ? prev : [...prev, value]);
+                }
+              }}
+            >
+              <SelectTrigger className="w-40">
+                <SelectValue placeholder="Add license filter" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Licenses</SelectItem>
+                {licenses.map(license => (
+                  <SelectItem key={license.id} value={license.id}>
+                    {license.region} - {license.licenseName}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>

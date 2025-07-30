@@ -6,11 +6,15 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { useOnlinePresence } from '@/hooks/useOnlinePresence';
+import { useLicenses } from '@/hooks/useLicenses';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, User, AlertCircle, CheckCircle, Shuffle } from 'lucide-react';
+import { Loader2, User, AlertCircle, CheckCircle, Shuffle, X } from 'lucide-react';
 import { sanitizeText, validateAvatarUrl, sanitizeDisplayName } from '@/components/ui/input-sanitizer';
 
 interface Profile {
@@ -23,6 +27,9 @@ interface Profile {
   reputation: number;
   successful_trades: number;
   total_trades: number;
+  kyc_level?: 'Level 0' | 'Level 1' | 'Level 2';
+  trader_type?: 'Degen' | 'Institutional';
+  licenses?: string[];
 }
 
 export default function ProfileManager() {
@@ -33,6 +40,7 @@ export default function ProfileManager() {
   const { user, session } = useAuth();
   const { toast } = useToast();
   const { isUserOnline } = useOnlinePresence();
+  const { licenses } = useLicenses();
 
   // Random avatar generation options
   const avatarOptions = {
@@ -170,6 +178,9 @@ export default function ProfileManager() {
         description: sanitizeText(profile.description || '', 500),
         avatar: avatarUrl,
         is_public: profile.is_public,
+        kyc_level: profile.kyc_level || 'Level 0',
+        trader_type: profile.trader_type || 'Degen',
+        licenses: profile.licenses || [],
       };
 
       const { error } = await supabase
@@ -330,6 +341,109 @@ export default function ProfileManager() {
               disabled
               className="bg-muted"
             />
+          </div>
+        </div>
+
+        {/* Trading Information */}
+        <div className="space-y-4 pt-4 border-t">
+          <h3 className="text-lg font-medium">Trading Information</h3>
+          
+          <div>
+            <Label htmlFor="kycLevel">KYC Level</Label>
+            <Select 
+              value={profile.kyc_level || 'Level 0'} 
+              onValueChange={(value) => setProfile({ ...profile, kyc_level: value as 'Level 0' | 'Level 1' | 'Level 2' })}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select KYC level" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Level 0">Level 0 - Basic</SelectItem>
+                <SelectItem value="Level 1">Level 1 - Verified</SelectItem>
+                <SelectItem value="Level 2">Level 2 - Enhanced</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <Label>Trader Type</Label>
+            <RadioGroup
+              value={profile.trader_type || 'Degen'}
+              onValueChange={(value) => setProfile({ ...profile, trader_type: value as 'Degen' | 'Institutional' })}
+              className="flex flex-row gap-6 mt-2"
+            >
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="Degen" id="degen" />
+                <Label htmlFor="degen">Degen Trader</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="Institutional" id="institutional" />
+                <Label htmlFor="institutional">Institutional</Label>
+              </div>
+            </RadioGroup>
+          </div>
+
+          <div>
+            <Label>Professional Licenses</Label>
+            <div className="space-y-3">
+              {profile.licenses && profile.licenses.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {profile.licenses.map(licenseId => {
+                    const license = licenses.find(l => l.id === licenseId);
+                    return license ? (
+                      <Badge key={licenseId} variant="secondary" className="flex items-center gap-1">
+                        {license.licenseName} ({license.region})
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-4 w-4 p-0"
+                          onClick={() => setProfile({
+                            ...profile,
+                            licenses: profile.licenses?.filter(id => id !== licenseId) || []
+                          })}
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </Badge>
+                    ) : null;
+                  })}
+                </div>
+              )}
+              
+              <Select 
+                value="" 
+                onValueChange={(value) => {
+                  if (value && !profile.licenses?.includes(value)) {
+                    setProfile({
+                      ...profile,
+                      licenses: [...(profile.licenses || []), value]
+                    });
+                  }
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Add a license" />
+                </SelectTrigger>
+                <SelectContent>
+                  {licenses
+                    .filter(license => !profile.licenses?.includes(license.id))
+                    .map(license => (
+                      <SelectItem key={license.id} value={license.id}>
+                        {license.region} - {license.licenseName}
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="flex items-center space-x-2">
+            <Switch
+              id="isPublic"
+              checked={profile.is_public}
+              onCheckedChange={(checked) => setProfile({ ...profile, is_public: checked })}
+            />
+            <Label htmlFor="isPublic">Make profile visible to other traders</Label>
           </div>
         </div>
 
