@@ -38,6 +38,7 @@ export default function ProfileManager() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [avatarValidation, setAvatarValidation] = useState<{ isValid: boolean; error?: string } | null>(null);
+  const [avatarMode, setAvatarMode] = useState<'url' | 'upload'>('url');
   const { user, session } = useAuth();
   const { toast } = useToast();
   const { isUserOnline } = useOnlinePresence();
@@ -280,45 +281,65 @@ export default function ProfileManager() {
             </div>
           </div>
           
-          {/* File Upload */}
-          <FileUpload
-            currentImage={profile.avatar}
-            onImageUpload={handleAvatarChange}
-          />
-          
-          {/* URL Input Alternative */}
-          <div className="space-y-2">
-            <Label htmlFor="avatar">Or use Avatar URL</Label>
-            <div className="flex gap-2">
-              <Input
-                id="avatar"
-                value={profile.avatar || ''}
-                onChange={(e) => handleAvatarChange(e.target.value)}
-                placeholder="Enter avatar URL"
-                className={`flex-1 ${avatarValidation && !avatarValidation.isValid ? 'border-destructive' : ''}`}
-              />
-              <Button
-                type="button"
-                variant="outline"
-                size="default"
-                onClick={handleRandomAvatar}
-                className="shrink-0"
-              >
-                <Shuffle className="h-4 w-4 mr-2" />
-                Random
-              </Button>
-            </div>
-            {avatarValidation && (
-              <div className={`flex items-center gap-2 text-sm ${avatarValidation.isValid ? 'text-green-600' : 'text-destructive'}`}>
-                {avatarValidation.isValid ? (
-                  <CheckCircle className="h-4 w-4" />
-                ) : (
-                  <AlertCircle className="h-4 w-4" />
-                )}
-                {avatarValidation.isValid ? 'Valid avatar URL' : avatarValidation.error}
+          {/* Avatar Input Mode Toggle */}
+          <div className="space-y-3">
+            <Label>Avatar Input Method</Label>
+            <RadioGroup
+              value={avatarMode}
+              onValueChange={(value) => setAvatarMode(value as 'url' | 'upload')}
+              className="flex flex-row gap-6"
+            >
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="url" id="url-mode" />
+                <Label htmlFor="url-mode">Avatar URL</Label>
               </div>
-            )}
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="upload" id="upload-mode" />
+                <Label htmlFor="upload-mode">Image Upload</Label>
+              </div>
+            </RadioGroup>
           </div>
+
+          {/* Conditional Avatar Input */}
+          {avatarMode === 'upload' ? (
+            <FileUpload
+              currentImage={profile.avatar}
+              onImageUpload={handleAvatarChange}
+            />
+          ) : (
+            <div className="space-y-2">
+              <Label htmlFor="avatar">Avatar URL</Label>
+              <div className="flex gap-2">
+                <Input
+                  id="avatar"
+                  value={profile.avatar || ''}
+                  onChange={(e) => handleAvatarChange(e.target.value)}
+                  placeholder="Enter avatar URL"
+                  className={`flex-1 ${avatarValidation && !avatarValidation.isValid ? 'border-destructive' : ''}`}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="default"
+                  onClick={handleRandomAvatar}
+                  className="shrink-0"
+                >
+                  <Shuffle className="h-4 w-4 mr-2" />
+                  Random
+                </Button>
+              </div>
+              {avatarValidation && (
+                <div className={`flex items-center gap-2 text-sm ${avatarValidation.isValid ? 'text-green-600' : 'text-destructive'}`}>
+                  {avatarValidation.isValid ? (
+                    <CheckCircle className="h-4 w-4" />
+                  ) : (
+                    <AlertCircle className="h-4 w-4" />
+                  )}
+                  {avatarValidation.isValid ? 'Valid avatar URL' : avatarValidation.error}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Basic Info */}
