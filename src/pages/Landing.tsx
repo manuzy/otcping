@@ -38,7 +38,7 @@ const Landing = () => {
               Secure P2P Trading Platform
             </Badge>
             
-            <h1 className="text-4xl lg:text-6xl font-bold mb-6 bg-gradient-to-r from-primary/70 to-primary bg-clip-text text-transparent">
+            <h1 className="text-4xl lg:text-6xl font-bold mb-6 bg-gradient-to-r from-primary to-primary bg-clip-text text-transparent">
               Welcome to OTCping
             </h1>
             
