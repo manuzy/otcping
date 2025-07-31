@@ -41,6 +41,18 @@ export const ChatView = ({ chat, onMenuClick }: ChatViewProps) => {
   // Get sell token for allowance checking
   const sellToken = chat.trade?.sellAsset ? tokens.find(t => t.address.toLowerCase() === chat.trade.sellAsset?.toLowerCase()) : undefined;
   
+  // DEBUG: Check what values we're passing to useTokenAllowance
+  console.log('🔍 ChatView - useTokenAllowance params:', {
+    tokenAddress: sellToken?.address,
+    ownerAddress: address,
+    spenderAddress: '0x1111111254eeb25477b68fb85ed929f73a960582',
+    requiredAmount: chat.trade?.size,
+    tokenDecimals: 18,
+    chainId: chat.trade?.chain_id || 1,
+    sellToken,
+    tradeData: chat.trade
+  });
+
   // Check token allowance for 1inch limit order contract
   const {
     allowance,
