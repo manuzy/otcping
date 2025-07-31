@@ -16,8 +16,9 @@ import { getExplorerUrl } from '@/lib/tokenUtils';
 import { safeParseDate, formatNumberWithCommas } from '@/lib/utils';
 import { format, formatDistanceToNow } from 'date-fns';
 import { limitOrderService } from '@/lib/limitOrderService';
-import { useWalletClient } from 'wagmi';
+import { useWalletClient, useAccount } from 'wagmi';
 import { useToast } from '@/hooks/use-toast';
+import { useTokenAllowance } from '@/hooks/useTokenAllowance';
 
 interface ChatViewProps {
   chat: Chat;
@@ -34,7 +35,26 @@ export const ChatView = ({ chat, onMenuClick }: ChatViewProps) => {
   const { tokens } = useTokens();
   const { chains } = useChains();
   const { data: walletClient } = useWalletClient();
+  const { address } = useAccount();
   const { toast } = useToast();
+
+  // Get sell token for allowance checking
+  const sellToken = chat.trade?.sellAsset ? tokens.find(t => t.address.toLowerCase() === chat.trade.sellAsset?.toLowerCase()) : undefined;
+  
+  // Check token allowance for 1inch limit order contract
+  const {
+    hasEnoughAllowance,
+    isLoading: allowanceLoading,
+    isApproving,
+    approve
+  } = useTokenAllowance({
+    tokenAddress: sellToken?.address,
+    ownerAddress: address,
+    spenderAddress: '0x1111111254eeb25477b68fb85ed929f73a960582', // 1inch v5 contract
+    requiredAmount: chat.trade?.size,
+    tokenDecimals: 18, // TODO: Use actual token decimals
+    chainId: chat.trade?.chain_id || 1,
+  });
 
   // Mark messages as read when chat is opened
   useEffect(() => {
@@ -383,46 +403,72 @@ export const ChatView = ({ chat, onMenuClick }: ChatViewProps) => {
                 )}
               </div>
               
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                  <Clock className="h-3 w-3" />
-                  <span>Created {safeParseDate(chat.trade.createdAt) ? formatDistanceToNow(safeParseDate(chat.trade.createdAt)!, { addSuffix: true }) : 'Invalid date'}</span>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                    <Clock className="h-3 w-3" />
+                    <span>Created {safeParseDate(chat.trade.createdAt) ? formatDistanceToNow(safeParseDate(chat.trade.createdAt)!, { addSuffix: true }) : 'Invalid date'}</span>
+                  </div>
+                  {user?.id === chat.trade?.createdBy && (
+                    <div className="flex gap-2">
+                      {/* Show approve button if allowance is insufficient */}
+                      {!hasEnoughAllowance && sellToken && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => approve()}
+                          disabled={isApproving || allowanceLoading}
+                          className="gap-1"
+                        >
+                          {isApproving ? (
+                            <>
+                              <div className="h-3 w-3 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                              Approving...
+                            </>
+                          ) : (
+                            <>
+                              <ExternalLink className="h-3 w-3" />
+                              Approve {sellToken.symbol}
+                            </>
+                          )}
+                        </Button>
+                      )}
+                      
+                      {/* Place Order button */}
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={handlePlaceOrder}
+                        disabled={orderState !== 'idle' || !walletClient || !hasEnoughAllowance || isApproving}
+                        className={`gap-1 ${!hasEnoughAllowance ? 'opacity-50' : ''}`}
+                      >
+                        {orderState === 'preparing' && (
+                          <>
+                            <div className="h-3 w-3 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                            Preparing...
+                          </>
+                        )}
+                        {orderState === 'signing' && (
+                          <>
+                            <div className="h-3 w-3 animate-pulse rounded-full bg-yellow-500" />
+                            Waiting for Signature
+                          </>
+                        )}
+                        {orderState === 'submitting' && (
+                          <>
+                            <div className="h-3 w-3 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                            Submitting...
+                          </>
+                        )}
+                        {orderState === 'idle' && (
+                          <>
+                            <ShoppingCart className="h-3 w-3" />
+                            Place Order
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  )}
                 </div>
-                {user?.id === chat.trade?.createdBy && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={handlePlaceOrder}
-                    disabled={orderState !== 'idle' || !walletClient}
-                    className="gap-1"
-                  >
-                    {orderState === 'preparing' && (
-                      <>
-                        <div className="h-3 w-3 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-                        Preparing...
-                      </>
-                    )}
-                    {orderState === 'signing' && (
-                      <>
-                        <div className="h-3 w-3 animate-pulse rounded-full bg-yellow-500" />
-                        Waiting for Signature
-                      </>
-                    )}
-                    {orderState === 'submitting' && (
-                      <>
-                        <div className="h-3 w-3 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-                        Submitting...
-                      </>
-                    )}
-                    {orderState === 'idle' && (
-                      <>
-                        <ShoppingCart className="h-3 w-3" />
-                        Place Order
-                      </>
-                    )}
-                  </Button>
-                )}
-              </div>
             </CardContent>
           </Card>
         </div>
