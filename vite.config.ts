@@ -23,6 +23,7 @@ export default defineConfig(({ mode }) => ({
     global: 'globalThis',
   },
   optimizeDeps: {
-    include: ['@1inch/limit-order-sdk'],
+    exclude: ['@1inch/limit-order-sdk'],
+    force: true,
   },
 }));
