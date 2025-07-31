@@ -69,7 +69,17 @@ export const Header = () => {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center space-x-8">
-            <Link to="/" className="text-xl font-bold hover:opacity-80 transition-opacity">OTCping</Link>
+            <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+              <svg width="32" height="32" viewBox="0 0 32 32" fill="none" className="text-primary">
+                <circle cx="8" cy="8" r="3" fill="currentColor" />
+                <circle cx="24" cy="8" r="3" fill="currentColor" />
+                <circle cx="8" cy="24" r="3" fill="currentColor" />
+                <circle cx="24" cy="24" r="3" fill="currentColor" />
+                <path d="M11 8h10M8 11v10M21 8v10M11 24h10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                <circle cx="16" cy="16" r="2" fill="currentColor" />
+              </svg>
+              <span className="text-xl font-bold">OTCping</span>
+            </Link>
             
             {isAuthenticated && (
               <nav className="flex space-x-1">
