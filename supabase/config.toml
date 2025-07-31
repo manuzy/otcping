@@ -14,3 +14,6 @@ verify_jwt = false
 
 [functions.get-1inch-api-key]
 verify_jwt = false
+
+[functions.create-1inch-order]
+verify_jwt = false
