@@ -43,6 +43,7 @@ export const ChatView = ({ chat, onMenuClick }: ChatViewProps) => {
   
   // Check token allowance for 1inch limit order contract
   const {
+    allowance,
     hasEnoughAllowance,
     isLoading: allowanceLoading,
     isApproving,
@@ -55,6 +56,21 @@ export const ChatView = ({ chat, onMenuClick }: ChatViewProps) => {
     tokenDecimals: 18, // TODO: Use actual token decimals
     chainId: chat.trade?.chain_id || 1,
   });
+
+  // Format allowance for display
+  const formatAllowance = (allowance: bigint, decimals: number = 18): string => {
+    const divisor = 10n ** BigInt(decimals);
+    const quotient = allowance / divisor;
+    const remainder = allowance % divisor;
+    
+    if (quotient === 0n && remainder === 0n) return '0';
+    if (remainder === 0n) return quotient.toString();
+    
+    // For non-zero remainder, show up to 4 decimal places
+    const decimal = Number(remainder) / Number(divisor);
+    const combined = Number(quotient) + decimal;
+    return combined.toFixed(4).replace(/\.?0+$/, '');
+  };
 
   // Mark messages as read when chat is opened
   useEffect(() => {
@@ -412,25 +428,30 @@ export const ChatView = ({ chat, onMenuClick }: ChatViewProps) => {
                     <div className="flex gap-2">
                       {/* Show approve button if allowance is insufficient */}
                       {!hasEnoughAllowance && sellToken && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => approve(chat.trade?.size)}
-                          disabled={isApproving || allowanceLoading}
-                          className="gap-1"
-                        >
-                          {isApproving ? (
-                            <>
-                              <div className="h-3 w-3 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-                              Approving...
-                            </>
-                          ) : (
-                            <>
-                              <ExternalLink className="h-3 w-3" />
-                              Approve {sellToken.symbol}
-                            </>
-                          )}
-                        </Button>
+                        <div className="flex flex-col items-end gap-1">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => approve(chat.trade?.size)}
+                            disabled={isApproving || allowanceLoading}
+                            className="gap-1"
+                          >
+                            {isApproving ? (
+                              <>
+                                <div className="h-3 w-3 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                                Approving...
+                              </>
+                            ) : (
+                              <>
+                                <ExternalLink className="h-3 w-3" />
+                                Approve {sellToken.symbol}
+                              </>
+                            )}
+                          </Button>
+                          <div className="text-xs text-muted-foreground">
+                            Current: {formatAllowance(allowance)} {sellToken.symbol}
+                          </div>
+                        </div>
                       )}
                       
                       {/* Place Order button */}
