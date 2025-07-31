@@ -415,7 +415,7 @@ export const ChatView = ({ chat, onMenuClick }: ChatViewProps) => {
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => approve()}
+                          onClick={() => approve(chat.trade?.size)}
                           disabled={isApproving || allowanceLoading}
                           className="gap-1"
                         >
