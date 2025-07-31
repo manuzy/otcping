@@ -136,20 +136,38 @@ const CreateTrade = () => {
       
       // Calculate expiry timestamp
       let expiryTimestamp = null;
+      
+      console.log('🔍 CreateTrade - Expiry calculation:', {
+        expiryType: formData.expiryType,
+        expiryValue: formData.expiryValue,
+        currentTime: new Date().toISOString()
+      });
+      
       if (formData.expiryType !== "Never") {
         const now = new Date();
         if (formData.expiryType === "Custom" && formData.expiryValue) {
           // For custom, assume the value is in hours
-          expiryTimestamp = new Date(now.getTime() + parseInt(formData.expiryValue) * 60 * 60 * 1000).toISOString();
+          const customHours = parseInt(formData.expiryValue);
+          if (!isNaN(customHours) && customHours > 0) {
+            expiryTimestamp = new Date(now.getTime() + customHours * 60 * 60 * 1000).toISOString();
+            console.log('✅ Custom expiry calculated:', expiryTimestamp);
+          } else {
+            console.error('❌ Invalid custom expiry value:', formData.expiryValue);
+            // Default to 24 hours if custom value is invalid
+            expiryTimestamp = new Date(now.getTime() + 24 * 60 * 60 * 1000).toISOString();
+          }
         } else {
           const hours = {
             '1 hour': 1,
             '1 day': 24,
             '1 week': 168,
             '1 month': 720
-          }[formData.expiryType] || 0;
+          }[formData.expiryType] || 24; // Default to 24 hours instead of 0
           expiryTimestamp = new Date(now.getTime() + hours * 60 * 60 * 1000).toISOString();
+          console.log('✅ Preset expiry calculated:', expiryTimestamp, 'for type:', formData.expiryType);
         }
+      } else {
+        console.log('✅ No expiry set (Never)');
       }
 
       // Create the trade first
