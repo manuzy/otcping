@@ -33,21 +33,36 @@ export const useTokenAllowance = ({
 
   const checkAllowance = async () => {
     if (!tokenAddress || !ownerAddress || !publicClient) {
+      console.log('🔍 Allowance check skipped:', { tokenAddress, ownerAddress, publicClient: !!publicClient });
       setAllowance(0n);
       return;
     }
 
     try {
       setIsLoading(true);
+      console.log('🔍 Checking allowance:', { 
+        tokenAddress, 
+        ownerAddress, 
+        spenderAddress,
+        requiredAmount,
+        requiredAmountBigInt: requiredAmountBigInt.toString()
+      });
+      
       const result = await publicClient.readContract({
         address: tokenAddress as `0x${string}`,
         abi: erc20Abi,
         functionName: 'allowance',
         args: [ownerAddress as `0x${string}`, spenderAddress as `0x${string}`],
       });
+      
+      console.log('✅ Allowance result:', {
+        allowance: result.toString(),
+        hasEnoughAllowance: result >= requiredAmountBigInt
+      });
+      
       setAllowance(result as bigint);
     } catch (error) {
-      console.error('Failed to check allowance:', error);
+      console.error('❌ Failed to check allowance:', error);
       setAllowance(0n);
     } finally {
       setIsLoading(false);
