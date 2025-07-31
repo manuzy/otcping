@@ -6,7 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 
 export class LimitOrderService {
   private readonly MAINNET_CHAIN_ID = 1;
-  private readonly LIMIT_ORDER_CONTRACT = '0x1111111254eeb25477b68fb85ed929f73a960582'; // 1inch v5 contract
+  private readonly LIMIT_ORDER_CONTRACT = '0x111111125421cA6dc452d289314280a0f8842A65'; // 1inch v6 contract
 
   async createAndSubmitLimitOrder(
     trade: Trade, 

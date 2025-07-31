@@ -45,7 +45,7 @@ export const ChatView = ({ chat, onMenuClick }: ChatViewProps) => {
   console.log('🔍 ChatView - useTokenAllowance params:', {
     tokenAddress: sellToken?.address,
     ownerAddress: address,
-    spenderAddress: '0x1111111254eeb25477b68fb85ed929f73a960582',
+    spenderAddress: '0x111111125421cA6dc452d289314280a0f8842A65',
     requiredAmount: chat.trade?.size,
     tokenDecimals: 18,
     chainId: chat.trade?.chain_id || 1,
@@ -63,7 +63,7 @@ export const ChatView = ({ chat, onMenuClick }: ChatViewProps) => {
   } = useTokenAllowance({
     tokenAddress: sellToken?.address,
     ownerAddress: address,
-    spenderAddress: '0x1111111254eeb25477b68fb85ed929f73a960582', // 1inch v5 contract
+    spenderAddress: '0x111111125421cA6dc452d289314280a0f8842A65', // 1inch v6 contract
     requiredAmount: chat.trade?.size,
     tokenDecimals: 18, // TODO: Use actual token decimals
     chainId: chat.trade?.chain_id || 1,
