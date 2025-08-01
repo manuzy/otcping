@@ -1,7 +1,4 @@
 import { serve } from 'https://deno.land/std@0.190.0/http/server.ts'
-import {Address, MakerTraits, Sdk} from "@1inch/limit-order-sdk";
-import {AxiosProviderConnector} from "@1inch/limit-order-sdk/axios";
-import {privateKeyToAccount} from "viem/accounts";
 
 interface OrderRequest {
   sellTokenAddress: string;
@@ -21,67 +18,6 @@ serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
-  }
-
-  // it is a well-known test private key, do not use it in production
-  const privKey =
-    'df02719c4df8b9b8ac7f551fcb5d9ef48fa27eef7a66453879f4d8fdc6e78fb1';
-  const authKey = 'K9nGKGwREwyBeH6NxkKeAQVRz6gCK5sg';
-  // const maker = new Wallet(privKey);
-  const maker = privateKeyToAccount(privKey as `0x${string}`);
-  const expiresIn = 120n; // 2m
-  const expiration = BigInt(Math.floor(Date.now() / 1000)) + expiresIn;
-
-  // see MakerTraits.ts
-  const makerTraits = MakerTraits.default()
-    .withExpiration(expiration)
-    .allowPartialFills()
-    .allowMultipleFills();
-
-  const sdk = new Sdk({
-    authKey,
-    networkId: 1,
-    httpConnector: new AxiosProviderConnector(),
-  });
-
-  const order = await sdk.createOrder(
-    {
-      makerAsset: new Address('0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2'),
-      takerAsset: new Address('0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48'),
-      makingAmount: 100000000000000n,
-      takingAmount: 385769n,
-      maker: new Address(maker.address),
-      // salt? : bigint
-      // receiver? : Address
-    },
-    makerTraits,
-  );
-
-  const typedData = order.getTypedData(1);
-
-  console.log('### typedData');
-  console.log(typedData);
-  console.log(typedData.types);
-
-  const signature = await maker.signTypedData({
-    domain: typedData.domain,
-    types: typedData.types,
-    primaryType: 'Order',  // This is required in viem
-    message: typedData.message,
-  });
-
-
-  console.log(signature);
-  console.log(order.extension);
-  console.log(order.extension.encode());
-
-  try {
-    console.log('### submitting');
-    await sdk.submitOrder(order, signature);
-    console.log('### done');
-  } catch (e) {
-    console.log('### error');
-    console.log(e);
   }
 
   try {
