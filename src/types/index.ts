@@ -63,6 +63,7 @@ export interface Trade {
   createdBy: string;
   limitPrice?: string;
   usdAmount?: string;
+  tokenAmount?: string;
   sellAsset?: string;
   buyAsset?: string;
   expectedExecution?: Date;

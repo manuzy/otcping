@@ -17,3 +17,6 @@ verify_jwt = false
 
 [functions.create-1inch-order]
 verify_jwt = false
+
+[functions.get-token-price]
+verify_jwt = false

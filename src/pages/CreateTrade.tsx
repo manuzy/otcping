@@ -19,8 +19,9 @@ import { useTokens } from "@/hooks/useTokens";
 import { tokenToSelectOption, tokenToTriggerSelectOption, getExplorerUrl, formatTokenDisplay, truncateAddress } from "@/lib/tokenUtils";
 import { supabase } from "@/integrations/supabase/client";
 import { formatNumberWithCommas, parseFormattedNumber, isValidNumberInput } from "@/lib/utils";
-import { ChevronDown, ChevronRight } from "lucide-react";
+import { ChevronDown, ChevronRight, RefreshCw } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { useCoinMarketCapPrice } from "@/hooks/useCoinMarketCapPrice";
 
 
 interface TradeFormData {
@@ -28,6 +29,7 @@ interface TradeFormData {
   sellAsset: string; // Token address
   buyAsset: string;  // Token address
   usdAmount: string;
+  tokenAmount: string;
   limitPrice: string;
   expectedExecutionTimestamp: string;
   expiryType: string;
@@ -55,6 +57,7 @@ const CreateTrade = () => {
     sellAsset: "",
     buyAsset: "",
     usdAmount: "",
+    tokenAmount: "",
     limitPrice: "",
     expectedExecutionTimestamp: "",
     expiryType: "",
@@ -68,6 +71,15 @@ const CreateTrade = () => {
   const selectedChainId = formData.chain_id ? parseInt(chains.find(c => c.id === formData.chain_id)?.chain_id.toString() || '0') : undefined;
   const { tokens, loading: tokensLoading, error: tokensError } = useTokens(selectedChainId);
 
+  // Get price for sell token conversion
+  const { 
+    price, 
+    loading: priceLoading, 
+    error: priceError, 
+    refreshPrice, 
+    convertUSDToToken 
+  } = useCoinMarketCapPrice(formData.sellAsset, selectedChainId || 0);
+
   const handleInputChange = (field: keyof TradeFormData, value: string) => {
     setFormData(prev => {
       const newData = { ...prev, [field]: value };
@@ -76,6 +88,12 @@ const CreateTrade = () => {
       if (field === 'chain_id') {
         newData.sellAsset = '';
         newData.buyAsset = '';
+        newData.tokenAmount = '';
+      }
+      
+      // Reset token amount when sell token changes
+      if (field === 'sellAsset') {
+        newData.tokenAmount = '';
       }
       
       return newData;
@@ -86,7 +104,14 @@ const CreateTrade = () => {
     if (!isValidNumberInput(value)) return;
     
     const cleanValue = parseFormattedNumber(value);
-    setFormData(prev => ({ ...prev, [field]: cleanValue }));
+    const newFormData = { ...formData, [field]: cleanValue };
+    
+    // Auto-calculate token amount when USD amount changes
+    if (field === 'usdAmount' && price) {
+      newFormData.tokenAmount = convertUSDToToken(cleanValue);
+    }
+    
+    setFormData(prev => ({ ...prev, ...newFormData }));
   };
 
   const handleContactToggle = (contactId: string) => {
@@ -183,6 +208,7 @@ const CreateTrade = () => {
           created_by: user.id,
           limit_price: formData.limitPrice,
           usd_amount: formData.usdAmount,
+          token_amount: formData.tokenAmount,
           sell_asset: formData.sellAsset,
           buy_asset: formData.buyAsset,
           expected_execution: formData.expectedExecutionTimestamp || null,
@@ -420,15 +446,63 @@ const CreateTrade = () => {
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <Label>USD amount *</Label>
-                  <Input
-                    type="text"
-                    inputMode="decimal"
-                    placeholder="$ 0.00"
-                    value={formatNumberWithCommas(formData.usdAmount)}
-                    onChange={(e) => handleNumberInputChange("usdAmount", e.target.value)}
-                  />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>USD amount *</Label>
+                    <Input
+                      type="text"
+                      inputMode="decimal"
+                      placeholder="$ 0.00"
+                      value={formatNumberWithCommas(formData.usdAmount)}
+                      onChange={(e) => handleNumberInputChange("usdAmount", e.target.value)}
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label>Token amount</Label>
+                      {formData.sellAsset && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={refreshPrice}
+                          disabled={priceLoading}
+                          className="h-6 w-6 p-0"
+                        >
+                          <RefreshCw className={`h-3 w-3 ${priceLoading ? 'animate-spin' : ''}`} />
+                        </Button>
+                      )}
+                    </div>
+                    <div className="relative">
+                      <Input
+                        type="text"
+                        value={formData.tokenAmount}
+                        placeholder={
+                          !formData.sellAsset ? "Select sell token first" :
+                          priceLoading ? "Loading price..." :
+                          priceError ? "Price unavailable" :
+                          !price ? "Enter USD amount" :
+                          "0.00"
+                        }
+                        disabled={true}
+                        className="bg-muted"
+                      />
+                      {price && (
+                        <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-xs text-muted-foreground">
+                          {price.symbol}
+                        </div>
+                      )}
+                    </div>
+                    {priceError && (
+                      <p className="text-xs text-destructive">{priceError}</p>
+                    )}
+                    {price && (
+                      <p className="text-xs text-muted-foreground">
+                        1 {price.symbol} = ${price.priceUSD.toFixed(6)}
+                      </p>
+                    )}
+                  </div>
                 </div>
 
                 <div className="space-y-2">
@@ -648,8 +722,17 @@ const CreateTrade = () => {
                       })()}
                     </span>
                     
-                    <span className="text-muted-foreground">Amount:</span>
-                    <span>${formatNumberWithCommas(formData.usdAmount)}</span>
+                     <span className="text-muted-foreground">USD Amount:</span>
+                     <span>${formatNumberWithCommas(formData.usdAmount)}</span>
+                     
+                     {formData.tokenAmount && (
+                       <>
+                         <span className="text-muted-foreground">Token Amount:</span>
+                         <span>
+                           {formData.tokenAmount} {price?.symbol || 'tokens'}
+                         </span>
+                       </>
+                     )}
                     
                     <span className="text-muted-foreground">Limit Price:</span>
                     <span>${formatNumberWithCommas(formData.limitPrice)}</span>
