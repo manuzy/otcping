@@ -311,6 +311,12 @@ export type Database = {
           display_name: string
           id: string
           is_public: boolean
+          kyb_provider: string | null
+          kyb_status: Database["public"]["Enums"]["kyb_status"] | null
+          kyb_verification_type:
+            | Database["public"]["Enums"]["kyb_verification_type"]
+            | null
+          kyb_verified_at: string | null
           kyc_level: Database["public"]["Enums"]["kyc_level"]
           licenses: string[]
           reputation: number
@@ -327,6 +333,12 @@ export type Database = {
           display_name: string
           id: string
           is_public?: boolean
+          kyb_provider?: string | null
+          kyb_status?: Database["public"]["Enums"]["kyb_status"] | null
+          kyb_verification_type?:
+            | Database["public"]["Enums"]["kyb_verification_type"]
+            | null
+          kyb_verified_at?: string | null
           kyc_level?: Database["public"]["Enums"]["kyc_level"]
           licenses?: string[]
           reputation?: number
@@ -343,6 +355,12 @@ export type Database = {
           display_name?: string
           id?: string
           is_public?: boolean
+          kyb_provider?: string | null
+          kyb_status?: Database["public"]["Enums"]["kyb_status"] | null
+          kyb_verification_type?:
+            | Database["public"]["Enums"]["kyb_verification_type"]
+            | null
+          kyb_verified_at?: string | null
           kyc_level?: Database["public"]["Enums"]["kyc_level"]
           licenses?: string[]
           reputation?: number
@@ -544,6 +562,8 @@ export type Database = {
       }
     }
     Enums: {
+      kyb_status: "verified" | "not_verified" | "pending"
+      kyb_verification_type: "basic" | "full"
       kyc_level: "Level 0" | "Level 1" | "Level 2"
       message_type: "message" | "trade_action" | "system"
       trade_status: "active" | "completed" | "cancelled"
@@ -676,6 +696,8 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      kyb_status: ["verified", "not_verified", "pending"],
+      kyb_verification_type: ["basic", "full"],
       kyc_level: ["Level 0", "Level 1", "Level 2"],
       message_type: ["message", "trade_action", "system"],
       trade_status: ["active", "completed", "cancelled"],

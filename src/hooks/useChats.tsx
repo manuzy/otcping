@@ -518,7 +518,11 @@ export function useChats() {
           contacts: [],
           kycLevel: 'Level 0' as 'Level 0' | 'Level 1' | 'Level 2',
           traderType: 'Degen' as 'Degen' | 'Institutional',
-          licenses: []
+          licenses: [],
+          kybStatus: 'not_verified' as 'verified' | 'not_verified' | 'pending',
+          kybProvider: undefined,
+          kybVerifiedAt: undefined,
+          kybVerificationType: undefined
         }));
 
         return {

@@ -9,6 +9,8 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ReactSelect } from "@/components/ui/react-select";
 import { LicenseBadges } from "@/components/ui/license-badges";
+import { KybBadge } from "@/components/ui/kyb-badge";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { usePublicUsers, SortOption } from "@/hooks/usePublicUsers";
 import { useLicenses } from "@/hooks/useLicenses";
 import { useContacts } from "@/hooks/useContacts";
@@ -180,7 +182,8 @@ export default function PublicUsers() {
   }
 
   return (
-    <div className="flex flex-col h-screen bg-background">
+    <TooltipProvider>
+      <div className="flex flex-col h-screen bg-background">
       {/* Header */}
       <div className="border-b border-border p-4">
         <h1 className="text-2xl font-bold mb-4">Public Traders</h1>
@@ -319,9 +322,18 @@ export default function PublicUsers() {
                         <div className="flex items-center">
                           <StarRating rating={user.reputation} size="sm" />
                         </div>
-                        <Badge className={getKycBadgeColor(user.kycLevel)}>
-                          KYC {user.kycLevel}
-                        </Badge>
+                        {user.traderType === 'Institutional' ? (
+                          <KybBadge 
+                            status={user.kybStatus} 
+                            provider={user.kybProvider}
+                            verifiedAt={user.kybVerifiedAt}
+                            verificationType={user.kybVerificationType}
+                          />
+                        ) : (
+                          <Badge className={getKycBadgeColor(user.kycLevel)}>
+                            KYC {user.kycLevel}
+                          </Badge>
+                        )}
                        <Badge className={getTraderTypeBadgeColor(user.traderType)}>
                          {user.traderType}
                        </Badge>
@@ -430,6 +442,7 @@ export default function PublicUsers() {
         userId={selectedUser?.id || ''}
         onSubmitRating={handleSubmitRating}
       />
-    </div>
+      </div>
+    </TooltipProvider>
   );
 }

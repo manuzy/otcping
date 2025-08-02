@@ -97,6 +97,10 @@ export function usePublicUsers() {
         kycLevel: profile.kyc_level as 'Level 0' | 'Level 1' | 'Level 2',
         traderType: profile.trader_type as 'Degen' | 'Institutional',
         licenses: profile.licenses || [],
+        kybStatus: profile.kyb_status as 'verified' | 'not_verified' | 'pending',
+        kybProvider: profile.kyb_provider || undefined,
+        kybVerifiedAt: profile.kyb_verified_at ? new Date(profile.kyb_verified_at) : undefined,
+        kybVerificationType: profile.kyb_verification_type as 'basic' | 'full' | undefined,
       }));
 
       setUsers(formattedUsers);

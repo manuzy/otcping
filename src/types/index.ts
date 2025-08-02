@@ -14,6 +14,10 @@ export interface User {
   kycLevel: 'Level 0' | 'Level 1' | 'Level 2';
   traderType: 'Degen' | 'Institutional';
   licenses: string[]; // License IDs
+  kybStatus: 'verified' | 'not_verified' | 'pending';
+  kybProvider?: string;
+  kybVerifiedAt?: Date;
+  kybVerificationType?: 'basic' | 'full';
 }
 
 export interface License {

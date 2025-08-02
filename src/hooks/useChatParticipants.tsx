@@ -66,7 +66,11 @@ export function useChatParticipants(chatId: string | null) {
               wallet_address,
               kyc_level,
               trader_type,
-              licenses
+              licenses,
+              kyb_status,
+              kyb_provider,
+              kyb_verified_at,
+              kyb_verification_type
             )
           `)
           .eq('chat_id', chatId)
@@ -100,6 +104,10 @@ export function useChatParticipants(chatId: string | null) {
             kycLevel: (participant.profiles.kyc_level as 'Level 0' | 'Level 1' | 'Level 2') || 'Level 0',
             traderType: (participant.profiles.trader_type as 'Degen' | 'Institutional') || 'Degen',
             licenses: participant.profiles.licenses || [],
+            kybStatus: (participant.profiles.kyb_status as 'verified' | 'not_verified' | 'pending') || 'not_verified',
+            kybProvider: participant.profiles.kyb_provider || undefined,
+            kybVerifiedAt: participant.profiles.kyb_verified_at ? new Date(participant.profiles.kyb_verified_at) : undefined,
+            kybVerificationType: participant.profiles.kyb_verification_type as 'basic' | 'full' | undefined,
           }));
 
         if (mountedRef.current) {

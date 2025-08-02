@@ -17,6 +17,10 @@ export const mockUsers: User[] = [
     kycLevel: 'Level 2',
     traderType: 'Institutional',
     licenses: [],
+    kybStatus: 'verified',
+    kybProvider: 'Sumsub',
+    kybVerifiedAt: new Date('2023-02-01'),
+    kybVerificationType: 'full',
   },
   {
     id: "2",
@@ -34,6 +38,7 @@ export const mockUsers: User[] = [
     kycLevel: 'Level 1',
     traderType: 'Degen',
     licenses: [],
+    kybStatus: 'not_verified',
   },
   {
     id: "3",
@@ -51,6 +56,9 @@ export const mockUsers: User[] = [
     kycLevel: 'Level 2',
     traderType: 'Institutional',
     licenses: [],
+    kybStatus: 'pending',
+    kybProvider: 'Veriff',
+    kybVerificationType: 'basic',
   },
   {
     id: "4",
@@ -68,6 +76,7 @@ export const mockUsers: User[] = [
     kycLevel: 'Level 1',
     traderType: 'Degen',
     licenses: [],
+    kybStatus: 'not_verified',
   },
   {
     id: "5",
@@ -85,6 +94,7 @@ export const mockUsers: User[] = [
     kycLevel: 'Level 0',
     traderType: 'Degen',
     licenses: [],
+    kybStatus: 'not_verified',
   },
   {
     id: "6",
@@ -102,6 +112,7 @@ export const mockUsers: User[] = [
     kycLevel: 'Level 1',
     traderType: 'Degen',
     licenses: [],
+    kybStatus: 'not_verified',
   },
 ];
 
