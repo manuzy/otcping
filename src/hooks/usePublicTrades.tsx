@@ -28,7 +28,7 @@ export function usePublicTrades() {
     }
 
     try {
-      console.log('Fetching public trades...');
+      console.log('Fetching public trades for user:', user?.id);
       
       const { data, error } = await supabase
         .from('chats')
