@@ -8,6 +8,7 @@ import { useAuth } from '@/hooks/useAuth';
 interface FileUploadProps {
   currentImage?: string;
   onImageUpload: (url: string) => void;
+  onImageSaved?: (success: boolean) => void;
   maxSizeInMB?: number;
   accept?: string;
   className?: string;
@@ -16,6 +17,7 @@ interface FileUploadProps {
 export function FileUpload({
   currentImage,
   onImageUpload,
+  onImageSaved,
   maxSizeInMB = 5,
   accept = "image/*",
   className = ""
@@ -123,23 +125,47 @@ export function FileUpload({
 
       if (uploadError) throw uploadError;
 
-      // Get public URL
+      // Get public URL with cache busting
       const { data } = supabase.storage
         .from('profile-images')
         .getPublicUrl(fileName);
 
-      onImageUpload(data.publicUrl);
+      const cachebustedUrl = `${data.publicUrl}?t=${Date.now()}`;
       
-      toast({
-        title: "Image uploaded successfully",
-        description: "Your profile image has been updated.",
-      });
+      // Immediately update the avatar in the database
+      try {
+        const { error: updateError } = await supabase
+          .from('profiles')
+          .update({ avatar: cachebustedUrl })
+          .eq('id', user.id);
+
+        if (updateError) throw updateError;
+
+        onImageUpload(cachebustedUrl);
+        onImageSaved?.(true);
+        
+        toast({
+          title: "Image uploaded successfully",
+          description: "Your profile image has been updated.",
+        });
+      } catch (dbError) {
+        console.error('Database update error:', dbError);
+        
+        // Rollback: Delete the uploaded file
+        await supabase.storage
+          .from('profile-images')
+          .remove([fileName]);
+          
+        onImageSaved?.(false);
+        throw new Error('Failed to save avatar to profile');
+      }
       
     } catch (error) {
       console.error('Upload error:', error);
+      onImageSaved?.(false);
       toast({
         title: "Upload failed",
-        description: "Failed to upload image. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to upload image. Please try again.",
         variant: "destructive",
       });
       setPreview(null);

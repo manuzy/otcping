@@ -39,6 +39,7 @@ export default function ProfileManager() {
   const [saving, setSaving] = useState(false);
   const [avatarValidation, setAvatarValidation] = useState<{ isValid: boolean; error?: string } | null>(null);
   const [avatarMode, setAvatarMode] = useState<'url' | 'upload'>('url');
+  const [pendingAvatarUrl, setPendingAvatarUrl] = useState<string | null>(null);
   const { user, session } = useAuth();
   const { toast } = useToast();
   const { isUserOnline } = useOnlinePresence();
@@ -142,14 +143,33 @@ export default function ProfileManager() {
   };
 
   const handleAvatarChange = (newAvatarUrl: string) => {
-    setProfile({ ...profile!, avatar: newAvatarUrl });
+    console.log('Avatar change:', newAvatarUrl);
     
-    // Validate avatar URL in real-time
-    if (newAvatarUrl.trim()) {
+    // Update profile state immediately
+    setProfile(prev => prev ? { ...prev, avatar: newAvatarUrl } : null);
+    
+    // Track pending upload URL
+    setPendingAvatarUrl(newAvatarUrl);
+    
+    // Skip validation for Supabase storage URLs (they're trusted)
+    const isSupabaseUrl = newAvatarUrl.includes('supabase') || newAvatarUrl.includes('storage');
+    
+    if (newAvatarUrl.trim() && !isSupabaseUrl) {
       const validation = validateAvatarUrl(newAvatarUrl);
       setAvatarValidation({ isValid: validation.isValid, error: validation.error });
     } else {
       setAvatarValidation(null);
+    }
+  };
+
+  const handleAvatarSaved = (success: boolean) => {
+    console.log('Avatar saved:', success);
+    if (success) {
+      setPendingAvatarUrl(null);
+      toast({
+        title: "Avatar updated",
+        description: "Your profile image has been saved automatically.",
+      });
     }
   };
 
@@ -166,12 +186,13 @@ export default function ProfileManager() {
       return;
     }
 
+    console.log('Saving profile with avatar:', profile.avatar);
+
     setSaving(true);
     try {
-      // Use the already validated avatar URL from state, apply basic sanitization only
+      // Use the current avatar URL from state (may already be saved for uploads)
       let avatarUrl = null;
       if (profile.avatar && profile.avatar.trim()) {
-        // Only apply basic length limit, don't re-validate since we already did real-time validation
         avatarUrl = profile.avatar.trim().length <= 500 ? profile.avatar.trim() : null;
       }
 
@@ -305,6 +326,7 @@ export default function ProfileManager() {
             <FileUpload
               currentImage={profile.avatar}
               onImageUpload={handleAvatarChange}
+              onImageSaved={handleAvatarSaved}
             />
           ) : (
             <div className="space-y-2">
