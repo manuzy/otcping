@@ -158,7 +158,7 @@ export const ChatView = ({ chat, onMenuClick }: ChatViewProps) => {
       // Success
       toast({
         title: "Order Placed Successfully",
-        description: `Your limit order has been submitted to 1inch. Order hash: ${orderHash.slice(0, 10)}...`,
+        description: `Your limit order has been submitted to 1inch. Order hash: ${orderHash?.slice(0, 10) || 'Unknown'}...`,
       });
 
       // Send a system message to the chat about the order with the app link
