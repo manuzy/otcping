@@ -25,7 +25,7 @@ export function LicenseBadges({ licenseIds, maxDisplay = 2 }: LicenseBadgesProps
                 {license.regionCode}
               </Badge>
             </TooltipTrigger>
-            <TooltipContent>
+            <TooltipContent side="top" align="center" sideOffset={5} className="z-50">
               <div className="max-w-xs">
                 <p className="font-semibold">{license.licenseName}</p>
                 <p className="text-xs text-muted-foreground">{license.description}</p>
@@ -40,7 +40,7 @@ export function LicenseBadges({ licenseIds, maxDisplay = 2 }: LicenseBadgesProps
                 +{remainingCount}
               </Badge>
             </TooltipTrigger>
-            <TooltipContent>
+            <TooltipContent side="top" align="center" sideOffset={5} className="z-50">
               <div className="max-w-xs">
                 {userLicenses.slice(maxDisplay).map((license) => (
                   <div key={license.id} className="mb-1">
