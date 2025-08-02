@@ -19,6 +19,7 @@ interface OrderSubmissionRequest {
   };
   orderHash: string;
   signature: string;
+  extension: string;
   chainId?: number;
 }
 
@@ -41,7 +42,7 @@ serve(async (req) => {
       );
     }
 
-    const { orderData, orderHash, signature, chainId = 1 }: OrderSubmissionRequest = await req.json();
+    const { orderData, orderHash, signature, extension, chainId = 1 }: OrderSubmissionRequest = await req.json();
 
     // Validate that we have proper addresses (not just "0x")
     if (!orderData.makerAsset || orderData.makerAsset === '0x' || orderData.makerAsset.length < 42) {
@@ -72,7 +73,7 @@ serve(async (req) => {
       signature,
       data: {
         ...orderData,
-        extension: encodedExtension,
+        extension: extension,
       },
     };
 

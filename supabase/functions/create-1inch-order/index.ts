@@ -1,9 +1,10 @@
 import { serve } from 'https://deno.land/std@0.190.0/http/server.ts'
-// import {Sdk, randBigInt, MakerTraits, Address} from "https://esm.sh/@1inch/limit-order-sdk";
+import {LimitOrder, randBigInt, MakerTraits, Address} from "https://esm.sh/@1inch/limit-order-sdk";
 // import {AxiosProviderConnector} from "https://esm.sh/@1inch/limit-order-sdk/axios";
 import {keccak256, hashTypedData} from "https://esm.sh/viem";
-import {Sdk, randBigInt, MakerTraits, Address} from "npm:@1inch/limit-order-sdk@^5.0.3";
-import {AxiosProviderConnector} from "npm:@1inch/limit-order-sdk@^5.0.3/axios";
+// import {Sdk, randBigInt, MakerTraits, Address} from "npm:@1inch/limit-order-sdk@^5.0.3";
+// import {AxiosProviderConnector} from "npm:@1inch/limit-order-sdk@^5.0.3/axios";
+// import {axios} from "npm:axios@^1.11.0";
 
 
 interface OrderRequest {
@@ -64,13 +65,13 @@ serve(async (req) => {
     //   takingAmount: orderRequest.buyAmount,
     // }
 
-    const sdk = new Sdk({
-      apiKey,
-      networkId: 1,
-      httpConnector: new AxiosProviderConnector(),
-    });
+    // const sdk = new Sdk({
+    //   apiKey,
+    //   networkId: 1,
+    //   httpConnector: new AxiosProviderConnector(),
+    // });
 
-    const order = await sdk.createOrder(
+    const order = new LimitOrder(
       {
         makerAsset: new Address('0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2'),
         takerAsset: new Address('0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48'),
@@ -148,12 +149,19 @@ serve(async (req) => {
     });
 
     return new Response(
-      JSON.stringify({ 
-        success: true, 
-        typedData,
+      JSON.stringify({
+        success: true,
+        typedData: order.getTypedData(1),
         orderData,
-        orderHash
+        orderHash: order.getOrderHash(1),
+        extension: order.extension.encode().toString(),
       }),
+      // JSON.stringify({
+      //   success: true,
+      //   typedData,
+      //   orderData,
+      //   orderHash
+      // }),
       { 
         status: 200, 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
