@@ -1,4 +1,6 @@
 import { serve } from 'https://deno.land/std@0.190.0/http/server.ts'
+import {randBigInt} from "@1inch/limit-order-sdk";
+import {keccak256} from "viem";
 
 interface OrderRequest {
   sellTokenAddress: string;
@@ -42,18 +44,34 @@ serve(async (req) => {
       ? BigInt(Math.floor(new Date(orderRequest.expiration).getTime() / 1000))
       : BigInt(Math.floor(Date.now() / 1000)) + BigInt(24 * 60 * 60);
 
+    const baseSalt = randBigInt((1n << 96n) - 1n);
+    const encodedExtension =
+      '0x000000d400000072000000720000007200000072000000390000000000000000c0dfdb9e7a392c3dbbe7c6fbe8fbc1789c9fe05e00000001f43203b09498030ae3416b66dc74db31d09524fa87b1f7d18bd45f0b94f54a968fc0dfdb9e7a392c3dbbe7c6fbe8fbc1789c9fe05e00000001f43203b09498030ae3416b66dc74db31d09524fa87b1f7d18bd45f0b94f54a968fc0dfdb9e7a392c3dbbe7c6fbe8fbc1789c9fe05e00000000000000000000000000000000000000000090cbe4bdd538d6e9b379bff5fe72c3d67a521de500000001f43203b09498030ae3416b66dc74db31d09524fa87b1f7d18bd45f0b94f54a968f';
+    const UINT_160_MAX = (1n << 160n) - 1n
+    const salt =
+      (baseSalt << 160n) | (BigInt(keccak256(encodedExtension)) & UINT_160_MAX);
+
     // Create order data structure for 1inch API
+    // const orderData = {
+    //   salt: Math.floor(Math.random() * Number.MAX_SAFE_INTEGER).toString(),
+    //   maker: orderRequest.makerAddress,
+    //   receiver: '0xc0DFdB9E7a392c3dBBE7c6FBe8FBC1789C9FE05e', // Ethereum FeeTaker contract
+    //   makerAsset: orderRequest.sellTokenAddress,
+    //   takerAsset: orderRequest.buyTokenAddress,
+    //   makingAmount: orderRequest.sellAmount,
+    //   takingAmount: orderRequest.buyAmount,
+    //   makerTraits: '0x',
+    // };
+
     const orderData = {
-      salt: Math.floor(Math.random() * Number.MAX_SAFE_INTEGER).toString(),
-      makerAsset: orderRequest.sellTokenAddress,
-      takerAsset: orderRequest.buyTokenAddress,
-      makingAmount: orderRequest.sellAmount,
-      takingAmount: orderRequest.buyAmount,
+      salt: salt.toString(),
       maker: orderRequest.makerAddress,
-      receiver: '0x0000000000000000000000000000000000000000',
-      allowedSender: '0x0000000000000000000000000000000000000000',
-      offsets: '0',
-      interactions: '0x',
+      receiver: '0xc0DFdB9E7a392c3dBBE7c6FBe8FBC1789C9FE05e', // FeeTaker contract
+      makerAsset: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2', // WETH
+      takerAsset: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48', // USDC
+      makingAmount: '100000000000000',
+      takingAmount: '385769',
+      makerTraits: '0x', // TODO: this.getMakerTraits(120),
     };
 
     console.log('Order data for 1inch API:', orderData);
@@ -61,36 +79,32 @@ serve(async (req) => {
     // Create typed data for EIP-712 signing
     const typedData = {
       domain: {
-        name: '1inch Limit Order Protocol',
-        version: '4',
-        chainId: 1,
+        name: '1inch Aggregation Router',
+        version: '6',
+        chainId: 1, // Ethereum mainnet
         verifyingContract: '0x111111125421cA6dc452d289314280a0f8842A65',
       },
       types: {
         Order: [
           { name: 'salt', type: 'uint256' },
-          { name: 'makerAsset', type: 'address' },
-          { name: 'takerAsset', type: 'address' },
           { name: 'maker', type: 'address' },
           { name: 'receiver', type: 'address' },
-          { name: 'allowedSender', type: 'address' },
+          { name: 'makerAsset', type: 'address' },
+          { name: 'takerAsset', type: 'address' },
           { name: 'makingAmount', type: 'uint256' },
           { name: 'takingAmount', type: 'uint256' },
-          { name: 'offsets', type: 'uint256' },
-          { name: 'interactions', type: 'bytes' },
+          { name: 'makerTraits', type: 'uint256' },
         ],
       },
       message: {
         salt: orderData.salt,
-        makerAsset: orderData.makerAsset,
-        takerAsset: orderData.takerAsset,
         maker: orderData.maker,
         receiver: orderData.receiver,
-        allowedSender: orderData.allowedSender,
+        makerAsset: orderData.makerAsset,
+        takerAsset: orderData.takerAsset,
         makingAmount: orderData.makingAmount,
         takingAmount: orderData.takingAmount,
-        offsets: orderData.offsets,
-        interactions: orderData.interactions,
+        makerTraits: orderData.makerTraits,
       },
     };
 
