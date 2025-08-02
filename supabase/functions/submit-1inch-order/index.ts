@@ -17,6 +17,7 @@ interface OrderSubmissionRequest {
     takingAmount: string;
     makerTraits: string;
   };
+  orderHash: string;
   signature: string;
   chainId?: number;
 }
@@ -40,7 +41,7 @@ serve(async (req) => {
       );
     }
 
-    const { orderData, signature, chainId = 1 }: OrderSubmissionRequest = await req.json();
+    const { orderData, orderHash, signature, chainId = 1 }: OrderSubmissionRequest = await req.json();
 
     // Validate that we have proper addresses (not just "0x")
     if (!orderData.makerAsset || orderData.makerAsset === '0x' || orderData.makerAsset.length < 42) {
@@ -67,7 +68,7 @@ serve(async (req) => {
 
     // Prepare the limit order for 1inch API (send order data directly, no wrapper)
     const body = {
-      orderHash: '0x123', // this.getOrderHash(domain, types, order),
+      orderHash: orderHash,
       signature,
       data: {
         ...orderData,
@@ -75,19 +76,19 @@ serve(async (req) => {
       },
     };
 
-    const limitOrder = {
-      salt: orderData.salt,
-      makerAsset: orderData.makerAsset,
-      takerAsset: orderData.takerAsset,
-      makingAmount: orderData.makingAmount,
-      takingAmount: orderData.takingAmount,
-      maker: orderData.maker,
-      receiver: orderData.receiver,
-      allowedSender: orderData.allowedSender,
-      offsets: orderData.offsets,
-      interactions: orderData.interactions,
-      signature
-    };
+    // const limitOrder = {
+    //   salt: orderData.salt,
+    //   makerAsset: orderData.makerAsset,
+    //   takerAsset: orderData.takerAsset,
+    //   makingAmount: orderData.makingAmount,
+    //   takingAmount: orderData.takingAmount,
+    //   maker: orderData.maker,
+    //   receiver: orderData.receiver,
+    //   allowedSender: orderData.allowedSender,
+    //   offsets: orderData.offsets,
+    //   interactions: orderData.interactions,
+    //   signature
+    // };
 
     console.log('Full request to 1inch API:', {
       url: `https://api.1inch.dev/orderbook/v4.0/${chainId}`,

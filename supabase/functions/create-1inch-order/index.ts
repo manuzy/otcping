@@ -1,6 +1,6 @@
 import { serve } from 'https://deno.land/std@0.190.0/http/server.ts'
-import {randBigInt} from "https://esm.sh/@1inch/limit-order-sdk";
-import {keccak256} from "https://esm.sh/viem";
+import {randBigInt, MakerTraits} from "https://esm.sh/@1inch/limit-order-sdk";
+import {keccak256, hashTypedData} from "https://esm.sh/viem";
 
 interface OrderRequest {
   sellTokenAddress: string;
@@ -51,6 +51,11 @@ serve(async (req) => {
     const salt =
       (baseSalt << 160n) | (BigInt(keccak256(encodedExtension)) & UINT_160_MAX);
 
+    const makerTraits = MakerTraits.default()
+      .withExpiration(orderRequest.expiration)
+      .allowPartialFills()
+      .allowMultipleFills();
+
     // Create order data structure for 1inch API
     // const orderData = {
     //   salt: Math.floor(Math.random() * Number.MAX_SAFE_INTEGER).toString(),
@@ -71,7 +76,7 @@ serve(async (req) => {
       takerAsset: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48', // USDC
       makingAmount: '100000000000000',
       takingAmount: '385769',
-      makerTraits: '0x', // TODO: this.getMakerTraits(120),
+      makerTraits: makerTraits.asBigInt().toString(),
     };
 
     console.log('Order data for 1inch API:', orderData);
@@ -108,11 +113,19 @@ serve(async (req) => {
       },
     };
 
+    const orderHash = hashTypedData({
+      domain: typedData.domain,
+      types: typedData.types,
+      primaryType: 'Order',
+      message: typedData.message,
+    });
+
     return new Response(
       JSON.stringify({ 
         success: true, 
         typedData,
-        orderData 
+        orderData,
+        orderHash
       }),
       { 
         status: 200, 
