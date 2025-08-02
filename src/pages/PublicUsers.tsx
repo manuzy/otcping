@@ -352,7 +352,7 @@ export default function PublicUsers() {
                      {user.licenses.length > 0 && (
                        <div className="mb-3">
                          <p className="text-xs text-muted-foreground mb-1">Licenses</p>
-                         <LicenseBadges licenseIds={user.licenses} />
+                         <LicenseBadges licenseIds={user.licenses} maxDisplay={99} />
                        </div>
                      )}
                     

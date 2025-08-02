@@ -1,5 +1,5 @@
 import { Badge } from "@/components/ui/badge";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useLicenses } from "@/hooks/useLicenses";
 
 interface LicenseBadgesProps {
@@ -17,8 +17,7 @@ export function LicenseBadges({ licenseIds, maxDisplay = 2 }: LicenseBadgesProps
   const remainingCount = userLicenses.length - maxDisplay;
 
   return (
-    <TooltipProvider>
-      <div className="flex gap-1 flex-wrap">
+    <div className="flex gap-1 flex-wrap">
         {displayLicenses.map((license) => (
           <Tooltip key={license.id}>
             <TooltipTrigger asChild>
@@ -54,6 +53,5 @@ export function LicenseBadges({ licenseIds, maxDisplay = 2 }: LicenseBadgesProps
           </Tooltip>
         )}
       </div>
-    </TooltipProvider>
   );
 }
