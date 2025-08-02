@@ -99,7 +99,7 @@ export class LimitOrderService {
         throw new Error(errorMessage);
       }
 
-      const orderHash = submitResult.orderHash;
+      const submittedOrderHash = submitResult.orderHash;
       console.log('1inch limit order submitted successfully:', {
         orderHash,
         sellToken: sellToken.symbol,
