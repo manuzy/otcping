@@ -37,7 +37,7 @@ serve(async (req) => {
     }
 
     const orderRequest: OrderRequest = await req.json();
-    console.log('Creating 1inch order:', orderRequest);
+    console.log('🚀 Creating 1inch order with NEW code:', orderRequest);
 
     // Calculate expiration (default 24h from now)
     const expiresIn = orderRequest.expiration 
