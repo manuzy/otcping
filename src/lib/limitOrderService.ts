@@ -101,14 +101,14 @@ export class LimitOrderService {
 
       const submittedOrderHash = submitResult.orderHash;
       console.log('1inch limit order submitted successfully:', {
-        orderHash,
+        orderHash: submittedOrderHash,
         sellToken: sellToken.symbol,
         buyToken: buyToken.symbol,
         sellAmount: trade.size,
         limitPrice: trade.limitPrice,
       });
 
-      return orderHash;
+      return submittedOrderHash;
     } catch (error) {
       console.error('Failed to create 1inch limit order:', error);
       throw new Error(`Failed to create limit order: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -135,6 +135,15 @@ export class LimitOrderService {
       token.address.toLowerCase() === address.toLowerCase() &&
       token.chain_id === this.MAINNET_CHAIN_ID
     );
+  }
+
+  // Generate 1inch app link for limit order
+  generate1inchAppLink(
+    sellTokenSymbol: string, 
+    buyTokenSymbol: string, 
+    chainId: number = 1
+  ): string {
+    return `https://app.1inch.io/advanced/limit?network=${chainId}&src=${sellTokenSymbol}&dst=${buyTokenSymbol}`;
   }
 }
 

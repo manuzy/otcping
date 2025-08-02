@@ -148,14 +148,25 @@ export const ChatView = ({ chat, onMenuClick }: ChatViewProps) => {
       // Brief delay to show processing state
       await new Promise(resolve => setTimeout(resolve, 1000));
 
+      // Generate 1inch app link
+      const sellToken = findToken(chat.trade.sellAsset || '');
+      const buyToken = findToken(chat.trade.buyAsset || '');
+      const appLink = sellToken && buyToken 
+        ? limitOrderService.generate1inchAppLink(sellToken.symbol, buyToken.symbol, chat.trade.chain_id || 1)
+        : '';
+
       // Success
       toast({
         title: "Order Placed Successfully",
         description: `Your limit order has been submitted to 1inch. Order hash: ${orderHash.slice(0, 10)}...`,
       });
 
-      // Send a system message to the chat about the order
-      await sendMessage(`🎯 Limit order placed on 1inch protocol. Order hash: ${orderHash}`);
+      // Send a system message to the chat about the order with the app link
+      const orderMessage = appLink 
+        ? `🎯 Limit order placed on 1inch protocol. Order hash: ${orderHash}\n\n📱 View in 1inch app: ${appLink}`
+        : `🎯 Limit order placed on 1inch protocol. Order hash: ${orderHash}`;
+      
+      await sendMessage(orderMessage);
       
     } catch (error) {
       console.error('Failed to place order:', error);
