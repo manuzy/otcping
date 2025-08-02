@@ -71,7 +71,7 @@ serve(async (req) => {
       takerAsset: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48', // USDC
       makingAmount: '100000000000000',
       takingAmount: '385769',
-      makerTraits: '0x', // TODO: this.getMakerTraits(120),
+      makerTraits: '0', // TODO: this.getMakerTraits(120),
     };
 
     console.log('Order data for 1inch API:', orderData);
