@@ -41,8 +41,7 @@ export function usePublicTrades() {
             type,
             created_at,
             sender:profiles(id, display_name, avatar)
-          ),
-          creator:profiles!trades(id, display_name, avatar, wallet_address)
+          )
         `)
         .eq('is_public', true)
         .not('trade_id', 'is', null)
@@ -88,23 +87,7 @@ export function usePublicTrades() {
               triggerCondition: chat.trade.trigger_condition || undefined,
               triggerPrice: chat.trade.trigger_price || undefined
             } : undefined,
-            participants: Array.isArray(chat.creator) && chat.creator.length > 0 ? [{
-              id: chat.creator[0].id,
-              walletAddress: chat.creator[0].wallet_address || '',
-              displayName: chat.creator[0].display_name || 'Unknown',
-              avatar: chat.creator[0].avatar || '',
-              isOnline: false,
-              isPublic: true,
-              reputation: 0,
-              successfulTrades: 0,
-              totalTrades: 0,
-              joinedAt: new Date(),
-              contacts: [],
-              kycLevel: 'Level 0' as const,
-              traderType: 'Degen' as const,
-              licenses: [],
-              kybStatus: 'not_verified' as const
-            }] : [],
+            participants: [],
             lastMessage: lastMessage ? {
               id: lastMessage.id,
               chatId: chat.id,
