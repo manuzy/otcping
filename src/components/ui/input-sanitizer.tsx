@@ -50,7 +50,8 @@ export function validateAvatarUrl(url: string): { isValid: boolean; url: string 
       'www.gravatar.com',
       'secure.gravatar.com',
       'cloudflare-ipfs.com',
-      'ipfs.io'
+      'ipfs.io',
+      'peqqefvohjemxhuyvzbg.supabase.co' // Supabase Storage domain
     ];
     
     const isValidDomain = trustedDomains.some(domain => 
