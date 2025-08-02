@@ -267,11 +267,34 @@ export const ChatView = ({ chat, onMenuClick }: ChatViewProps) => {
     const isSystemMessage = msg.type === 'system' || msg.type === 'trade_action';
     const sender = participants.find(p => p.id === msg.senderId);
 
+    // Helper function to render content with clickable links
+    const renderContentWithLinks = (content: string) => {
+      const urlRegex = /(https?:\/\/[^\s]+)/g;
+      const parts = content.split(urlRegex);
+      
+      return parts.map((part, index) => {
+        if (urlRegex.test(part)) {
+          return (
+            <a
+              key={index}
+              href={part}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-400 hover:text-blue-300 underline break-all"
+            >
+              {part}
+            </a>
+          );
+        }
+        return part;
+      });
+    };
+
     if (isSystemMessage) {
       return (
         <div key={msg.id} className="flex justify-center my-4">
-          <div className="bg-muted px-3 py-1 rounded-full text-xs text-muted-foreground">
-            {msg.content}
+          <div className="bg-muted px-3 py-1 rounded-full text-xs text-muted-foreground whitespace-pre-line">
+            {renderContentWithLinks(msg.content)}
           </div>
         </div>
       );
@@ -287,7 +310,9 @@ export const ChatView = ({ chat, onMenuClick }: ChatViewProps) => {
               : 'bg-muted'
             }
           `}>
-            <p className="text-sm">{msg.content}</p>
+            <div className="text-sm whitespace-pre-line">
+              {renderContentWithLinks(msg.content)}
+            </div>
             <p className={`text-xs mt-1 ${isOwnMessage ? 'text-primary-foreground/70' : 'text-muted-foreground'}`}>
               {formatTime(msg.timestamp)}
             </p>
