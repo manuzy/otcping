@@ -9,15 +9,13 @@ const corsHeaders = {
 interface OrderSubmissionRequest {
   orderData: {
     salt: string;
-    makerAsset: string;
-    takerAsset: string;
     maker: string;
     receiver: string;
-    allowedSender: string;
+    makerAsset: string;
+    takerAsset: string;
     makingAmount: string;
     takingAmount: string;
-    offsets: string;
-    interactions: string;
+    makerTraits: string;
   };
   signature: string;
   chainId?: number;
@@ -64,7 +62,19 @@ serve(async (req) => {
       takingAmount: orderData.takingAmount
     });
 
+    const encodedExtension =
+      '0x000000d400000072000000720000007200000072000000390000000000000000c0dfdb9e7a392c3dbbe7c6fbe8fbc1789c9fe05e00000001f43203b09498030ae3416b66dc74db31d09524fa87b1f7d18bd45f0b94f54a968fc0dfdb9e7a392c3dbbe7c6fbe8fbc1789c9fe05e00000001f43203b09498030ae3416b66dc74db31d09524fa87b1f7d18bd45f0b94f54a968fc0dfdb9e7a392c3dbbe7c6fbe8fbc1789c9fe05e00000000000000000000000000000000000000000090cbe4bdd538d6e9b379bff5fe72c3d67a521de500000001f43203b09498030ae3416b66dc74db31d09524fa87b1f7d18bd45f0b94f54a968f';
+
     // Prepare the limit order for 1inch API (send order data directly, no wrapper)
+    const body = {
+      orderHash: '0x123', // this.getOrderHash(domain, types, order),
+      signature,
+      data: {
+        ...orderData,
+        extension: encodedExtension,
+      },
+    };
+
     const limitOrder = {
       salt: orderData.salt,
       makerAsset: orderData.makerAsset,
@@ -80,19 +90,19 @@ serve(async (req) => {
     };
 
     console.log('Full request to 1inch API:', {
-      url: `https://api.1inch.dev/orderbook/v4.0/${chainId}/limit-order/order`,
-      body: limitOrder
+      url: `https://api.1inch.dev/orderbook/v4.0/${chainId}`,
+      body: body
     });
 
     // Submit to 1inch Limit Order API with correct endpoint
-    const response = await fetch(`https://api.1inch.dev/orderbook/v4.0/${chainId}/limit-order/order`, {
+    const response = await fetch(`https://api.1inch.dev/orderbook/v4.0/${chainId}`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
         'Accept': 'application/json'
       },
-      body: JSON.stringify(limitOrder)
+      body: JSON.stringify(body)
     });
 
     const responseData = await response.json();
