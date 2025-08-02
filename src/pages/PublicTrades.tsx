@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Combobox, ComboboxOption } from "@/components/ui/combobox";
+import { usePublicTrades } from "@/hooks/usePublicTrades";
 import { useChats } from "@/hooks/useChats";
 import { useTokens } from "@/hooks/useTokens";
 import { useChains } from "@/hooks/useChains";
@@ -37,7 +38,8 @@ function safeParseDate(dateValue: string | Date | null | undefined): Date | null
 
 export default function PublicTrades() {
   const navigate = useNavigate();
-  const { chats, loading, createChat, findExistingDirectChat } = useChats();
+  const { trades, loading } = usePublicTrades();
+  const { createChat, findExistingDirectChat } = useChats();
   const { chains } = useChains();
   const { user } = useAuth();
   const { users } = usePublicUsers();
@@ -77,10 +79,8 @@ export default function PublicTrades() {
     return `${sellAsset}/${buyAsset}`;
   };
 
-  // Get public chats with trades
-  const publicChats = chats.filter(chat => chat.isPublic && chat.trade);
-
-  const filteredChats = publicChats
+  // Use trades directly from usePublicTrades hook (already filtered)
+  const filteredChats = trades
     .filter(chat => {
       const matchesSearch = chat.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                           chat.trade?.pair.toLowerCase().includes(searchQuery.toLowerCase());
