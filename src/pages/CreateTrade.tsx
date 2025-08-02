@@ -208,7 +208,6 @@ const CreateTrade = () => {
           created_by: user.id,
           limit_price: formData.limitPrice,
           usd_amount: formData.usdAmount,
-          token_amount: formData.tokenAmount,
           sell_asset: formData.sellAsset,
           buy_asset: formData.buyAsset,
           expected_execution: formData.expectedExecutionTimestamp || null,
