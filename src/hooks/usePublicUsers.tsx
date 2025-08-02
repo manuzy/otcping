@@ -12,6 +12,7 @@ export function usePublicUsers() {
   const [sortBy, setSortBy] = useState<SortOption>('reputation');
   const [kycFilter, setKycFilter] = useState<'all' | 'Level 0' | 'Level 1' | 'Level 2'>('all');
   const [traderTypeFilter, setTraderTypeFilter] = useState<'all' | 'Degen' | 'Institutional'>('all');
+  const [kybFilter, setKybFilter] = useState<'all' | 'verified' | 'not_verified' | 'pending'>('all');
   const [licenseFilter, setLicenseFilter] = useState<string[]>([]);
   const { user } = useWalletAuth();
 
@@ -43,6 +44,11 @@ export function usePublicUsers() {
       // Apply trader type filter
       if (traderTypeFilter !== 'all') {
         query = query.eq('trader_type', traderTypeFilter);
+      }
+
+      // Apply KYB filter
+      if (kybFilter !== 'all') {
+        query = query.eq('kyb_status', kybFilter);
       }
 
       // Apply license filter
@@ -132,7 +138,7 @@ export function usePublicUsers() {
 
   useEffect(() => {
     fetchPublicUsers();
-  }, [user?.id, searchQuery, sortBy, kycFilter, traderTypeFilter, licenseFilter]);
+  }, [user?.id, searchQuery, sortBy, kycFilter, traderTypeFilter, kybFilter, licenseFilter]);
 
   // Set up real-time subscription for profile changes
   useEffect(() => {
@@ -167,6 +173,8 @@ export function usePublicUsers() {
     setKycFilter,
     traderTypeFilter,
     setTraderTypeFilter,
+    kybFilter,
+    setKybFilter,
     licenseFilter,
     setLicenseFilter,
     checkIsContact,

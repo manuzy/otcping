@@ -38,6 +38,8 @@ export default function PublicUsers() {
     setKycFilter,
     traderTypeFilter,
     setTraderTypeFilter,
+    kybFilter,
+    setKybFilter,
     licenseFilter,
     setLicenseFilter,
     checkIsContact
@@ -233,6 +235,18 @@ export default function PublicUsers() {
                 <SelectItem value="all">All Types</SelectItem>
                 <SelectItem value="Degen">Degen</SelectItem>
                 <SelectItem value="Institutional">Institutional</SelectItem>
+              </SelectContent>
+            </Select>
+            
+            <Select value={kybFilter} onValueChange={(value) => setKybFilter(value as typeof kybFilter)}>
+              <SelectTrigger className="w-32">
+                <SelectValue placeholder="KYB Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All KYB</SelectItem>
+                <SelectItem value="verified">Verified</SelectItem>
+                <SelectItem value="pending">Pending</SelectItem>
+                <SelectItem value="not_verified">Not Verified</SelectItem>
               </SelectContent>
             </Select>
             
