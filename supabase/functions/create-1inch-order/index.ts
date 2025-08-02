@@ -1,5 +1,6 @@
 import { serve } from 'https://deno.land/std@0.190.0/http/server.ts'
-import {randBigInt, MakerTraits, FeeTakerExt, Address, Bps, LimitOrderWithFee} from "https://esm.sh/@1inch/limit-order-sdk";
+import {Sdk, randBigInt, MakerTraits, Address} from "https://esm.sh/@1inch/limit-order-sdk";
+import {AxiosProviderConnector} from "https://esm.sh/@1inch/limit-order-sdk/axios";
 import {keccak256, hashTypedData} from "https://esm.sh/viem";
 
 interface OrderRequest {
@@ -39,41 +40,41 @@ serve(async (req) => {
     const orderRequest: OrderRequest = await req.json();
     console.log('🚀 Creating 1inch order with dynamic extension:', orderRequest);
 
-    // Get fee parameters from 1inch API
-    const feeParamsUrl = `https://api.1inch.dev/orderbook/v4.0/1/fee-params?makerAsset=${orderRequest.sellTokenAddress}&takerAsset=${orderRequest.buyTokenAddress}&makerAmount=${orderRequest.sellAmount}&takerAmount=${orderRequest.buyAmount}`;
-    
-    const feeParamsResponse = await fetch(feeParamsUrl, {
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!feeParamsResponse.ok) {
-      throw new Error(`Failed to get fee parameters: ${feeParamsResponse.statusText}`);
-    }
-
-    const feeParams = await feeParamsResponse.json();
-    console.log('Fee parameters from 1inch API:', feeParams);
-
-    // Create dynamic extension using 1inch SDK
-    const fees = new FeeTakerExt.Fees(
-      new FeeTakerExt.ResolverFee(
-        new Address(feeParams.protocolFeeReceiver),
-        new Bps(BigInt(feeParams.feeBps)),
-        Bps.fromPercent(feeParams.whitelistDiscountPercent)
-      ),
-      FeeTakerExt.IntegratorFee.ZERO
-    );
-
-    const feeExt = FeeTakerExt.FeeTakerExtension.new(
-      new Address(feeParams.extensionAddress),
-      fees,
-      Object.values(feeParams.whitelist).map((w: string) => new Address(w)),
-      {
-        customReceiver: orderRequest.makerAddress // Use maker as receiver
-      }
-    );
+    // // Get fee parameters from 1inch API
+    // const feeParamsUrl = `https://api.1inch.dev/orderbook/v4.0/1/fee-params?makerAsset=${orderRequest.sellTokenAddress}&takerAsset=${orderRequest.buyTokenAddress}&makerAmount=${orderRequest.sellAmount}&takerAmount=${orderRequest.buyAmount}`;
+    //
+    // const feeParamsResponse = await fetch(feeParamsUrl, {
+    //   headers: {
+    //     'Authorization': `Bearer ${apiKey}`,
+    //     'Content-Type': 'application/json',
+    //   },
+    // });
+    //
+    // if (!feeParamsResponse.ok) {
+    //   throw new Error(`Failed to get fee parameters: ${feeParamsResponse.statusText}`);
+    // }
+    //
+    // const feeParams = await feeParamsResponse.json();
+    // console.log('Fee parameters from 1inch API:', feeParams);
+    //
+    // // Create dynamic extension using 1inch SDK
+    // const fees = new FeeTakerExt.Fees(
+    //   new FeeTakerExt.ResolverFee(
+    //     new Address(feeParams.protocolFeeReceiver),
+    //     new Bps(BigInt(feeParams.feeBps)),
+    //     Bps.fromPercent(feeParams.whitelistDiscountPercent)
+    //   ),
+    //   FeeTakerExt.IntegratorFee.ZERO
+    // );
+    //
+    // const feeExt = FeeTakerExt.FeeTakerExtension.new(
+    //   new Address(feeParams.extensionAddress),
+    //   fees,
+    //   Object.values(feeParams.whitelist).map((w: string) => new Address(w)),
+    //   {
+    //     customReceiver: orderRequest.makerAddress // Use maker as receiver
+    //   }
+    // );
 
     // Calculate expiration (default 24h from now)
     const expiresIn = orderRequest.expiration 
@@ -81,7 +82,7 @@ serve(async (req) => {
       : BigInt(Math.floor(Date.now() / 1000)) + BigInt(24 * 60 * 60);
 
     const makerTraits = MakerTraits.default()
-      .withExpiration(orderRequest.expiration)
+      .withExpiration(expiresIn)
       .allowPartialFills()
       .allowMultipleFills();
 
@@ -94,13 +95,36 @@ serve(async (req) => {
       takerAsset: orderRequest.buyTokenAddress,
       makingAmount: orderRequest.sellAmount,
       takingAmount: orderRequest.buyAmount,
-    };
+    }
+
+    const sdk = new Sdk({
+      apiKey,
+      networkId: 1,
+      httpConnector: new AxiosProviderConnector(),
+    });
+
+    const order = await sdk.createOrder(
+      {
+        makerAsset: new Address('0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2'),
+        takerAsset: new Address('0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48'),
+        makingAmount: 100000000000000n,
+        takingAmount: 385769n,
+        maker: new Address(orderRequest.makerAddress),
+        // salt? : bigint
+        // receiver? : Address
+      },
+      makerTraits,
+    );
+
+    console.log('SDK ORDER');
+    console.log(order.getTypedData(1));
 
     // Create limit order with fee using SDK
-    const limitOrderWithFee = new LimitOrderWithFee(orderInfo, makerTraits, feeExt);
+    // const limitOrderWithFee = new LimitOrderWithFee(orderInfo, makerTraits, feeExt);
 
     const baseSalt = randBigInt((1n << 96n) - 1n);
-    const encodedExtension = feeExt.encode();
+    const encodedExtension =
+      '0x000000d400000072000000720000007200000072000000390000000000000000c0dfdb9e7a392c3dbbe7c6fbe8fbc1789c9fe05e00000001f43203b09498030ae3416b66dc74db31d09524fa87b1f7d18bd45f0b94f54a968fc0dfdb9e7a392c3dbbe7c6fbe8fbc1789c9fe05e00000001f43203b09498030ae3416b66dc74db31d09524fa87b1f7d18bd45f0b94f54a968fc0dfdb9e7a392c3dbbe7c6fbe8fbc1789c9fe05e00000000000000000000000000000000000000000090cbe4bdd538d6e9b379bff5fe72c3d67a521de500000001f43203b09498030ae3416b66dc74db31d09524fa87b1f7d18bd45f0b94f54a968f';
     const UINT_160_MAX = (1n << 160n) - 1n;
     const salt = (baseSalt << 160n) | (BigInt(keccak256(encodedExtension)) & UINT_160_MAX);
 

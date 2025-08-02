@@ -120,7 +120,7 @@ serve(async (req) => {
         status: response.status,
         statusText: response.statusText,
         body: responseData,
-        requestBody: limitOrder
+        requestBody: body
       });
       const errorMessage = responseData.description || responseData.message || responseData.error || `HTTP ${response.status}: ${response.statusText}`;
       throw new Error(`1inch API error: ${errorMessage}`);
