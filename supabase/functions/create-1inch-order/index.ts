@@ -1,7 +1,10 @@
 import { serve } from 'https://deno.land/std@0.190.0/http/server.ts'
-import {Sdk, randBigInt, MakerTraits, Address} from "https://esm.sh/@1inch/limit-order-sdk";
-import {AxiosProviderConnector} from "https://esm.sh/@1inch/limit-order-sdk/axios";
+// import {Sdk, randBigInt, MakerTraits, Address} from "https://esm.sh/@1inch/limit-order-sdk";
+// import {AxiosProviderConnector} from "https://esm.sh/@1inch/limit-order-sdk/axios";
 import {keccak256, hashTypedData} from "https://esm.sh/viem";
+import {Sdk, randBigInt, MakerTraits, Address} from "npm:@1inch/limit-order-sdk@^5.0.3";
+import {AxiosProviderConnector} from "npm:@1inch/limit-order-sdk@^5.0.3/axios";
+
 
 interface OrderRequest {
   sellTokenAddress: string;
@@ -40,42 +43,6 @@ serve(async (req) => {
     const orderRequest: OrderRequest = await req.json();
     console.log('🚀 Creating 1inch order with dynamic extension:', orderRequest);
 
-    // // Get fee parameters from 1inch API
-    // const feeParamsUrl = `https://api.1inch.dev/orderbook/v4.0/1/fee-params?makerAsset=${orderRequest.sellTokenAddress}&takerAsset=${orderRequest.buyTokenAddress}&makerAmount=${orderRequest.sellAmount}&takerAmount=${orderRequest.buyAmount}`;
-    //
-    // const feeParamsResponse = await fetch(feeParamsUrl, {
-    //   headers: {
-    //     'Authorization': `Bearer ${apiKey}`,
-    //     'Content-Type': 'application/json',
-    //   },
-    // });
-    //
-    // if (!feeParamsResponse.ok) {
-    //   throw new Error(`Failed to get fee parameters: ${feeParamsResponse.statusText}`);
-    // }
-    //
-    // const feeParams = await feeParamsResponse.json();
-    // console.log('Fee parameters from 1inch API:', feeParams);
-    //
-    // // Create dynamic extension using 1inch SDK
-    // const fees = new FeeTakerExt.Fees(
-    //   new FeeTakerExt.ResolverFee(
-    //     new Address(feeParams.protocolFeeReceiver),
-    //     new Bps(BigInt(feeParams.feeBps)),
-    //     Bps.fromPercent(feeParams.whitelistDiscountPercent)
-    //   ),
-    //   FeeTakerExt.IntegratorFee.ZERO
-    // );
-    //
-    // const feeExt = FeeTakerExt.FeeTakerExtension.new(
-    //   new Address(feeParams.extensionAddress),
-    //   fees,
-    //   Object.values(feeParams.whitelist).map((w: string) => new Address(w)),
-    //   {
-    //     customReceiver: orderRequest.makerAddress // Use maker as receiver
-    //   }
-    // );
-
     // Calculate expiration (default 24h from now)
     const expiresIn = orderRequest.expiration 
       ? BigInt(Math.floor(new Date(orderRequest.expiration).getTime() / 1000))
@@ -87,15 +54,15 @@ serve(async (req) => {
       .allowMultipleFills();
 
     // Create order info
-    const orderInfo = {
-      salt: randBigInt((1n << 96n) - 1n),
-      maker: orderRequest.makerAddress,
-      receiver: orderRequest.makerAddress,
-      makerAsset: orderRequest.sellTokenAddress,
-      takerAsset: orderRequest.buyTokenAddress,
-      makingAmount: orderRequest.sellAmount,
-      takingAmount: orderRequest.buyAmount,
-    }
+    // const orderInfo = {
+    //   salt: randBigInt((1n << 96n) - 1n),
+    //   maker: orderRequest.makerAddress,
+    //   receiver: orderRequest.makerAddress,
+    //   makerAsset: orderRequest.sellTokenAddress,
+    //   takerAsset: orderRequest.buyTokenAddress,
+    //   makingAmount: orderRequest.sellAmount,
+    //   takingAmount: orderRequest.buyAmount,
+    // }
 
     const sdk = new Sdk({
       apiKey,
