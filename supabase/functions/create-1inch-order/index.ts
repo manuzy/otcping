@@ -1,6 +1,6 @@
 import { serve } from 'https://deno.land/std@0.190.0/http/server.ts'
-import {randBigInt} from "@1inch/limit-order-sdk";
-import {keccak256} from "viem";
+import {randBigInt} from "https://esm.sh/@1inch/limit-order-sdk";
+import {keccak256} from "https://esm.sh/viem";
 
 interface OrderRequest {
   sellTokenAddress: string;
