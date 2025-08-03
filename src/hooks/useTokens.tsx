@@ -7,6 +7,7 @@ export interface Token {
   symbol: string;
   address: string;
   chain_id: number;
+  decimals: number;
 }
 
 export const useTokens = (chainId?: number) => {

@@ -29,9 +29,9 @@ export class LimitOrderService {
 
     try {
       // Parse amounts with proper decimals
-      const sellAmount = parseUnits(trade.size, 18); // TODO: Use actual token decimals
+      const sellAmount = parseUnits(trade.size, sellToken.decimals);
       const limitPrice = parseFloat(trade.limitPrice || '0');
-      const buyAmount = parseUnits((parseFloat(trade.size) * limitPrice).toString(), 18);
+      const buyAmount = parseUnits((parseFloat(trade.size) * limitPrice).toString(), buyToken.decimals);
 
       console.log('Creating 1inch limit order:', {
         sellToken: sellToken.symbol,

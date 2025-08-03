@@ -47,7 +47,7 @@ export const ChatView = ({ chat, onMenuClick }: ChatViewProps) => {
     ownerAddress: address,
     spenderAddress: '0x111111125421cA6dc452d289314280a0f8842A65',
     requiredAmount: chat.trade?.size,
-    tokenDecimals: 18,
+    tokenDecimals: sellToken?.decimals || 18,
     chainId: chat.trade?.chain_id || 1,
     sellToken,
     tradeData: chat.trade
@@ -65,7 +65,7 @@ export const ChatView = ({ chat, onMenuClick }: ChatViewProps) => {
     ownerAddress: address,
     spenderAddress: '0x111111125421cA6dc452d289314280a0f8842A65', // 1inch v6 contract
     requiredAmount: chat.trade?.size,
-    tokenDecimals: 18, // TODO: Use actual token decimals
+    tokenDecimals: sellToken?.decimals || 18,
     chainId: chat.trade?.chain_id || 1,
   });
 
