@@ -422,6 +422,30 @@ export const ChatView = ({ chat, onMenuClick }: ChatViewProps) => {
               </div>
 
                <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-3 text-sm">
+                 {chat.trade.tokenAmount && (
+                   <div>
+                     <span className="text-xs text-muted-foreground">Sell Amount</span>
+                     <p className="font-semibold">
+                       {formatNumberWithCommas(chat.trade.tokenAmount)}
+                       {chat.trade.sellAsset && (() => {
+                         const sellToken = findToken(chat.trade.sellAsset);
+                         return sellToken ? ` ${sellToken.symbol}` : '';
+                       })()}
+                     </p>
+                   </div>
+                 )}
+                 {chat.trade.tokenAmount && chat.trade.limitPrice && (
+                   <div>
+                     <span className="text-xs text-muted-foreground">Buy Amount</span>
+                     <p className="font-semibold">
+                       {formatNumberWithCommas((parseFloat(chat.trade.tokenAmount) * parseFloat(chat.trade.limitPrice)).toString())}
+                       {chat.trade.buyAsset && (() => {
+                         const buyToken = findToken(chat.trade.buyAsset);
+                         return buyToken ? ` ${buyToken.symbol}` : '';
+                       })()}
+                     </p>
+                   </div>
+                 )}
                  {chat.trade.usdAmount && (
                    <div>
                      <span className="text-xs text-muted-foreground">USD Amount</span>
