@@ -189,6 +189,7 @@ export type Database = {
           address: string
           chain_id: number
           created_at: string
+          decimals: number
           id: string
           name: string
           symbol: string
@@ -198,6 +199,7 @@ export type Database = {
           address: string
           chain_id: number
           created_at?: string
+          decimals?: number
           id?: string
           name: string
           symbol: string
@@ -207,6 +209,7 @@ export type Database = {
           address?: string
           chain_id?: number
           created_at?: string
+          decimals?: number
           id?: string
           name?: string
           symbol?: string
