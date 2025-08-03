@@ -4,8 +4,8 @@ import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { Menu, Send, MoreVertical, Loader2, ExternalLink, Clock, TrendingUp, ShoppingCart } from "lucide-react";
-import { Chat, Message } from "@/types";
+import { Menu, Send, MoreVertical, Loader2, ExternalLink, Clock, TrendingUp, ShoppingCart, Edit } from "lucide-react";
+import { Chat, Message, Trade } from "@/types";
 import { useMessages } from '@/hooks/useMessages';
 import { useChatParticipants } from '@/hooks/useChatParticipants';
 import { useChats } from '@/hooks/useChats';
@@ -19,6 +19,8 @@ import { limitOrderService } from '@/lib/limitOrderService';
 import { useWalletClient, useAccount } from 'wagmi';
 import { useToast } from '@/hooks/use-toast';
 import { useTokenAllowance } from '@/hooks/useTokenAllowance';
+import { EditTradeDialog } from './EditTradeDialog';
+import { supabase } from '@/integrations/supabase/client';
 
 interface ChatViewProps {
   chat: Chat;
@@ -28,10 +30,12 @@ interface ChatViewProps {
 export const ChatView = ({ chat, onMenuClick }: ChatViewProps) => {
   const [message, setMessage] = useState("");
   const [orderState, setOrderState] = useState<'idle' | 'preparing' | 'signing' | 'submitting'>('idle');
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [updatingTrade, setUpdatingTrade] = useState(false);
   const { user } = useAuth();
   const { messages, loading: messagesLoading, sending, sendMessage } = useMessages(chat.id);
   const { participants } = useChatParticipants(chat.id);
-  const { markAsRead } = useChats();
+  const { markAsRead, refetch: refetchChats } = useChats();
   const { tokens } = useTokens();
   const { chains } = useChains();
   const { data: walletClient } = useWalletClient();
@@ -194,6 +198,91 @@ export const ChatView = ({ chat, onMenuClick }: ChatViewProps) => {
       });
     } finally {
       setOrderState('idle');
+    }
+  };
+
+  const handleEditTrade = async (updatedTrade: Partial<Trade>) => {
+    if (!chat.trade?.id || !user) return;
+
+    setUpdatingTrade(true);
+    try {
+      // Update the trade in the database
+      const { error } = await supabase
+        .from('trades')
+        .update({
+          token_amount: updatedTrade.tokenAmount,
+          limit_price: updatedTrade.limitPrice,
+          expected_execution: updatedTrade.expectedExecution?.toISOString(),
+          expiry_timestamp: updatedTrade.expiryTimestamp?.toISOString(),
+          expiry_type: updatedTrade.expiryType,
+          trigger_asset: updatedTrade.triggerAsset,
+          trigger_condition: updatedTrade.triggerCondition,
+          trigger_price: updatedTrade.triggerPrice,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', chat.trade.id);
+
+      if (error) throw error;
+
+      // Generate change notification message
+      const changes: string[] = [];
+      
+      if (updatedTrade.tokenAmount && updatedTrade.tokenAmount !== chat.trade.tokenAmount) {
+        const sellToken = findToken(chat.trade.sellAsset || '');
+        changes.push(`• Sell Amount: ${chat.trade.tokenAmount || 'N/A'} → ${updatedTrade.tokenAmount}${sellToken ? ` ${sellToken.symbol}` : ''}`);
+      }
+      
+      if (updatedTrade.limitPrice && updatedTrade.limitPrice !== chat.trade.limitPrice) {
+        changes.push(`• Limit Price: ${chat.trade.limitPrice || 'N/A'} → ${updatedTrade.limitPrice}`);
+      }
+      
+      if (updatedTrade.expectedExecution) {
+        const originalDate = chat.trade.expectedExecution ? format(new Date(chat.trade.expectedExecution), "MMM dd, yyyy HH:mm") : 'N/A';
+        const newDate = format(updatedTrade.expectedExecution, "MMM dd, yyyy HH:mm");
+        if (originalDate !== newDate) {
+          changes.push(`• Expected Execution: ${originalDate} → ${newDate}`);
+        }
+      }
+      
+      if (updatedTrade.expiryTimestamp) {
+        const originalExpiry = chat.trade.expiryTimestamp ? format(new Date(chat.trade.expiryTimestamp), "MMM dd, yyyy HH:mm") : 'N/A';
+        const newExpiry = format(updatedTrade.expiryTimestamp, "MMM dd, yyyy HH:mm");
+        if (originalExpiry !== newExpiry) {
+          changes.push(`• Expiry: ${originalExpiry} → ${newExpiry}`);
+        }
+      }
+
+      if (updatedTrade.triggerAsset !== chat.trade.triggerAsset || 
+          updatedTrade.triggerCondition !== chat.trade.triggerCondition || 
+          updatedTrade.triggerPrice !== chat.trade.triggerPrice) {
+        const originalTrigger = chat.trade.triggerAsset ? 
+          `${chat.trade.triggerAsset} ${chat.trade.triggerCondition} ${chat.trade.triggerPrice}` : 'None';
+        const newTrigger = updatedTrade.triggerAsset ? 
+          `${updatedTrade.triggerAsset} ${updatedTrade.triggerCondition} ${updatedTrade.triggerPrice}` : 'None';
+        changes.push(`• Trigger: ${originalTrigger} → ${newTrigger}`);
+      }
+
+      if (changes.length > 0) {
+        const changeMessage = `📝 Trade Updated:\n${changes.join('\n')}`;
+        await sendMessage(changeMessage);
+      }
+
+      // Refresh chat data to show updated trade
+      await refetchChats();
+
+      toast({
+        title: "Trade Updated",
+        description: "Trade has been successfully updated.",
+      });
+    } catch (error) {
+      console.error('Failed to update trade:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update trade. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setUpdatingTrade(false);
     }
   };
 
@@ -491,77 +580,91 @@ export const ChatView = ({ chat, onMenuClick }: ChatViewProps) => {
                 )}
               </div>
               
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                    <Clock className="h-3 w-3" />
-                    <span>Created {safeParseDate(chat.trade.createdAt) ? formatDistanceToNow(safeParseDate(chat.trade.createdAt)!, { addSuffix: true }) : 'Invalid date'}</span>
-                  </div>
-                  {user?.id === chat.trade?.createdBy && (
-                    <div className="flex gap-2">
-                      {/* Show approve button if allowance is insufficient */}
-                      {!hasEnoughAllowance && sellToken && (
-                        <div className="flex flex-col items-end gap-1">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => approve(chat.trade?.size)}
-                            disabled={isApproving || allowanceLoading}
-                            className="gap-1"
-                          >
-                            {isApproving ? (
-                              <>
-                                <div className="h-3 w-3 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-                                Approving...
-                              </>
-                            ) : (
-                              <>
-                                <ExternalLink className="h-3 w-3" />
-                                Approve {sellToken.symbol}
-                              </>
-                            )}
-                          </Button>
-                          <div className="text-xs text-muted-foreground">
-                            Current: {formatAllowance(allowance)} {sellToken.symbol}
-                          </div>
-                        </div>
-                      )}
-                      
-                      {/* Place Order button */}
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={handlePlaceOrder}
-                        disabled={orderState !== 'idle' || !walletClient || !hasEnoughAllowance || isApproving}
-                        className={`gap-1 ${!hasEnoughAllowance ? 'opacity-50' : ''}`}
-                      >
-                        {orderState === 'preparing' && (
-                          <>
-                            <div className="h-3 w-3 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-                            Preparing...
-                          </>
-                        )}
-                        {orderState === 'signing' && (
-                          <>
-                            <div className="h-3 w-3 animate-pulse rounded-full bg-yellow-500" />
-                            Waiting for Signature
-                          </>
-                        )}
-                        {orderState === 'submitting' && (
-                          <>
-                            <div className="h-3 w-3 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-                            Submitting...
-                          </>
-                        )}
-                        {orderState === 'idle' && (
-                          <>
-                            <ShoppingCart className="h-3 w-3" />
-                            Place Order
-                          </>
-                        )}
-                      </Button>
-                    </div>
-                  )}
-                </div>
+                 <div className="flex items-center justify-between">
+                   <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                     <Clock className="h-3 w-3" />
+                     <span>Created {safeParseDate(chat.trade.createdAt) ? formatDistanceToNow(safeParseDate(chat.trade.createdAt)!, { addSuffix: true }) : 'Invalid date'}</span>
+                   </div>
+                   {user?.id === chat.trade?.createdBy && (
+                     <div className="flex gap-2">
+                       {/* Edit button - only for active/cancelled trades */}
+                       {(chat.trade.status === 'active' || chat.trade.status === 'cancelled') && (
+                         <Button
+                           size="sm"
+                           variant="outline"
+                           onClick={() => setEditDialogOpen(true)}
+                           disabled={updatingTrade}
+                           className="gap-1"
+                         >
+                           <Edit className="h-3 w-3" />
+                           Edit
+                         </Button>
+                       )}
+                       
+                       {/* Show approve button if allowance is insufficient */}
+                       {!hasEnoughAllowance && sellToken && (
+                         <div className="flex flex-col items-end gap-1">
+                           <Button
+                             size="sm"
+                             variant="outline"
+                             onClick={() => approve(chat.trade?.size)}
+                             disabled={isApproving || allowanceLoading}
+                             className="gap-1"
+                           >
+                             {isApproving ? (
+                               <>
+                                 <div className="h-3 w-3 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                                 Approving...
+                               </>
+                             ) : (
+                               <>
+                                 <ExternalLink className="h-3 w-3" />
+                                 Approve {sellToken.symbol}
+                               </>
+                             )}
+                           </Button>
+                           <div className="text-xs text-muted-foreground">
+                             Current: {formatAllowance(allowance)} {sellToken.symbol}
+                           </div>
+                         </div>
+                       )}
+                       
+                       {/* Place Order button */}
+                       <Button
+                         size="sm"
+                         variant="outline"
+                         onClick={handlePlaceOrder}
+                         disabled={orderState !== 'idle' || !walletClient || !hasEnoughAllowance || isApproving}
+                         className={`gap-1 ${!hasEnoughAllowance ? 'opacity-50' : ''}`}
+                       >
+                         {orderState === 'preparing' && (
+                           <>
+                             <div className="h-3 w-3 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                             Preparing...
+                           </>
+                         )}
+                         {orderState === 'signing' && (
+                           <>
+                             <div className="h-3 w-3 animate-pulse rounded-full bg-yellow-500" />
+                             Waiting for Signature
+                           </>
+                         )}
+                         {orderState === 'submitting' && (
+                           <>
+                             <div className="h-3 w-3 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                             Submitting...
+                           </>
+                         )}
+                         {orderState === 'idle' && (
+                           <>
+                             <ShoppingCart className="h-3 w-3" />
+                             Place Order
+                           </>
+                         )}
+                       </Button>
+                     </div>
+                   )}
+                 </div>
             </CardContent>
           </Card>
         </div>
@@ -612,6 +715,16 @@ export const ChatView = ({ chat, onMenuClick }: ChatViewProps) => {
           </Button>
         </div>
       </div>
+
+      {/* Edit Trade Dialog */}
+      {chat.trade && (
+        <EditTradeDialog
+          open={editDialogOpen}
+          onOpenChange={setEditDialogOpen}
+          trade={chat.trade}
+          onSave={handleEditTrade}
+        />
+      )}
     </div>
   );
 };
