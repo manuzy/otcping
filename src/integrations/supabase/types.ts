@@ -425,6 +425,7 @@ export type Database = {
           sell_asset: string | null
           size: string
           status: Database["public"]["Enums"]["trade_status"]
+          token_amount: string | null
           trigger_asset: string | null
           trigger_condition: string | null
           trigger_price: string | null
@@ -448,6 +449,7 @@ export type Database = {
           sell_asset?: string | null
           size: string
           status?: Database["public"]["Enums"]["trade_status"]
+          token_amount?: string | null
           trigger_asset?: string | null
           trigger_condition?: string | null
           trigger_price?: string | null
@@ -471,6 +473,7 @@ export type Database = {
           sell_asset?: string | null
           size?: string
           status?: Database["public"]["Enums"]["trade_status"]
+          token_amount?: string | null
           trigger_asset?: string | null
           trigger_condition?: string | null
           trigger_price?: string | null
