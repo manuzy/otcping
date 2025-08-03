@@ -156,13 +156,19 @@ const CreateTrade = () => {
   };
 
   const handleNext = () => {
-    if (currentStep < 3) {
+    if (preSelectedUser && currentStep === 1) {
+      // Skip chat configuration step when counterparty is pre-selected
+      setCurrentStep(3);
+    } else if (currentStep < 3) {
       setCurrentStep(currentStep + 1);
     }
   };
 
   const handleBack = () => {
-    if (currentStep > 1) {
+    if (preSelectedUser && currentStep === 3) {
+      // Skip back to trade details when counterparty is pre-selected
+      setCurrentStep(1);
+    } else if (currentStep > 1) {
       setCurrentStep(currentStep - 1);
     } else {
       navigate("/app");
@@ -398,15 +404,15 @@ const CreateTrade = () => {
 
         {/* Progress Steps */}
         <div className="flex items-center justify-center mb-8">
-          {[1, 2, 3].map((step) => (
+          {(preSelectedUser ? [1, 3] : [1, 2, 3]).map((step, index) => (
             <div key={step} className="flex items-center">
               <div className={`
                 w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium
                 ${currentStep >= step ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}
               `}>
-                {currentStep > step ? <Check className="h-4 w-4" /> : step}
+                {currentStep > step ? <Check className="h-4 w-4" /> : (preSelectedUser ? index + 1 : step)}
               </div>
-              {step < 3 && (
+              {index < (preSelectedUser ? 1 : 2) && (
                 <div className={`
                   w-16 h-1 mx-2
                   ${currentStep > step ? 'bg-primary' : 'bg-muted'}
@@ -422,10 +428,20 @@ const CreateTrade = () => {
             <CardTitle>
               {currentStep === 1 && "Trade Details"}
               {currentStep === 2 && "Chat Configuration"}
-              {currentStep === 3 && "Review & Publish"}
+              {currentStep === 3 && (preSelectedUser ? "Review & Publish" : "Review & Publish")}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
+            {/* Pre-selected user banner */}
+            {preSelectedUser && currentStep === 1 && (
+              <div className="bg-muted p-4 rounded-lg mb-6">
+                <h3 className="font-medium">Creating Private Trade</h3>
+                <p className="text-sm text-muted-foreground mt-1">
+                  This trade will be shared privately with {preSelectedUser.name}
+                </p>
+              </div>
+            )}
+
             {/* Step 1: Trade Details */}
             {currentStep === 1 && (
               <>
@@ -649,17 +665,9 @@ const CreateTrade = () => {
               </>
             )}
 
-            {/* Step 2: Chat Configuration */}
-            {currentStep === 2 && (
+            {/* Step 2: Chat Configuration - Skip when preSelectedUser exists */}
+            {currentStep === 2 && !preSelectedUser && (
               <>
-                {preSelectedUser && (
-                  <div className="bg-muted p-4 rounded-lg mb-4">
-                    <h3 className="font-medium">Creating Private Trade</h3>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      This trade will be shared privately with {preSelectedUser.name}
-                    </p>
-                  </div>
-                )}
                 
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
@@ -838,7 +846,7 @@ const CreateTrade = () => {
                   className="flex-1"
                   disabled={currentStep === 1 && !isStep1Valid}
                 >
-                  Next
+                  {preSelectedUser && currentStep === 1 ? "Review & Publish" : "Next"}
                 </Button>
               ) : (
                 <Button 
