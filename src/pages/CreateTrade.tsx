@@ -52,6 +52,7 @@ const CreateTrade = () => {
   const [isPublicChat, setIsPublicChat] = useState(true);
   const [selectedContacts, setSelectedContacts] = useState<string[]>([]);
   const [preSelectedUser, setPreSelectedUser] = useState<{id: string, name: string} | null>(null);
+  const [hasProcessedParams, setHasProcessedParams] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
   const [formData, setFormData] = useState<TradeFormData>({
@@ -87,18 +88,30 @@ const CreateTrade = () => {
     const userId = searchParams.get('user');
     const userName = searchParams.get('userName');
     
-    if (userId && userName) {
+    if (userId && userName && !hasProcessedParams) {
+      setHasProcessedParams(true);
       setPreSelectedUser({ id: userId, name: decodeURIComponent(userName) });
       setIsPublicChat(false);
       setSelectedContacts([userId]);
       
-      // Add user as contact if not already in contacts
-      const isAlreadyContact = contacts.some(contact => contact.id === userId);
-      if (!isAlreadyContact) {
-        addContact(userId);
+      // Only add as contact if contacts are loaded and user isn't already a contact
+      if (!contactsLoading && contacts.length > 0) {
+        const isAlreadyContact = contacts.some(contact => contact.id === userId);
+        if (!isAlreadyContact) {
+          addContact(userId).catch((error) => {
+            // Only show error if it's not a duplicate key error
+            if (!error.message?.includes('duplicate key')) {
+              toast({
+                title: "Error",
+                description: "Failed to add contact. Please try again.",
+                variant: "destructive",
+              });
+            }
+          });
+        }
       }
     }
-  }, [searchParams, contacts, addContact]);
+  }, [searchParams, hasProcessedParams, contactsLoading, contacts, addContact, toast]);
 
   const handleInputChange = (field: keyof TradeFormData, value: string) => {
     setFormData(prev => {
