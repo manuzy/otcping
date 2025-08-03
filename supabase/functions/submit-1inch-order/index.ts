@@ -64,9 +64,6 @@ serve(async (req) => {
       takingAmount: orderData.takingAmount
     });
 
-    const encodedExtension =
-      '0x000000d400000072000000720000007200000072000000390000000000000000c0dfdb9e7a392c3dbbe7c6fbe8fbc1789c9fe05e00000001f43203b09498030ae3416b66dc74db31d09524fa87b1f7d18bd45f0b94f54a968fc0dfdb9e7a392c3dbbe7c6fbe8fbc1789c9fe05e00000001f43203b09498030ae3416b66dc74db31d09524fa87b1f7d18bd45f0b94f54a968fc0dfdb9e7a392c3dbbe7c6fbe8fbc1789c9fe05e00000000000000000000000000000000000000000090cbe4bdd538d6e9b379bff5fe72c3d67a521de500000001f43203b09498030ae3416b66dc74db31d09524fa87b1f7d18bd45f0b94f54a968f';
-
     // Prepare the limit order for 1inch API (send order data directly, no wrapper)
     const body = {
       orderHash: orderHash,
@@ -76,20 +73,6 @@ serve(async (req) => {
         extension: extension,
       },
     };
-
-    // const limitOrder = {
-    //   salt: orderData.salt,
-    //   makerAsset: orderData.makerAsset,
-    //   takerAsset: orderData.takerAsset,
-    //   makingAmount: orderData.makingAmount,
-    //   takingAmount: orderData.takingAmount,
-    //   maker: orderData.maker,
-    //   receiver: orderData.receiver,
-    //   allowedSender: orderData.allowedSender,
-    //   offsets: orderData.offsets,
-    //   interactions: orderData.interactions,
-    //   signature
-    // };
 
     console.log('Full request to 1inch API:', {
       url: `https://api.1inch.dev/orderbook/v4.0/${chainId}`,

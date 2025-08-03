@@ -62,7 +62,7 @@ export class LimitOrderService {
         throw new Error('Failed to create order data');
       }
 
-      const { typedData, orderData, orderHash, extension } = orderResult;
+      const { typedData, orderHash, extension } = orderResult;
 
       console.log('Signing order with typed data:', typedData);
 
@@ -82,7 +82,7 @@ export class LimitOrderService {
         'submit-1inch-order',
         {
           body: {
-            orderData,
+            orderData: typedData.message,
             orderHash,
             signature,
             extension,
