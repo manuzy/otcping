@@ -12,6 +12,8 @@ import { useChats } from '@/hooks/useChats';
 import { useAuth } from '@/hooks/useAuth';
 import { useTokens } from '@/hooks/useTokens';
 import { useChains } from '@/hooks/useChains';
+import { useIsAdmin } from '@/hooks/useIsAdmin';
+import { useAdminSettings } from '@/hooks/useAdminSettings';
 import { getExplorerUrl } from '@/lib/tokenUtils';
 import { safeParseDate, formatNumberWithCommas } from '@/lib/utils';
 import { format, formatDistanceToNow } from 'date-fns';
@@ -41,6 +43,8 @@ export const ChatView = ({ chat, onMenuClick }: ChatViewProps) => {
   const { data: walletClient } = useWalletClient();
   const { address } = useAccount();
   const { toast } = useToast();
+  const { isAdmin, isAdminWallet } = useIsAdmin();
+  const { settings: adminSettings } = useAdminSettings();
 
   // Get sell token for allowance checking
   const sellToken = chat.trade?.sellAsset ? tokens.find(t => t.address.toLowerCase() === chat.trade.sellAsset?.toLowerCase()) : undefined;
@@ -601,42 +605,42 @@ export const ChatView = ({ chat, onMenuClick }: ChatViewProps) => {
                          </Button>
                        )}
                        
-                       {/* Show approve button if allowance is insufficient */}
-                       {!hasEnoughAllowance && sellToken && (
-                         <div className="flex flex-col items-end gap-1">
-                           <Button
-                             size="sm"
-                             variant="outline"
-                             onClick={() => approve(chat.trade?.size)}
-                             disabled={isApproving || allowanceLoading}
-                             className="gap-1"
-                           >
-                             {isApproving ? (
-                               <>
-                                 <div className="h-3 w-3 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-                                 Approving...
-                               </>
-                             ) : (
-                               <>
-                                 <ExternalLink className="h-3 w-3" />
-                                 Approve {sellToken.symbol}
-                               </>
-                             )}
-                           </Button>
-                           <div className="text-xs text-muted-foreground">
-                             Current: {formatAllowance(allowance)} {sellToken.symbol}
-                           </div>
-                         </div>
-                       )}
+                        {/* Show approve button if allowance is insufficient AND not admin with skip approval */}
+                        {!hasEnoughAllowance && sellToken && !(isAdmin && isAdminWallet && adminSettings.skip_approval) && (
+                          <div className="flex flex-col items-end gap-1">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => approve(chat.trade?.size)}
+                              disabled={isApproving || allowanceLoading}
+                              className="gap-1"
+                            >
+                              {isApproving ? (
+                                <>
+                                  <div className="h-3 w-3 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                                  Approving...
+                                </>
+                              ) : (
+                                <>
+                                  <ExternalLink className="h-3 w-3" />
+                                  Approve {sellToken.symbol}
+                                </>
+                              )}
+                            </Button>
+                            <div className="text-xs text-muted-foreground">
+                              Current: {formatAllowance(allowance)} {sellToken.symbol}
+                            </div>
+                          </div>
+                        )}
                        
-                       {/* Place Order button */}
-                       <Button
-                         size="sm"
-                         variant="outline"
-                         onClick={handlePlaceOrder}
-                         disabled={orderState !== 'idle' || !walletClient || !hasEnoughAllowance || isApproving}
-                         className={`gap-1 ${!hasEnoughAllowance ? 'opacity-50' : ''}`}
-                       >
+                        {/* Place Order button - allow admin to skip approval */}
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={handlePlaceOrder}
+                          disabled={orderState !== 'idle' || !walletClient || (!hasEnoughAllowance && !(isAdmin && isAdminWallet && adminSettings.skip_approval)) || isApproving}
+                          className={`gap-1 ${!hasEnoughAllowance && !(isAdmin && isAdminWallet && adminSettings.skip_approval) ? 'opacity-50' : ''}`}
+                        >
                          {orderState === 'preparing' && (
                            <>
                              <div className="h-3 w-3 animate-spin rounded-full border-2 border-primary border-t-transparent" />

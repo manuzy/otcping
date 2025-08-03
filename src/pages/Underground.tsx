@@ -1,9 +1,13 @@
 import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { useWalletAuth } from "@/hooks/useWalletAuth";
+import { useAdminSettings } from "@/hooks/useAdminSettings";
 import { Navigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ShieldCheck, Mail, Loader2 } from "lucide-react";
+import { ShieldCheck, Mail, Loader2, Settings, AlertTriangle } from "lucide-react";
 import { EmailTestPanel } from "@/components/debug/EmailTestPanel";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 export default function Underground() {
   const {
     isAdmin
@@ -12,6 +16,7 @@ export default function Underground() {
     isAuthenticated,
     user
   } = useWalletAuth();
+  const { settings, loading: settingsLoading, updating, updateSkipApproval } = useAdminSettings();
 
   // Show loading while auth state is being determined
   if (user === undefined) {
@@ -43,6 +48,44 @@ export default function Underground() {
       {/* Admin Content */}
       <div className="flex-1 overflow-y-auto p-6 space-y-6 pb-20 md:pb-4">
         
+        {/* Trading Settings Section */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Settings className="h-5 w-5" />
+              Trading Settings
+            </CardTitle>
+            <CardDescription>
+              Configure trading behavior and preferences for admin operations
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Alert>
+              <AlertTriangle className="h-4 w-4" />
+              <AlertDescription>
+                <strong>Warning:</strong> Skipping token approval bypasses security checks. Only enable this for trusted operations where you understand the risks.
+              </AlertDescription>
+            </Alert>
+            
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label htmlFor="skip-approval" className="text-base">
+                  Skip Token Approval
+                </Label>
+                <p className="text-sm text-muted-foreground">
+                  When enabled, you can place orders directly without approving tokens first. This only affects wallet address: 0xcc56...634d
+                </p>
+              </div>
+              <Switch
+                id="skip-approval"
+                checked={settings.skip_approval}
+                onCheckedChange={updateSkipApproval}
+                disabled={settingsLoading || updating}
+              />
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Test Email Section */}
         <Card>
           <CardHeader>
