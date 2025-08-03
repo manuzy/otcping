@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -41,15 +41,17 @@ interface TradeFormData {
 
 const CreateTrade = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { address } = useAppKitAccount();
   const { user } = useAuth();
-  const { contacts, loading: contactsLoading } = useContacts();
+  const { contacts, loading: contactsLoading, addContact } = useContacts();
   const { createChat } = useChats();
   const { chains, loading: chainsLoading, error: chainsError } = useChains();
   const { toast } = useToast();
   const [currentStep, setCurrentStep] = useState(1);
   const [isPublicChat, setIsPublicChat] = useState(true);
   const [selectedContacts, setSelectedContacts] = useState<string[]>([]);
+  const [preSelectedUser, setPreSelectedUser] = useState<{id: string, name: string} | null>(null);
   const [isPublishing, setIsPublishing] = useState(false);
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
   const [formData, setFormData] = useState<TradeFormData>({
@@ -79,6 +81,24 @@ const CreateTrade = () => {
     refreshPrice, 
     convertUSDToToken 
   } = useCoinMarketCapPrice(formData.sellAsset, selectedChainId || 0);
+
+  // Handle URL parameters for pre-selected user
+  useEffect(() => {
+    const userId = searchParams.get('user');
+    const userName = searchParams.get('userName');
+    
+    if (userId && userName) {
+      setPreSelectedUser({ id: userId, name: decodeURIComponent(userName) });
+      setIsPublicChat(false);
+      setSelectedContacts([userId]);
+      
+      // Add user as contact if not already in contacts
+      const isAlreadyContact = contacts.some(contact => contact.id === userId);
+      if (!isAlreadyContact) {
+        addContact(userId);
+      }
+    }
+  }, [searchParams, contacts, addContact]);
 
   const handleInputChange = (field: keyof TradeFormData, value: string) => {
     setFormData(prev => {
@@ -619,6 +639,15 @@ const CreateTrade = () => {
             {/* Step 2: Chat Configuration */}
             {currentStep === 2 && (
               <>
+                {preSelectedUser && (
+                  <div className="bg-muted p-4 rounded-lg mb-4">
+                    <h3 className="font-medium">Creating Private Trade</h3>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      This trade will be shared privately with {preSelectedUser.name}
+                    </p>
+                  </div>
+                )}
+                
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
                     <Label>Public Chat</Label>
@@ -629,6 +658,7 @@ const CreateTrade = () => {
                   <Switch
                     checked={isPublicChat}
                     onCheckedChange={setIsPublicChat}
+                    disabled={!!preSelectedUser}
                   />
                 </div>
 

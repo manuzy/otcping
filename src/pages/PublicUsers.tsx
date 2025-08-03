@@ -175,6 +175,10 @@ export default function PublicUsers() {
     return await submitRating(selectedUser.id, rating, comment);
   };
 
+  const handleTrade = (userId: string, userName: string) => {
+    navigate(`/create-trade?user=${userId}&userName=${encodeURIComponent(userName)}`);
+  };
+
   if (!isAuthenticated) {
     return (
       <div className="flex flex-col items-center justify-center h-screen">
@@ -416,7 +420,12 @@ export default function PublicUsers() {
                         )}
                         {creatingChat[user.id] ? "Creating..." : "Message"}
                       </Button>
-                       <Button size="sm" variant="outline" className="gap-2">
+                       <Button 
+                         size="sm" 
+                         variant="outline" 
+                         className="gap-2"
+                         onClick={() => handleTrade(user.id, user.displayName)}
+                       >
                          <TrendingUp className="h-4 w-4" />
                          Trade
                        </Button>
