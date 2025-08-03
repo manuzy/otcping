@@ -68,6 +68,7 @@ export function useChats() {
               createdBy: chat.trade.created_by || '',
               limitPrice: chat.trade.limit_price || undefined,
               usdAmount: chat.trade.usd_amount || undefined,
+              tokenAmount: chat.trade.token_amount || undefined,
               sellAsset: chat.trade.sell_asset || undefined,
               buyAsset: chat.trade.buy_asset || undefined,
               expectedExecution: chat.trade.expected_execution ? new Date(chat.trade.expected_execution) : undefined,
