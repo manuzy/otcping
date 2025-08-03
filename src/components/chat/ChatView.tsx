@@ -531,7 +531,7 @@ export const ChatView = ({ chat, onMenuClick }: ChatViewProps) => {
                    <div>
                      <span className="text-xs text-muted-foreground">Buy Amount</span>
                      <p className="font-semibold">
-                       {formatNumberWithCommas((parseFloat(chat.trade.tokenAmount) * parseFloat(chat.trade.limitPrice)).toString())}
+                       {formatNumberWithCommas((parseFloat(chat.trade.tokenAmount) / parseFloat(chat.trade.limitPrice)).toString())}
                        {chat.trade.buyAsset && (() => {
                          const buyToken = findToken(chat.trade.buyAsset);
                          return buyToken ? ` ${buyToken.symbol}` : '';

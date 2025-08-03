@@ -31,13 +31,13 @@ export class LimitOrderService {
       // Parse amounts with proper decimals - use tokenAmount for actual token quantity
       const sellAmount = parseUnits(trade.tokenAmount || trade.size, sellToken.decimals);
       const limitPrice = parseFloat(trade.limitPrice || '0');
-      const buyAmount = parseUnits((parseFloat(trade.tokenAmount || trade.size) * limitPrice).toString(), buyToken.decimals);
+      const buyAmount = parseUnits((parseFloat(trade.tokenAmount || trade.size) / limitPrice).toString(), buyToken.decimals);
 
       console.log('Creating 1inch limit order:', {
         sellToken: sellToken.symbol,
         buyToken: buyToken.symbol,
         sellAmount: trade.tokenAmount || trade.size,
-        buyAmount: (parseFloat(trade.tokenAmount || trade.size) * limitPrice).toString(),
+        buyAmount: (parseFloat(trade.tokenAmount || trade.size) / limitPrice).toString(),
         limitPrice: trade.limitPrice,
         maker: walletClient.account.address,
       });
