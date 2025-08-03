@@ -55,12 +55,12 @@ serve(async (req) => {
       httpConnector: new FetchProviderConnector(),
     });
 
-    const order0 = await sdk.createOrder(
+    const order = await sdk.createOrder(
       {
-        makerAsset: new Address('0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2'),
-        takerAsset: new Address('0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48'),
-        makingAmount: 100000000000000n,
-        takingAmount: 385769n,
+        makerAsset: new Address(orderRequest.sellTokenAddress),
+        takerAsset: new Address(orderRequest.buyTokenAddress),
+        makingAmount: BigInt(orderRequest.sellAmount),
+        takingAmount: BigInt(orderRequest.buyAmount),
         maker: new Address(orderRequest.makerAddress),
         // salt? : bigint
         // receiver? : Address
@@ -68,12 +68,26 @@ serve(async (req) => {
       makerTraits,
     );
 
+    // hardcoded for testing
+    // const order = await sdk.createOrder(
+    //   {
+    //     makerAsset: new Address('0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2'),
+    //     takerAsset: new Address('0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48'),
+    //     makingAmount: 100000000000000n,
+    //     takingAmount: 385769n,
+    //     maker: new Address(orderRequest.makerAddress),
+    //     // salt? : bigint
+    //     // receiver? : Address
+    //   },
+    //   makerTraits,
+    // );
+
     return new Response(
       JSON.stringify({
         success: true,
-        typedData: order0.getTypedData(1),
-        orderHash: order0.getOrderHash(1),
-        extension: order0.extension.encode().toString(),
+        typedData: order.getTypedData(1),
+        orderHash: order.getOrderHash(1),
+        extension: order.extension.encode().toString(),
       }),
       { 
         status: 200, 
