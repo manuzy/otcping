@@ -8,24 +8,25 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    --background: oklch(0.99 0 0);
-    --foreground: oklch(0.35 0.02 165.48);
-    --card: oklch(1.00 0 0);
-    --card-foreground: oklch(0.35 0.02 165.48);
-    --popover: oklch(1.00 0 0);
-    --popover-foreground: oklch(0.35 0.02 165.48);
-    --primary: oklch(0.67 0.17 153.85);
-    --primary-foreground: oklch(0.99 0.02 175.22);
-    --secondary: oklch(0.90 0.02 238.66);
-    --secondary-foreground: oklch(0.20 0.02 266.02);
-    --muted: oklch(0.90 0.02 240.73);
-    --muted-foreground: oklch(0.50 0.03 268.53);
-    --accent: oklch(0.90 0.02 240.73);
-    --accent-foreground: oklch(0.35 0.02 165.48);
-    --destructive: oklch(0.61 0.24 20.96);
-    --border: oklch(0.94 0.01 238.46);
-    --input: oklch(0.85 0.02 240.75);
-    --ring: oklch(0.67 0.17 153.85);
+    /* GenTwo-inspired color palette using HSL for consistency */
+    --background: 0 0% 100%; /* White (#FFFFFF) */
+    --foreground: 214 100% 12%; /* Dark Blue (#0A1A3B) */
+    --card: 0 0% 100%; /* White (#FFFFFF) */
+    --card-foreground: 214 100% 12%; /* Dark Blue (#0A1A3B) */
+    --popover: 0 0% 100%; /* White (#FFFFFF) */
+    --popover-foreground: 214 100% 12%; /* Dark Blue (#0A1A3B) */
+    --primary: 45 95% 45%; /* Gold (#D4A017) */
+    --primary-foreground: 0 0% 100%; /* White text on gold */
+    --secondary: 210 20% 96%; /* Light Gray (#F5F6F5) */
+    --secondary-foreground: 214 100% 12%; /* Dark Blue (#0A1A3B) */
+    --muted: 210 20% 96%; /* Light Gray (#F5F6F5) */
+    --muted-foreground: 220 9% 46%; /* Medium Gray (#6B7280) */
+    --accent: 45 95% 45%; /* Gold (#D4A017) */
+    --accent-foreground: 0 0% 100%; /* White text on gold */
+    --destructive: 0 84% 60%; /* Red for destructive actions */
+    --border: 220 13% 91%; /* Light border */
+    --input: 220 13% 91%; /* Light input border */
+    --ring: 45 95% 45%; /* Gold ring color */
     --chart-1: oklch(0.67 0.17 153.85);
     --chart-2: oklch(0.50 0.10 270.06);
     --chart-3: oklch(0.72 0.12 201.79);
@@ -40,11 +41,11 @@ All colors MUST be HSL.
     --sidebar-border: oklch(0.85 0.02 240.75);
     --sidebar-ring: oklch(0.67 0.17 153.85);
 
-    --font-sans: Lato, sans-serif;
+    --font-sans: Inter, Lato, system-ui, -apple-system, sans-serif;
     --font-serif: Merriweather, Geist, Geist Fallback, ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
     --font-mono: Roboto Mono, Geist Mono, Geist Mono Fallback, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 
-    --radius: 0.25rem;
+    --radius: 0.5rem; /* 8px for GenTwo-style rounded corners */
     
     --shadow-2xs: 0px 1px 3px 0px oklch(0.35 0.05 163.02 / 0.02);
     --shadow-xs: 0px 1px 3px 0px oklch(0.35 0.05 163.02 / 0.02);
@@ -57,24 +58,25 @@ All colors MUST be HSL.
   }
 
   .dark {
-    --background: oklch(0.15 0.02 269.18);
-    --foreground: oklch(0.95 0.01 238.46);
-    --card: oklch(0.20 0.02 266.02);
-    --card-foreground: oklch(0.95 0.01 238.46);
-    --popover: oklch(0.20 0.02 266.02);
-    --popover-foreground: oklch(0.95 0.01 238.46);
-    --primary: oklch(0.67 0.17 153.85);
-    --primary-foreground: oklch(0.15 0.02 269.18);
-    --secondary: oklch(0.30 0.03 271.05);
-    --secondary-foreground: oklch(0.95 0.01 238.46);
-    --muted: oklch(0.30 0.03 271.05);
-    --muted-foreground: oklch(0.60 0.03 269.46);
-    --accent: oklch(0.30 0.03 271.05);
-    --accent-foreground: oklch(0.95 0.01 238.46);
-    --destructive: oklch(0.64 0.25 19.69);
-    --border: oklch(0.95 0.01 238.46 / 15%);
-    --input: oklch(0.95 0.01 238.46 / 20%);
-    --ring: oklch(0.67 0.17 153.85);
+    /* Dark mode with GenTwo-inspired palette */
+    --background: 214 100% 12%; /* Dark Blue (#0A1A3B) */
+    --foreground: 0 0% 100%; /* White (#FFFFFF) */
+    --card: 214 80% 15%; /* Slightly lighter dark blue for cards */
+    --card-foreground: 0 0% 100%; /* White (#FFFFFF) */
+    --popover: 214 80% 15%; /* Slightly lighter dark blue */
+    --popover-foreground: 0 0% 100%; /* White (#FFFFFF) */
+    --primary: 45 95% 45%; /* Gold (#D4A017) */
+    --primary-foreground: 214 100% 12%; /* Dark blue text on gold */
+    --secondary: 214 50% 20%; /* Darker secondary */
+    --secondary-foreground: 0 0% 100%; /* White (#FFFFFF) */
+    --muted: 214 50% 20%; /* Darker muted */
+    --muted-foreground: 220 9% 70%; /* Lighter gray for dark mode */
+    --accent: 45 95% 45%; /* Gold (#D4A017) */
+    --accent-foreground: 214 100% 12%; /* Dark blue text on gold */
+    --destructive: 0 84% 60%; /* Red for destructive actions */
+    --border: 214 50% 25%; /* Lighter border for dark mode */
+    --input: 214 50% 25%; /* Lighter input border for dark mode */
+    --ring: 45 95% 45%; /* Gold ring color */
     --chart-1: oklch(0.67 0.17 153.85);
     --chart-2: oklch(0.60 0.10 269.83);
     --chart-3: oklch(0.72 0.12 201.79);

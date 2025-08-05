@@ -13,7 +13,7 @@ import Settings from "./pages/Settings";
 import CreateTrade from "./pages/CreateTrade";
 import Underground from "./pages/Underground";
 import { BottomTabs } from "./components/navigation/BottomTabs";
-import { Header } from "./components/navigation/Header";
+import Header from "./components/navigation/Header";
 import { AuthProvider } from "./hooks/useAuth";
 import { AppKitProvider } from "./components/providers/AppKitProvider";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
