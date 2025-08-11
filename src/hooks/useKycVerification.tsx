@@ -16,7 +16,7 @@ export function useKycVerification() {
   const { toast } = useToast();
   const { user } = useAuth();
 
-  const generateKycToken = useCallback(async (level: string = 'basic-kyc-level') => {
+  const generateKycToken = useCallback(async (level: string = 'basic') => {
     if (!user) {
       toast({
         title: "Authentication required",
@@ -79,7 +79,7 @@ export function useKycVerification() {
   const getKycBadgeText = useCallback((status: string, level?: string) => {
     switch (status) {
       case 'completed':
-        return level === 'enhanced-kyc-level' ? 'Level 2 Verified' : 'Level 1 Verified';
+        return level === 'enhanced' || level === 'enhanced-kyc-level' ? 'Level 2 Verified' : 'Level 1 Verified';
       case 'pending':
         return 'Verification Pending';
       case 'reviewing':
