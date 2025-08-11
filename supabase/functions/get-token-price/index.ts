@@ -53,8 +53,10 @@ serve(async (req) => {
       );
     }
 
-    // First, get token info by contract address
-    const tokenInfoUrl = `https://pro-api.coinmarketcap.com/v2/cryptocurrency/info?address=${tokenAddress}`;
+    // First, get token info by contract address with platform specification
+    const tokenInfoUrl = `https://pro-api.coinmarketcap.com/v2/cryptocurrency/info?address=${tokenAddress}&platform=${platformId}`;
+    console.log(`Fetching token info for address ${tokenAddress} on platform ${platformId} (chain ${chainId})`);
+    
     const tokenInfoResponse = await fetch(tokenInfoUrl, {
       headers: {
         'X-CMC_PRO_API_KEY': apiKey,
@@ -63,15 +65,16 @@ serve(async (req) => {
     });
 
     if (!tokenInfoResponse.ok) {
-      console.error('CoinMarketCap token info API error:', await tokenInfoResponse.text());
+      const errorText = await tokenInfoResponse.text();
+      console.error(`CoinMarketCap token info API error for ${tokenAddress} on ${platformId}:`, errorText);
       return new Response(
-        JSON.stringify({ error: 'Failed to fetch token information' }),
+        JSON.stringify({ error: `Failed to fetch token information for ${platformId} chain` }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
     const tokenInfoData = await tokenInfoResponse.json();
-    console.log('Token info response:', tokenInfoData);
+    console.log(`Token info response for ${tokenAddress} on ${platformId}:`, tokenInfoData);
 
     // Extract token ID from response
     const tokenData = Object.values(tokenInfoData.data)[0] as any;
