@@ -53,9 +53,8 @@ serve(async (req) => {
       );
     }
 
-    // First, get token info by contract address with platform
-    const tokenInfoUrl = `https://pro-api.coinmarketcap.com/v2/cryptocurrency/info?address=${tokenAddress}&aux=platform`;
-    console.log(`Fetching token info for ${tokenAddress} on platform ${platformId}`);
+    // First, get token info by contract address
+    const tokenInfoUrl = `https://pro-api.coinmarketcap.com/v2/cryptocurrency/info?address=${tokenAddress}`;
     const tokenInfoResponse = await fetch(tokenInfoUrl, {
       headers: {
         'X-CMC_PRO_API_KEY': apiKey,
@@ -64,51 +63,21 @@ serve(async (req) => {
     });
 
     if (!tokenInfoResponse.ok) {
-      const errorText = await tokenInfoResponse.text();
-      console.error(`CoinMarketCap token info API error (${tokenInfoResponse.status}):`, errorText);
-      console.error(`Request URL: ${tokenInfoUrl}`);
+      console.error('CoinMarketCap token info API error:', await tokenInfoResponse.text());
       return new Response(
-        JSON.stringify({ 
-          error: 'Failed to fetch token information',
-          details: `API returned ${tokenInfoResponse.status}`,
-          tokenAddress,
-          chainId: platformId
-        }),
+        JSON.stringify({ error: 'Failed to fetch token information' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
     const tokenInfoData = await tokenInfoResponse.json();
-    console.log('Token info response:', JSON.stringify(tokenInfoData, null, 2));
+    console.log('Token info response:', tokenInfoData);
 
-    // Extract token ID from response - filter by platform if multiple matches
-    let tokenData: any = null;
-    
-    if (tokenInfoData.data && Object.keys(tokenInfoData.data).length > 0) {
-      const tokens = Object.values(tokenInfoData.data) as any[];
-      
-      // If multiple tokens, try to find the one for our specific platform
-      if (tokens.length > 1) {
-        tokenData = tokens.find((token: any) => {
-          return token.platform && token.platform.name.toLowerCase() === platformId;
-        });
-      }
-      
-      // Fallback to first token if no platform match
-      if (!tokenData) {
-        tokenData = tokens[0];
-      }
-    }
-    
+    // Extract token ID from response
+    const tokenData = Object.values(tokenInfoData.data)[0] as any;
     if (!tokenData || !tokenData.id) {
-      console.error(`Token not found for address ${tokenAddress} on platform ${platformId}`);
       return new Response(
-        JSON.stringify({ 
-          error: 'Token not found on specified blockchain',
-          tokenAddress,
-          platform: platformId,
-          availableTokens: tokenInfoData.data ? Object.keys(tokenInfoData.data).length : 0
-        }),
+        JSON.stringify({ error: 'Token not found' }),
         { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }

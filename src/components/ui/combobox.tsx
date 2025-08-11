@@ -123,7 +123,7 @@ export function Combobox({
           </div>
         </div>
       </PopoverTrigger>
-      <PopoverContent className="w-full p-0 bg-popover/95 backdrop-blur border shadow-lg" align="start">
+      <PopoverContent className="w-full p-0" align="start">
         <Command shouldFilter={false}>
           <CommandList>
             {filteredOptions.length === 0 ? (

@@ -53,7 +53,7 @@ export const WelcomeView = ({ onMenuClick }: WelcomeViewProps) => {
               </div>
               
               <div className="space-y-3">
-                <Button className="w-full" size="lg" onClick={() => navigate("/app/create-trade")}>
+                <Button className="w-full" size="lg" onClick={() => navigate("/create-trade")}>
                   <Plus className="h-5 w-5 mr-2" />
                   Create New Trade
                 </Button>

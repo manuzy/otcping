@@ -12,9 +12,8 @@ import PublicUsers from "./pages/PublicUsers";
 import Settings from "./pages/Settings";
 import CreateTrade from "./pages/CreateTrade";
 import Underground from "./pages/Underground";
-import { LandingLayout } from "./components/layout/LandingLayout";
-import { AppLayout } from "./components/layout/AppLayout";
-import { LegacyRedirect } from "./components/routing/LegacyRedirect";
+import { BottomTabs } from "./components/navigation/BottomTabs";
+import { Header } from "./components/navigation/Header";
 import { AuthProvider } from "./hooks/useAuth";
 import { AppKitProvider } from "./components/providers/AppKitProvider";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
@@ -30,100 +29,22 @@ const App = () => (
           <Toaster />
           <Sonner />
           <BrowserRouter>
-            <Routes>
-              {/* Landing page */}
-              <Route path="/" element={
-                <LandingLayout>
-                  <Index />
-                </LandingLayout>
-              } />
-              
-              {/* Protected app routes */}
-              <Route path="/app/dashboard" element={
-                <ProtectedRoute>
-                  <AppLayout>
-                    <AppPage />
-                  </AppLayout>
-                </ProtectedRoute>
-              } />
-              <Route path="/app/trades" element={
-                <ProtectedRoute>
-                  <AppLayout>
-                    <PublicTrades />
-                  </AppLayout>
-                </ProtectedRoute>
-              } />
-              <Route path="/app/traders" element={
-                <ProtectedRoute>
-                  <AppLayout>
-                    <PublicUsers />
-                  </AppLayout>
-                </ProtectedRoute>
-              } />
-              <Route path="/app/contacts" element={
-                <ProtectedRoute>
-                  <AppLayout>
-                    <Contacts />
-                  </AppLayout>
-                </ProtectedRoute>
-              } />
-              <Route path="/app/settings" element={
-                <ProtectedRoute>
-                  <AppLayout>
-                    <Settings />
-                  </AppLayout>
-                </ProtectedRoute>
-              } />
-              <Route path="/app/create-trade" element={
-                <ProtectedRoute>
-                  <AppLayout>
-                    <CreateTrade />
-                  </AppLayout>
-                </ProtectedRoute>
-              } />
-              <Route path="/underground" element={
-                <ProtectedRoute>
-                  <AppLayout>
-                    <Underground />
-                  </AppLayout>
-                </ProtectedRoute>
-              } />
-              
-              {/* Legacy redirects */}
-              <Route path="/app" element={
-                <LegacyRedirect to="/app/dashboard">
-                  <ProtectedRoute><AppPage /></ProtectedRoute>
-                </LegacyRedirect>
-              } />
-              <Route path="/public-trades" element={
-                <LegacyRedirect to="/app/trades">
-                  <ProtectedRoute><PublicTrades /></ProtectedRoute>
-                </LegacyRedirect>
-              } />
-              <Route path="/users" element={
-                <LegacyRedirect to="/app/traders">
-                  <ProtectedRoute><PublicUsers /></ProtectedRoute>
-                </LegacyRedirect>
-              } />
-              <Route path="/contacts" element={
-                <LegacyRedirect to="/app/contacts">
-                  <ProtectedRoute><Contacts /></ProtectedRoute>
-                </LegacyRedirect>
-              } />
-              <Route path="/settings" element={
-                <LegacyRedirect to="/app/settings">
-                  <ProtectedRoute><Settings /></ProtectedRoute>
-                </LegacyRedirect>
-              } />
-              <Route path="/create-trade" element={
-                <LegacyRedirect to="/app/create-trade">
-                  <ProtectedRoute><CreateTrade /></ProtectedRoute>
-                </LegacyRedirect>
-              } />
-              
-              {/* Catch all */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
+            <div className="relative">
+              <Header />
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/app" element={<ProtectedRoute><AppPage /></ProtectedRoute>} />
+                <Route path="/contacts" element={<ProtectedRoute><Contacts /></ProtectedRoute>} />
+                <Route path="/public-trades" element={<ProtectedRoute><PublicTrades /></ProtectedRoute>} />
+                <Route path="/users" element={<ProtectedRoute><PublicUsers /></ProtectedRoute>} />
+                <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+                <Route path="/create-trade" element={<ProtectedRoute><CreateTrade /></ProtectedRoute>} />
+                <Route path="/underground" element={<ProtectedRoute><Underground /></ProtectedRoute>} />
+                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+              <BottomTabs />
+            </div>
           </BrowserRouter>
         </TooltipProvider>
       </AuthProvider>

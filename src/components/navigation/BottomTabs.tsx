@@ -4,11 +4,11 @@ import { useWalletAuth } from '@/hooks/useWalletAuth';
 import { cn } from "@/lib/utils";
 
 const tabs = [
-  { id: 'chats', label: 'Chats', icon: MessageCircle, path: '/app/dashboard' },
-  { id: 'public-trades', label: 'Markets', icon: TrendingUp, path: '/app/trades' },
-  { id: 'users', label: 'Traders', icon: Users, path: '/app/traders' },
-  { id: 'contacts', label: 'Contacts', icon: UserPlus, path: '/app/contacts' },
-  { id: 'settings', label: 'Settings', icon: Settings, path: '/app/settings' },
+  { id: 'chats', label: 'Chats', icon: MessageCircle, path: '/app' },
+  { id: 'public-trades', label: 'Markets', icon: TrendingUp, path: '/public-trades' },
+  { id: 'users', label: 'Traders', icon: Users, path: '/users' },
+  { id: 'contacts', label: 'Contacts', icon: UserPlus, path: '/contacts' },
+  { id: 'settings', label: 'Settings', icon: Settings, path: '/settings' },
 ];
 
 export const BottomTabs = () => {

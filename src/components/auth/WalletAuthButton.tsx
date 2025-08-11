@@ -133,14 +133,12 @@ export default function WalletAuthButton() {
     <Button 
       onClick={handleAuthenticate}
       disabled={isAuthenticating}
-      variant="outline"
-      size="lg"
-      className="text-xl font-semibold"
+      className="flex items-center gap-2"
     >
       {isAuthenticating ? (
-        <Loader2 className="h-6 w-6 animate-spin" />
+        <Loader2 className="h-4 w-4 animate-spin" />
       ) : (
-        <Wallet className="h-6 w-6" />
+        <Wallet className="h-4 w-4" />
       )}
       {isConnected ? 
         `Authenticate ${address?.slice(0, 6)}...${address?.slice(-4)}` : 

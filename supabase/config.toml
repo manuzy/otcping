@@ -20,9 +20,3 @@ verify_jwt = false
 
 [functions.get-token-price]
 verify_jwt = false
-
-[functions.generate-kyc-token]
-verify_jwt = true
-
-[functions.kyc-webhook]
-verify_jwt = false
