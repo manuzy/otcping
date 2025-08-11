@@ -61,8 +61,15 @@ serve(async (req) => {
     const method = 'POST';
     const url = '/resources/accessTokens?userId=' + encodeURIComponent(externalUserId) + '&levelName=' + encodeURIComponent(level);
     
-    // Create signature for Sumsub API
-    const stringToSign = timestamp + method + url;
+    // Create request body
+    const requestBody = JSON.stringify({
+      externalUserId,
+      levelName: level,
+      ttlInSecs: 1800, // 30 minutes
+    });
+    
+    // Create signature for Sumsub API (timestamp + method + url + body)
+    const stringToSign = timestamp + method + url + requestBody;
     const encoder = new TextEncoder();
     const keyData = encoder.encode(secretKey);
     const messageData = encoder.encode(stringToSign);
@@ -90,11 +97,7 @@ serve(async (req) => {
         'X-App-Access-Sig': signatureHex,
         'X-App-Access-Ts': timestamp.toString(),
       },
-      body: JSON.stringify({
-        externalUserId,
-        levelName: level,
-        ttlInSecs: 1800, // 30 minutes
-      }),
+      body: requestBody,
     });
 
     if (!sumsubResponse.ok) {
