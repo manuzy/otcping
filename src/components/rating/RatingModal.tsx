@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { StarRating } from './StarRating';
-import { useToast } from '@/hooks/use-toast';
+import { notifications } from '@/lib/notifications';
 
 interface RatingModalProps {
   isOpen: boolean;
@@ -32,14 +32,12 @@ export function RatingModal({
   const [rating, setRating] = useState(existingRating?.rating_value || 0);
   const [comment, setComment] = useState(existingRating?.comment || '');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { toast } = useToast();
 
   const handleSubmit = async () => {
     if (rating === 0) {
-      toast({
+      notifications.warning({
         title: 'Rating Required',
-        description: 'Please select a star rating before submitting.',
-        variant: 'destructive',
+        description: 'Please select a star rating before submitting.'
       });
       return;
     }
@@ -49,23 +47,21 @@ export function RatingModal({
       const result = await onSubmitRating(rating, comment.trim() || undefined);
       
       if (result.success) {
-        toast({
+        notifications.success({
           title: 'Rating Submitted',
-          description: `Your rating for ${userDisplayName} has been ${existingRating ? 'updated' : 'submitted'}.`,
+          description: `Your rating for ${userDisplayName} has been ${existingRating ? 'updated' : 'submitted'}.`
         });
         onClose();
       } else {
-        toast({
+        notifications.error({
           title: 'Error',
-          description: result.error || 'Failed to submit rating.',
-          variant: 'destructive',
+          description: result.error || 'Failed to submit rating.'
         });
       }
     } catch (error) {
-      toast({
+      notifications.error({
         title: 'Error',
-        description: 'An unexpected error occurred.',
-        variant: 'destructive',
+        description: 'An unexpected error occurred.'
       });
     } finally {
       setIsSubmitting(false);

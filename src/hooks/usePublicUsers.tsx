@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useWalletAuth } from './useWalletAuth';
 import { User } from '@/types';
+import { logger } from '@/lib/logger';
 
 export type SortOption = 'reputation' | 'trades' | 'success' | 'newest';
 
@@ -111,7 +112,10 @@ export function usePublicUsers() {
 
       setUsers(formattedUsers);
     } catch (error) {
-      console.error('Error fetching public users:', error);
+      logger.error('Error fetching public users', {
+        component: 'usePublicUsers',
+        operation: 'fetch_public_users'
+      }, error as Error);
       setUsers([]);
     } finally {
       setLoading(false);

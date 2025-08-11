@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
-import { useToast } from './use-toast';
+import { logger } from '@/lib/logger';
+import { notifications } from '@/lib/notifications';
 
 export interface ContactProfile {
   id: string;
@@ -20,7 +21,6 @@ export function useContacts() {
   const [contacts, setContacts] = useState<ContactProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
-  const { toast } = useToast();
 
   // Fetch user's contacts
   const fetchContacts = async () => {
@@ -57,12 +57,12 @@ export function useContacts() {
 
       setContacts(contactProfiles || []);
     } catch (error) {
-      console.error('Error fetching contacts:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load contacts",
-        variant: "destructive",
-      });
+      logger.error('Error fetching contacts', {
+        component: 'useContacts',
+        operation: 'fetch_contacts',
+        userId: user?.id
+      }, error as Error);
+      notifications.loadingError('contacts');
     } finally {
       setLoading(false);
     }
@@ -82,9 +82,9 @@ export function useContacts() {
         .single();
 
       if (existing) {
-        toast({
+        notifications.info({
           title: "Already in contacts",
-          description: "This user is already in your contacts",
+          description: "This user is already in your contacts"
         });
         return false;
       }
@@ -96,7 +96,11 @@ export function useContacts() {
 
       if (error) {
         // Log error for debugging
-        console.log('Contact insertion error:', error.message, error.code);
+        logger.debug('Contact insertion error', {
+          component: 'useContacts',
+          operation: 'add_contact',
+          metadata: { message: error.message, code: error.code, contactId }
+        });
         
         // Check if it's a duplicate constraint violation
         const isDuplicateError = (err: any) => {
@@ -110,9 +114,9 @@ export function useContacts() {
 
         // If it's a duplicate, treat as success
         if (isDuplicateError(error)) {
-          toast({
+          notifications.info({
             title: "Already in contacts",
-            description: "This user is already in your contacts",
+            description: "This user is already in your contacts"
           });
           return false;
         }
@@ -121,20 +125,23 @@ export function useContacts() {
         throw error;
       }
 
-      toast({
+      notifications.success({
         title: "Contact added",
-        description: "User added to your contacts successfully",
+        description: "User added to your contacts successfully"
       });
 
       // Refresh contacts list
       fetchContacts();
       return true;
     } catch (error) {
-      console.error('Error adding contact:', error);
-      toast({
+      logger.error('Error adding contact', {
+        component: 'useContacts',
+        operation: 'add_contact',
+        metadata: { contactId }
+      }, error as Error);
+      notifications.error({
         title: "Error",
-        description: "Failed to add contact",
-        variant: "destructive",
+        description: "Failed to add contact"
       });
       return false;
     }
@@ -154,20 +161,23 @@ export function useContacts() {
 
       if (error) throw error;
 
-      toast({
+      notifications.success({
         title: "Contact removed",
-        description: "User removed from your contacts",
+        description: "User removed from your contacts"
       });
 
       // Refresh contacts list
       fetchContacts();
       return true;
     } catch (error) {
-      console.error('Error removing contact:', error);
-      toast({
+      logger.error('Error removing contact', {
+        component: 'useContacts',
+        operation: 'remove_contact',
+        metadata: { contactId }
+      }, error as Error);
+      notifications.error({
         title: "Error",
-        description: "Failed to remove contact",
-        variant: "destructive",
+        description: "Failed to remove contact"
       });
       return false;
     }

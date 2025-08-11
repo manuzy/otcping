@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { License } from '@/types';
+import { logger } from '@/lib/logger';
 
 export function useLicenses() {
   const [licenses, setLicenses] = useState<License[]>([]);
@@ -34,7 +35,10 @@ export function useLicenses() {
 
       setLicenses(formattedLicenses);
     } catch (err) {
-      console.error('Error fetching licenses:', err);
+      logger.error('Error fetching licenses', {
+        component: 'useLicenses',
+        operation: 'fetch_licenses'
+      }, err as Error);
       setError('Failed to fetch licenses');
     } finally {
       setLoading(false);

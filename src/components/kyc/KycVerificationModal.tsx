@@ -5,6 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useKycVerification } from "@/hooks/useKycVerification";
 import { Loader2, Shield, FileText, UserCheck } from "lucide-react";
 import { KycBadge } from "./KycBadge";
+import { logger } from '@/lib/logger';
 // @ts-ignore - Sumsub WebSDK types
 import SumsubWebSdk from '@sumsub/websdk-react';
 
@@ -33,7 +34,11 @@ export function KycVerificationModal({
   };
 
   const handleSdkMessage = async (message: any) => {
-    console.log('Sumsub SDK message:', message);
+    logger.debug('Sumsub SDK message received', {
+      component: 'KycVerificationModal',
+      operation: 'handle_sdk_message',
+      metadata: { type: message.type, status: message.payload?.status }
+    });
     
     if (message.type === 'onStatusChanged' && message.payload?.status === 'completed') {
       // Verification completed, close SDK and refresh status
@@ -89,7 +94,10 @@ export function KycVerificationModal({
                 }}
                 onMessage={handleSdkMessage}
                 onError={(error: any) => {
-                  console.error('Sumsub SDK error:', error);
+                  logger.error('Sumsub SDK error', {
+                    component: 'KycVerificationModal',
+                    operation: 'sdk_error'
+                  }, error);
                   setShowSdk(false);
                 }}
               />

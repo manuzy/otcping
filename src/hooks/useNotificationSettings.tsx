@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
-import { useToast } from './use-toast';
+import { logger } from '@/lib/logger';
+import { notifications } from '@/lib/notifications';
 
 interface NotificationSettings {
   id?: string;
@@ -19,7 +20,6 @@ export const useNotificationSettings = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const { user } = useAuth();
-  const { toast } = useToast();
 
   // Fetch notification settings
   const fetchSettings = async () => {
@@ -56,12 +56,12 @@ export const useNotificationSettings = () => {
         setSettings(defaultSettings);
       }
     } catch (error) {
-      console.error('Error fetching notification settings:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load notification settings",
-        variant: "destructive",
-      });
+      logger.error('Error fetching notification settings', {
+        component: 'useNotificationSettings',
+        operation: 'fetch_settings',
+        userId: user?.id
+      }, error as Error);
+      notifications.loadingError('notification settings');
     } finally {
       setLoading(false);
     }
@@ -96,17 +96,14 @@ export const useNotificationSettings = () => {
       }
 
       setSettings(updatedSettings);
-      toast({
-        title: "Settings saved",
-        description: "Your notification preferences have been updated",
-      });
+      notifications.saveSuccess('notification settings');
     } catch (error) {
-      console.error('Error saving notification settings:', error);
-      toast({
-        title: "Error",
-        description: "Failed to save notification settings",
-        variant: "destructive",
-      });
+      logger.error('Error saving notification settings', {
+        component: 'useNotificationSettings',
+        operation: 'save_settings',
+        userId: user?.id
+      }, error as Error);
+      notifications.saveError('notification settings');
     } finally {
       setSaving(false);
     }

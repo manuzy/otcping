@@ -3,6 +3,7 @@ import { Trade } from '@/types';
 import { Token } from '@/hooks/useTokens';
 import { parseUnits } from 'viem';
 import { supabase } from '@/integrations/supabase/client';
+import { logger } from '@/lib/logger';
 
 export class LimitOrderService {
   private readonly MAINNET_CHAIN_ID = 1;
@@ -33,13 +34,17 @@ export class LimitOrderService {
       const limitPrice = parseFloat(trade.limitPrice || '0');
       const buyAmount = parseUnits((parseFloat(trade.tokenAmount || trade.size) / limitPrice).toString(), buyToken.decimals);
 
-      console.log('Creating 1inch limit order:', {
-        sellToken: sellToken.symbol,
-        buyToken: buyToken.symbol,
-        sellAmount: trade.tokenAmount || trade.size,
-        buyAmount: (parseFloat(trade.tokenAmount || trade.size) / limitPrice).toString(),
-        limitPrice: trade.limitPrice,
-        maker: walletClient.account.address,
+      logger.info('Creating 1inch limit order', {
+        component: 'LimitOrderService',
+        operation: 'create_order',
+        metadata: {
+          sellToken: sellToken.symbol,
+          buyToken: buyToken.symbol,
+          sellAmount: trade.tokenAmount || trade.size,
+          buyAmount: (parseFloat(trade.tokenAmount || trade.size) / limitPrice).toString(),
+          limitPrice: trade.limitPrice,
+          maker: walletClient.account.address
+        }
       });
 
       // Create order data via edge function
@@ -58,13 +63,20 @@ export class LimitOrderService {
       );
 
       if (orderError || !orderResult?.success) {
-        console.error('Failed to create order:', orderError);
+        logger.error('Failed to create order', {
+          component: 'LimitOrderService',
+          operation: 'create_order'
+        }, orderError);
         throw new Error('Failed to create order data');
       }
 
       const { typedData, orderHash, extension } = orderResult;
 
-      console.log('Signing order with typed data:', typedData);
+      logger.debug('Signing order with typed data', {
+        component: 'LimitOrderService',
+        operation: 'sign_order',
+        metadata: { orderHash: orderHash }
+      });
 
       // Sign the typed data with the wallet
       const signature = await walletClient.signTypedData({
@@ -75,7 +87,11 @@ export class LimitOrderService {
         message: typedData.message,
       });
 
-      console.log('Order signed successfully!', { signature });
+      logger.info('Order signed successfully', {
+        component: 'LimitOrderService',
+        operation: 'sign_order',
+        metadata: { hasSignature: !!signature }
+      });
 
       // Submit the order to 1inch API
       const { data: submitResult, error: submitError } = await supabase.functions.invoke(
@@ -92,26 +108,34 @@ export class LimitOrderService {
       );
 
       if (submitError || !submitResult?.success) {
-        console.error('Failed to submit order to 1inch:', {
-          submitError,
-          submitResult
-        });
+        logger.error('Failed to submit order to 1inch', {
+          component: 'LimitOrderService',
+          operation: 'submit_order',
+          metadata: { hasSubmitError: !!submitError, resultError: submitResult?.error }
+        }, submitError);
         const errorMessage = submitResult?.error || submitError?.message || 'Failed to submit order to 1inch API';
         throw new Error(errorMessage);
       }
 
       const submittedOrderHash = submitResult.orderHash;
-      console.log('1inch limit order submitted successfully:', {
-        orderHash: submittedOrderHash,
-        sellToken: sellToken.symbol,
-        buyToken: buyToken.symbol,
-        sellAmount: trade.tokenAmount || trade.size,
-        limitPrice: trade.limitPrice,
+      logger.info('1inch limit order submitted successfully', {
+        component: 'LimitOrderService',
+        operation: 'submit_order',
+        metadata: {
+          orderHash: submittedOrderHash,
+          sellToken: sellToken.symbol,
+          buyToken: buyToken.symbol,
+          sellAmount: trade.tokenAmount || trade.size,
+          limitPrice: trade.limitPrice
+        }
       });
 
       return submittedOrderHash;
     } catch (error) {
-      console.error('Failed to create 1inch limit order:', error);
+      logger.error('Failed to create 1inch limit order', {
+        component: 'LimitOrderService',
+        operation: 'create_order'
+      }, error as Error);
       throw new Error(`Failed to create limit order: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }

@@ -19,6 +19,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { useTotalUnreadCount } from "@/hooks/useTotalUnreadCount";
 import { Badge } from "@/components/ui/badge";
+import { logger } from '@/lib/logger';
 
 const navItems = [
   { id: 'dashboard', label: 'Chat', icon: MessageCircle, path: '/app' },
@@ -56,7 +57,11 @@ export const Header = () => {
         setProfile(data);
       }
     } catch (error) {
-      console.error('Error fetching profile:', error);
+      logger.error('Error fetching profile', {
+        component: 'Header',
+        operation: 'fetch_profile',
+        userId: user?.id
+      }, error as Error);
     }
   };
 

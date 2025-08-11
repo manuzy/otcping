@@ -3,25 +3,26 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
+import { logger } from '@/lib/logger';
+import { notifications } from '@/lib/notifications';
 export function EmailTestPanel() {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
-  const {
-    toast
-  } = useToast();
   const sendTestEmail = async () => {
     if (!email) {
-      toast({
-        title: "Error",
-        description: "Please enter an email address",
-        variant: "destructive"
+      notifications.warning({
+        title: "Email Required",
+        description: "Please enter an email address"
       });
       return;
     }
     setLoading(true);
     try {
-      console.log('Sending test email to:', email);
+      logger.debug('Sending test email', {
+        component: 'EmailTestPanel',
+        operation: 'send_test_email',
+        metadata: { email }
+      });
       const {
         data,
         error
@@ -32,33 +33,42 @@ export function EmailTestPanel() {
         }
       });
       if (error) {
-        console.error('Test email error:', error);
-        toast({
+        logger.error('Test email function error', {
+          component: 'EmailTestPanel',
+          operation: 'send_test_email',
+          metadata: { email }
+        }, error);
+        notifications.error({
           title: "Error",
-          description: `Failed to send test email: ${error.message}`,
-          variant: "destructive"
+          description: `Failed to send test email: ${error.message}`
         });
         return;
       }
-      console.log('Test email response:', data);
+      logger.debug('Test email response received', {
+        component: 'EmailTestPanel',
+        operation: 'send_test_email',
+        metadata: { email, success: data?.success }
+      });
       if (data?.success) {
-        toast({
+        notifications.success({
           title: "Success",
           description: `Test email sent to ${email}. Check your inbox!`
         });
       } else {
-        toast({
+        notifications.error({
           title: "Error",
-          description: data?.details || "Failed to send test email",
-          variant: "destructive"
+          description: data?.details || "Failed to send test email"
         });
       }
     } catch (error: any) {
-      console.error('Test email exception:', error);
-      toast({
+      logger.error('Test email exception', {
+        component: 'EmailTestPanel',
+        operation: 'send_test_email',
+        metadata: { email }
+      }, error);
+      notifications.error({
         title: "Error",
-        description: `Exception: ${error.message}`,
-        variant: "destructive"
+        description: `Exception: ${error.message}`
       });
     } finally {
       setLoading(false);
