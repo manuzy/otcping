@@ -112,7 +112,9 @@ serve(async (req) => {
       let kycLevel: 'Level 0' | 'Level 1' | 'Level 2' = 'Level 0';
       
       if (reviewStatus === 'completed') {
-        if (levelName === 'basic' || levelName === 'basic-kyc-level') {
+        if (levelName === 'id-and-liveness' || 
+            levelName === 'basic' || 
+            levelName === 'basic-kyc-level') {
           kycLevel = 'Level 1';
         } else if (levelName === 'enhanced' || levelName === 'enhanced-kyc-level') {
           kycLevel = 'Level 2';

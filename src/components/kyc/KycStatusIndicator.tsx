@@ -98,7 +98,7 @@ export function KycStatusIndicator({
                 <p className="text-sm text-muted-foreground">
                   Identity verified successfully! You now have access to enhanced features.
                 </p>
-                {(kycStatus.level === 'basic' || kycStatus.level === 'basic-kyc-level') && (
+                {kycStatus.level === 'id-and-liveness' && (
                   <Button 
                     size="sm" 
                     variant="outline"

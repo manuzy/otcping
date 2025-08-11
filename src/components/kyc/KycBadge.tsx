@@ -34,7 +34,7 @@ export function KycBadge({
   const getText = () => {
     switch (status) {
       case 'completed':
-        return level === 'enhanced' || level === 'enhanced-kyc-level' ? 'Level 2 Verified' : 'Level 1 Verified';
+        return level === 'id-and-liveness' ? 'ID & Liveness Verified' : 'Verified';
       case 'pending':
         return 'Verification Pending';
       case 'reviewing':

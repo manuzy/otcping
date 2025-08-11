@@ -118,7 +118,9 @@ serve(async (req) => {
     if (applicantData.review?.reviewStatus === 'completed') {
       let kycLevel: 'Level 0' | 'Level 1' | 'Level 2' = 'Level 0';
       
-      if (kycRecord.verification_level === 'basic' || kycRecord.verification_level === 'basic-kyc-level') {
+      if (kycRecord.verification_level === 'id-and-liveness' || 
+          kycRecord.verification_level === 'basic' || 
+          kycRecord.verification_level === 'basic-kyc-level') {
         kycLevel = 'Level 1';
       } else if (kycRecord.verification_level === 'enhanced' || kycRecord.verification_level === 'enhanced-kyc-level') {
         kycLevel = 'Level 2';

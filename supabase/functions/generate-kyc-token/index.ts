@@ -29,8 +29,10 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Updated with standard Sumsub level names
+// Valid KYC levels based on Sumsub dashboard configuration
 const VALID_KYC_LEVELS = [
+  'id-and-liveness',
+  // Legacy support for existing levels
   'basic-kyc-level',
   'enhanced-kyc-level', 
   'level-1',
@@ -241,8 +243,8 @@ serve(async (req) => {
       return createErrorResponse({ message: 'Invalid JSON in request body' }, 400);
     }
 
-    // Use standard Sumsub level name - most common is 'basic'
-    const { level = 'basic' } = requestBody;
+    // Use configured Sumsub level name - default to 'id-and-liveness'
+    const { level = 'id-and-liveness' } = requestBody;
     
     // Validate KYC level
     const levelValidation = validateKycLevel(level);

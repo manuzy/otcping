@@ -19,7 +19,7 @@ export function KycVerificationModal({
   onOpenChange,
   currentKycLevel = 'Level 0'
 }: KycVerificationModalProps) {
-  const [selectedLevel, setSelectedLevel] = useState<string>('basic');
+  const [selectedLevel, setSelectedLevel] = useState<string>('id-and-liveness');
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [showSdk, setShowSdk] = useState(false);
   const { generateKycToken, isLoading, checkKycStatus } = useKycVerification();
@@ -52,18 +52,11 @@ export function KycVerificationModal({
 
   const levelOptions = [
     {
-      value: 'basic',
-      label: 'Level 1 - Basic Verification',
-      description: 'ID document + selfie verification',
-      icon: <FileText className="h-4 w-4" />,
-      disabled: currentKycLevel !== 'Level 0'
-    },
-    {
-      value: 'enhanced',
-      label: 'Level 2 - Enhanced Verification',
-      description: 'Full identity verification + address proof',
+      value: 'id-and-liveness',
+      label: 'ID & Liveness Verification',
+      description: 'ID document verification with liveness check',
       icon: <UserCheck className="h-4 w-4" />,
-      disabled: false
+      disabled: currentKycLevel !== 'Level 0'
     }
   ];
 
@@ -110,7 +103,7 @@ export function KycVerificationModal({
               </p>
               <KycBadge 
                 status={currentKycLevel === 'Level 0' ? 'not_started' : 'completed'} 
-                level={currentKycLevel === 'Level 2' ? 'enhanced' : 'basic'}
+                level={currentKycLevel === 'Level 1' ? 'id-and-liveness' : undefined}
               />
             </div>
 
