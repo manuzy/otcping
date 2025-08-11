@@ -56,20 +56,24 @@ serve(async (req) => {
     // Generate external user ID (use wallet address or user ID)
     const externalUserId = profile.wallet_address || user.id;
     
-    // Create access token payload
+    // Create access token payload with query parameters only
     const timestamp = Math.floor(Date.now() / 1000);
     const method = 'POST';
-    const url = '/resources/accessTokens?userId=' + encodeURIComponent(externalUserId) + '&levelName=' + encodeURIComponent(level);
+    const ttlInSecs = 1800; // 30 minutes
     
-    // Create request body
-    const requestBody = JSON.stringify({
-      externalUserId,
-      levelName: level,
-      ttlInSecs: 1800, // 30 minutes
-    });
+    // Build URL with all required query parameters
+    const url = '/resources/accessTokens?userId=' + encodeURIComponent(externalUserId) + 
+                '&levelName=' + encodeURIComponent(level) + 
+                '&ttlInSecs=' + ttlInSecs;
     
-    // Create signature for Sumsub API (timestamp + method + url + body)
-    const stringToSign = timestamp + method + url + requestBody;
+    // Log request details for debugging (without sensitive data)
+    console.log('Generating KYC token for user:', externalUserId);
+    console.log('KYC level:', level);
+    console.log('URL path:', url);
+    console.log('Timestamp:', timestamp);
+    
+    // Create signature for Sumsub API (timestamp + method + url, NO BODY)
+    const stringToSign = timestamp + method + url;
     const encoder = new TextEncoder();
     const keyData = encoder.encode(secretKey);
     const messageData = encoder.encode(stringToSign);
@@ -87,23 +91,29 @@ serve(async (req) => {
       .map(b => b.toString(16).padStart(2, '0'))
       .join('');
 
-    // Call Sumsub API to generate access token
+    // Log signature details for debugging (without exposing secrets)
+    console.log('String to sign:', stringToSign);
+    console.log('Signature hex length:', signatureHex.length);
+    
+    // Call Sumsub API to generate access token (NO BODY, query params only)
     const sumsubResponse = await fetch(`https://api.sumsub.com${url}`, {
       method: 'POST',
       headers: {
         'Accept': 'application/json',
-        'Content-Type': 'application/json',
         'X-App-Token': appToken,
         'X-App-Access-Sig': signatureHex,
         'X-App-Access-Ts': timestamp.toString(),
       },
-      body: requestBody,
+      // No body - all parameters are in the URL
     });
 
     if (!sumsubResponse.ok) {
       const errorText = await sumsubResponse.text();
-      console.error('Sumsub API error:', errorText);
-      throw new Error(`Sumsub API error: ${sumsubResponse.status}`);
+      console.error('Sumsub API error response:', errorText);
+      console.error('Request URL:', url);
+      console.error('Response status:', sumsubResponse.status);
+      console.error('Response headers:', Object.fromEntries(sumsubResponse.headers.entries()));
+      throw new Error(`Sumsub API error: ${sumsubResponse.status} - ${errorText}`);
     }
 
     const tokenData = await sumsubResponse.json();
