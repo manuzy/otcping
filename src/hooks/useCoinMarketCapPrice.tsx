@@ -34,8 +34,10 @@ export const useCoinMarketCapPrice = (
   const cacheKey = `${tokenAddress}-${chainId}`;
 
   const fetchPrice = useCallback(async () => {
-    if (!tokenAddress || !chainId) {
+    if (!tokenAddress || !chainId || tokenAddress === "" || chainId === 0) {
       setPrice(null);
+      setLoading(false);
+      setError(null);
       return;
     }
 

@@ -74,14 +74,18 @@ const CreateTrade = () => {
   const selectedChainId = formData.chain_id ? parseInt(chains.find(c => c.id === formData.chain_id)?.chain_id.toString() || '0') : undefined;
   const { tokens, loading: tokensLoading, error: tokensError } = useTokens(selectedChainId);
 
-  // Get price for sell token conversion
+  // Get price for sell token conversion (only when both token and chain are selected)
+  const shouldFetchPrice = formData.sellAsset && selectedChainId;
   const { 
     price, 
     loading: priceLoading, 
     error: priceError, 
     refreshPrice, 
     convertUSDToToken 
-  } = useCoinMarketCapPrice(formData.sellAsset, selectedChainId || 0);
+  } = useCoinMarketCapPrice(
+    shouldFetchPrice ? formData.sellAsset : "", 
+    shouldFetchPrice ? selectedChainId : 0
+  );
 
   // Handle URL parameters for pre-selected user
   useEffect(() => {
