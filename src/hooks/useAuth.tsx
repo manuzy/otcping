@@ -5,7 +5,7 @@ import { createClient } from '@supabase/supabase-js';
 import { useAppKitAccount } from '@reown/appkit/react';
 import CryptoJS from 'crypto-js';
 import { logger } from '@/lib/logger';
-import { ErrorHandler } from '@/lib/errorHandler';
+import { errorHandler } from '@/lib/errorHandler';
 import { notifications } from '@/lib/notifications';
 
 interface AuthContextType {
@@ -99,7 +99,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     
     const { error } = await supabase.auth.signOut();
     if (error) {
-      const appError = ErrorHandler.handle(error, false);
+      const appError = errorHandler.handle(error, false);
       logger.error('Sign out failed', { userId: user?.id }, appError);
     } else {
       logger.authEvent('User signed out successfully', { userId: user?.id });
@@ -131,7 +131,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       logger.apiSuccess('create_wallet_challenge', { walletAddress: address });
       return { message: result.message!, nonce: result.nonce! };
     } catch (error) {
-      const appError = ErrorHandler.handle(error, false);
+      const appError = errorHandler.handle(error, false);
       logger.apiError('create_wallet_challenge', appError, { walletAddress: address });
       return null;
     }

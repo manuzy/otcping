@@ -7,7 +7,7 @@ import { useWalletClient } from 'wagmi';
 import { useWalletAuth } from '@/hooks/useWalletAuth';
 import { logger } from '@/lib/logger';
 import { notifications } from '@/lib/notifications';
-import { ErrorHandler } from '@/lib/errorHandler';
+import { errorHandler } from '@/lib/errorHandler';
 
 export default function WalletAuthButton() {
   const [isAuthenticating, setIsAuthenticating] = useState(false);
@@ -69,7 +69,7 @@ export default function WalletAuthButton() {
         throw new Error(result.error || 'Authentication failed');
       }
     } catch (error) {
-      const appError = ErrorHandler.handle(error, false);
+      const appError = errorHandler.handle(error, false);
       logger.error('Wallet authentication failed', { 
         component: 'WalletAuthButton',
         walletAddress: address 

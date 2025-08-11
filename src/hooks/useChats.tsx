@@ -5,7 +5,7 @@ import { useAuth } from './useAuth';
 import type { Chat, User } from '@/types';
 import { logger } from '@/lib/logger';
 import { notifications } from '@/lib/notifications';
-import { ErrorHandler } from '@/lib/errorHandler';
+import { errorHandler } from '@/lib/errorHandler';
 import { apiClient } from '@/lib/apiClient';
 
 export function useChats() {
@@ -121,7 +121,7 @@ export function useChats() {
         userId: user.id 
       });
     } catch (error) {
-      const appError = ErrorHandler.handle(error, false);
+      const appError = errorHandler.handle(error, false);
       logger.error('Failed to fetch chats', { 
         component: 'useChats',
         userId: user.id 

@@ -12,9 +12,8 @@ export enum ErrorType {
   UNKNOWN = 'UNKNOWN'
 }
 
-export interface AppError {
+export interface AppError extends Error {
   type: ErrorType;
-  message: string;
   userMessage: string;
   code?: string;
   originalError?: Error;
@@ -23,7 +22,7 @@ export interface AppError {
 }
 
 export class ErrorHandler {
-  private static getUserFriendlyMessage(error: AppError): string {
+  private getUserFriendlyMessage(error: AppError): string {
     switch (error.type) {
       case ErrorType.NETWORK:
         return 'Connection problem. Please check your internet and try again.';
@@ -42,24 +41,24 @@ export class ErrorHandler {
     }
   }
 
-  static createError(
+  createError(
     type: ErrorType,
     message: string,
     userMessage?: string,
     originalError?: Error,
     context?: LogContext
   ): AppError {
-    return {
-      type,
-      message,
-      userMessage: userMessage || this.getUserFriendlyMessage({ type, message, userMessage: '' } as AppError),
-      originalError,
-      context,
-      retryable: type === ErrorType.NETWORK || type === ErrorType.SERVER
-    };
+    const error = new Error(message) as AppError;
+    error.type = type;
+    error.userMessage = userMessage || this.getUserFriendlyMessage({ type, message, userMessage: '' } as AppError);
+    error.originalError = originalError;
+    error.context = context;
+    error.retryable = type === ErrorType.NETWORK || type === ErrorType.SERVER;
+    error.name = 'AppError';
+    return error;
   }
 
-  static fromSupabaseError(error: any, context?: LogContext): AppError {
+  fromSupabaseError(error: any, context?: LogContext): AppError {
     // Handle Supabase-specific errors
     if (error?.code === 'PGRST116') {
       return this.createError(
@@ -120,7 +119,7 @@ export class ErrorHandler {
     );
   }
 
-  static fromNetworkError(error: any, context?: LogContext): AppError {
+  fromNetworkError(error: any, context?: LogContext): AppError {
     if (!navigator.onLine) {
       return this.createError(
         ErrorType.NETWORK,
@@ -150,7 +149,7 @@ export class ErrorHandler {
     );
   }
 
-  static handle(error: AppError | Error | any, showToast = true): AppError {
+  handle(error: AppError | Error | any, showToast = true): AppError {
     let appError: AppError;
 
     if (error instanceof Error) {
@@ -176,7 +175,7 @@ export class ErrorHandler {
     return appError;
   }
 
-  static handleAsync<T>(
+  handleAsync<T>(
     operation: () => Promise<T>,
     context?: LogContext,
     showToast = true
@@ -188,7 +187,7 @@ export class ErrorHandler {
       }));
   }
 
-  static retry<T>(
+  retry<T>(
     operation: () => Promise<T>,
     maxRetries = 3,
     delay = 1000,
@@ -214,26 +213,25 @@ export class ErrorHandler {
   }
 }
 
-// Helper functions for common error scenarios
+// Helper functions for common error scenarios  
 export const handleSupabaseError = (error: any, context?: LogContext) => 
-  ErrorHandler.handle(ErrorHandler.fromSupabaseError(error, context));
+  errorHandler.handle(errorHandler.fromSupabaseError(error, context));
 
 export const handleNetworkError = (error: any, context?: LogContext) => 
-  ErrorHandler.handle(ErrorHandler.fromNetworkError(error, context));
+  errorHandler.handle(errorHandler.fromNetworkError(error, context));
 
 export const handleAsyncOperation = <T>(
   operation: () => Promise<T>,
   context?: LogContext,
   showToast = true
-) => ErrorHandler.handleAsync(operation, context, showToast);
+) => errorHandler.handleAsync(operation, context, showToast);
 
 export const retryOperation = <T>(
   operation: () => Promise<T>,
   maxRetries = 3,
   delay = 1000,
   context?: LogContext
-) => ErrorHandler.retry(operation, maxRetries, delay, context);
+) => errorHandler.retry(operation, maxRetries, delay, context);
 
-// Export singleton instance
-const errorHandlerInstance = new ErrorHandler();
-export { errorHandlerInstance as errorHandler };
+// Create and export singleton instance
+export const errorHandler = new ErrorHandler();

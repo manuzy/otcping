@@ -1,7 +1,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { logger, LogContext } from './logger';
-import { ErrorHandler, AppError, ErrorType } from './errorHandler';
 import { notifications } from './notifications';
+import { errorHandler, AppError, ErrorType } from './errorHandler';
 
 export interface ApiOptions {
   showErrorToast?: boolean;
@@ -33,7 +33,7 @@ class ApiClient {
     const startTime = Date.now();
 
     try {
-      const result = await ErrorHandler.retry(
+      const result = await errorHandler.retry(
         operation,
         finalOptions.retries,
         1000,
@@ -49,7 +49,7 @@ class ApiClient {
 
       return { data: result, success: true };
     } catch (error) {
-      const appError = ErrorHandler.handle(error, finalOptions.showErrorToast);
+      const appError = errorHandler.handle(error, finalOptions.showErrorToast);
       return { error: appError, success: false };
     }
   }

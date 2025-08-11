@@ -23,7 +23,7 @@ import { useTokenAllowance } from '@/hooks/useTokenAllowance';
 import { EditTradeDialog } from './EditTradeDialog';
 import { logger } from '@/lib/logger';
 import { notifications } from '@/lib/notifications';
-import { ErrorHandler } from '@/lib/errorHandler';
+import { errorHandler } from '@/lib/errorHandler';
 import { apiClient } from '@/lib/apiClient';
 
 interface ChatViewProps {
@@ -187,7 +187,7 @@ export const ChatView = ({ chat, onMenuClick }: ChatViewProps) => {
       await sendMessage(orderMessage);
       
     } catch (error) {
-      const appError = ErrorHandler.handle(error, false);
+      const appError = errorHandler.handle(error, false);
       logger.error('Failed to place order', {
         component: 'ChatView',
         tradeId: chat.trade.id,
