@@ -58,18 +58,14 @@ const Landing = () => {
             </Badge>
             
             <h1 className="text-5xl lg:text-7xl font-bold mb-8 leading-tight text-foreground tracking-tight">
-              Any Asset. Any Strategy.
-              <br />
-              <span className="text-primary">Launch Your AMC</span>
-              <br />
-              in Days.
+              <span className="text-primary">Chat and Trade</span>
             </h1>
             
             <p className="text-xl lg:text-2xl text-muted-foreground mb-12 max-w-3xl mx-auto leading-relaxed">
               The secure platform for over-the-counter cryptocurrency trading with direct peer-to-peer communication and unlimited possibilities.
             </p>
 
-            <div className="flex flex-col sm:flex-row gap-6 justify-center mb-16">
+            <div className="flex justify-center mb-16">
               {isAuthenticated ? (
                 <Button 
                   variant="hero" 
@@ -81,17 +77,10 @@ const Landing = () => {
                   <ArrowRight className="ml-3 h-6 w-6" />
                 </Button>
               ) : (
-                <WalletAuthButton />
+                <div className="flex justify-center">
+                  <WalletAuthButton />
+                </div>
               )}
-              
-              <Button 
-                variant="outline" 
-                size="lg" 
-                className="text-xl px-12 py-4 h-14"
-                onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })}
-              >
-                Discover More
-              </Button>
             </div>
 
             {/* Stats */}
