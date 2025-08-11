@@ -1,6 +1,8 @@
 import { serve } from 'https://deno.land/std@0.190.0/http/server.ts'
 import {Sdk, MakerTraits, Address, FetchProviderConnector} from "https://esm.sh/@1inch/limit-order-sdk@5.0.3";
-
+import { EdgeLogger } from '../_shared/logger.ts';
+import { EdgeErrorHandler } from '../_shared/errorHandler.ts';
+import { ResponseBuilder, defaultCorsHeaders } from '../_shared/responseUtils.ts';
 
 interface OrderRequest {
   sellTokenAddress: string;
@@ -11,38 +13,61 @@ interface OrderRequest {
   expiration?: string;
 }
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
-
 serve(async (req) => {
+  const logger = new EdgeLogger('create-1inch-order');
+  const errorHandler = new EdgeErrorHandler(logger, defaultCorsHeaders);
+  const responseBuilder = new ResponseBuilder(defaultCorsHeaders);
+
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return ResponseBuilder.cors(defaultCorsHeaders);
   }
 
   try {
-    const apiKey = Deno.env.get('1INCH_API_KEY');
-    
-    if (!apiKey) {
-      console.error('1INCH_API_KEY not found in environment variables');
-      return new Response(
-        JSON.stringify({ error: '1inch API key not configured' }),
-        { 
-          status: 500, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
+    logger.info('Creating 1inch order request received');
+
+    // Validate environment
+    const envValidation = errorHandler.validateEnvironment(['1INCH_API_KEY']);
+    if (!envValidation.isValid) {
+      logger.error('Environment validation failed', {}, new Error(envValidation.error!));
+      return errorHandler.createErrorResponse(
+        new Error(envValidation.error!), 
+        500, 
+        { operation: 'environment_validation' }
       );
     }
 
-    const orderRequest: OrderRequest = await req.json();
-    console.log('🚀 Creating 1inch order with SDK:', orderRequest);
+    const apiKey = Deno.env.get('1INCH_API_KEY')!;
+
+    // Validate and parse request body
+    const bodyValidation = await errorHandler.validateJsonBody<OrderRequest>(req);
+    if (!bodyValidation.isValid) {
+      logger.error('Request body validation failed', {}, new Error(bodyValidation.error));
+      return errorHandler.createErrorResponse(
+        new Error(bodyValidation.error), 
+        400, 
+        { operation: 'request_validation' }
+      );
+    }
+
+    const orderRequest = bodyValidation.data;
+    logger.info('Order request validated', { 
+      operation: 'create_order',
+      sellToken: orderRequest.sellTokenAddress,
+      buyToken: orderRequest.buyTokenAddress,
+      maker: orderRequest.makerAddress
+    });
 
     // Calculate expiration (default 24h from now)
     const expiresIn = orderRequest.expiration 
       ? BigInt(Math.floor(new Date(orderRequest.expiration).getTime() / 1000))
       : BigInt(Math.floor(Date.now() / 1000)) + BigInt(24 * 60 * 60);
+
+    logger.info('Order parameters calculated', {
+      operation: 'order_preparation',
+      expiration: expiresIn.toString(),
+      hasCustomExpiration: !!orderRequest.expiration
+    });
 
     const makerTraits = MakerTraits.default()
       .withExpiration(expiresIn)
@@ -55,6 +80,11 @@ serve(async (req) => {
       httpConnector: new FetchProviderConnector(),
     });
 
+    logger.apiCall('create_order', '1inch-sdk', { 
+      operation: 'sdk_order_creation',
+      maker: orderRequest.makerAddress
+    });
+
     const order = await sdk.createOrder(
       {
         makerAsset: new Address(orderRequest.sellTokenAddress),
@@ -62,50 +92,33 @@ serve(async (req) => {
         makingAmount: BigInt(orderRequest.sellAmount),
         takingAmount: BigInt(orderRequest.buyAmount),
         maker: new Address(orderRequest.makerAddress),
-        // salt? : bigint
-        // receiver? : Address
       },
       makerTraits,
     );
 
-    // hardcoded for testing
-    // const order = await sdk.createOrder(
-    //   {
-    //     makerAsset: new Address('0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2'),
-    //     takerAsset: new Address('0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48'),
-    //     makingAmount: 100000000000000n,
-    //     takingAmount: 385769n,
-    //     maker: new Address(orderRequest.makerAddress),
-    //     // salt? : bigint
-    //     // receiver? : Address
-    //   },
-    //   makerTraits,
-    // );
+    const orderHash = order.getOrderHash(1);
+    const typedData = order.getTypedData(1);
+    const extension = order.extension.encode().toString();
 
-    return new Response(
-      JSON.stringify({
-        success: true,
-        typedData: order.getTypedData(1),
-        orderHash: order.getOrderHash(1),
-        extension: order.extension.encode().toString(),
-      }),
-      { 
-        status: 200, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      }
-    );
+    logger.apiSuccess('create_order', {
+      operation: 'order_created',
+      orderHash,
+      extensionLength: extension.length
+    });
+
+    return responseBuilder.success({
+      typedData,
+      orderHash,
+      extension,
+    });
 
   } catch (error) {
-    console.error('Error in create-1inch-order function:', error);
-    return new Response(
-      JSON.stringify({ 
-        error: 'Failed to create order',
-        details: error instanceof Error ? error.message : 'Unknown error'
-      }),
-      { 
-        status: 500, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      }
+    logger.apiError('create_order', error as Error, { operation: 'order_creation_failed' });
+    return errorHandler.createErrorResponse(
+      error as Error, 
+      500, 
+      { operation: 'create_order' },
+      'ORDER_CREATION_FAILED'
     );
   }
 });

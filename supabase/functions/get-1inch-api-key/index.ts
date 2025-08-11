@@ -1,55 +1,50 @@
 import { serve } from 'https://deno.land/std@0.190.0/http/server.ts'
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+import { EdgeLogger } from '../_shared/logger.ts';
+import { EdgeErrorHandler } from '../_shared/errorHandler.ts';
+import { ResponseBuilder, defaultCorsHeaders } from '../_shared/responseUtils.ts';
 
 serve(async (req) => {
+  const logger = new EdgeLogger('get-1inch-api-key');
+  const errorHandler = new EdgeErrorHandler(logger, defaultCorsHeaders);
+  const responseBuilder = new ResponseBuilder(defaultCorsHeaders);
+
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return ResponseBuilder.cors(defaultCorsHeaders);
   }
 
   try {
-    // Get the 1inch API key from environment variables
-    const apiKey = Deno.env.get('1INCH_API_KEY');
-    
-    if (!apiKey) {
-      console.error('1INCH_API_KEY not found in environment variables');
-      return new Response(
-        JSON.stringify({ error: '1inch API key not configured' }),
-        { 
-          status: 500, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
+    logger.info('API key request received');
+
+    // Validate environment
+    const envValidation = errorHandler.validateEnvironment(['1INCH_API_KEY']);
+    if (!envValidation.isValid) {
+      logger.error('Environment validation failed', {}, new Error(envValidation.error!));
+      return errorHandler.createErrorResponse(
+        new Error(envValidation.error!), 
+        500, 
+        { operation: 'environment_validation' }
       );
     }
 
-    console.log('Providing 1inch API key for SDK');
+    const apiKey = Deno.env.get('1INCH_API_KEY')!;
 
-    return new Response(
-      JSON.stringify({ 
-        success: true, 
-        apiKey: apiKey 
-      }),
-      { 
-        status: 200, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      }
-    );
+    logger.info('Providing 1inch API key for SDK', { 
+      operation: 'api_key_provision',
+      keyLength: apiKey.length
+    });
+
+    return responseBuilder.success({
+      apiKey: apiKey 
+    });
 
   } catch (error) {
-    console.error('Error in get-1inch-api-key function:', error);
-    return new Response(
-      JSON.stringify({ 
-        error: 'Failed to get API key',
-        details: error instanceof Error ? error.message : 'Unknown error'
-      }),
-      { 
-        status: 500, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      }
+    logger.error('Error in get-1inch-api-key function', {}, error as Error);
+    return errorHandler.createErrorResponse(
+      error as Error, 
+      500, 
+      { operation: 'get_api_key' },
+      'API_KEY_RETRIEVAL_FAILED'
     );
   }
 });
