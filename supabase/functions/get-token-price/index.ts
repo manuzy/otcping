@@ -3,6 +3,9 @@ import { EdgeLogger } from '../_shared/logger.ts';
 import { EdgeErrorHandler } from '../_shared/errorHandler.ts';
 import { ResponseBuilder, defaultCorsHeaders } from '../_shared/responseUtils.ts';
 import { RetryHandler } from '../_shared/retryUtils.ts';
+import { PerformanceMonitor } from '../_shared/performanceMonitor.ts';
+import { RateLimiter, rateLimitConfigs } from '../_shared/rateLimiter.ts';
+import { tokenPriceCache, MemoryCache } from '../_shared/cacheManager.ts';
 
 interface PriceRequest {
   tokenAddress: string;
@@ -14,10 +17,33 @@ serve(async (req) => {
   const errorHandler = new EdgeErrorHandler(logger, defaultCorsHeaders);
   const responseBuilder = new ResponseBuilder(defaultCorsHeaders);
   const retryHandler = new RetryHandler(logger);
+  const performanceMonitor = new PerformanceMonitor(1000); // 1 second threshold
+  const rateLimiter = new RateLimiter(rateLimitConfigs.moderate);
 
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return ResponseBuilder.cors(defaultCorsHeaders);
+  }
+
+  // Check rate limits
+  const rateLimitResult = rateLimiter.checkLimit(req);
+  if (!rateLimitResult.allowed) {
+    logger.warn('Rate limit exceeded', {
+      operation: 'rate_limit_check',
+      remaining: rateLimitResult.remaining,
+      resetTime: rateLimitResult.resetTime
+    });
+    return new Response(
+      JSON.stringify({ error: 'Rate limit exceeded' }),
+      { 
+        status: 429,
+        headers: { 
+          ...defaultCorsHeaders, 
+          ...rateLimiter.createHeaders(rateLimitResult),
+          'Content-Type': 'application/json'
+        }
+      }
+    );
   }
 
   try {
@@ -35,6 +61,24 @@ serve(async (req) => {
     }
 
     const { tokenAddress, chainId } = bodyValidation.data;
+
+    // Generate cache key
+    const cacheKey = MemoryCache.generateKey('token_price', tokenAddress, chainId);
+    
+    // Check cache first
+    const cachedPrice = tokenPriceCache.get(cacheKey);
+    if (cachedPrice) {
+      logger.info('Price found in cache', {
+        operation: 'cache_hit',
+        tokenAddress,
+        chainId
+      });
+      performanceMonitor.logSummary(logger);
+      return responseBuilder.success({
+        ...cachedPrice,
+        cached: true
+      });
+    }
 
     // Validate environment
     const envValidation = errorHandler.validateEnvironment(['COINMARKETCAP_API_KEY']);
@@ -85,15 +129,19 @@ serve(async (req) => {
       platformId
     });
     
-    const tokenInfoResponse = await retryHandler.fetchWithRetry(
-      tokenInfoUrl,
-      {
-        headers: {
-          'X-CMC_PRO_API_KEY': apiKey,
-          'Accept': 'application/json',
+    const { result: tokenInfoResponse, duration: tokenInfoDuration } = await performanceMonitor.timeOperation(
+      'coinmarketcap_token_info',
+      () => retryHandler.fetchWithRetry(
+        tokenInfoUrl,
+        {
+          headers: {
+            'X-CMC_PRO_API_KEY': apiKey,
+            'Accept': 'application/json',
+          },
         },
-      },
-      'get_token_info_from_coinmarketcap'
+        'get_token_info_from_coinmarketcap'
+      ),
+      { tokenAddress, platformId }
     );
 
     if (!tokenInfoResponse.ok) {
@@ -151,15 +199,19 @@ serve(async (req) => {
       tokenId
     });
 
-    const priceResponse = await retryHandler.fetchWithRetry(
-      priceUrl,
-      {
-        headers: {
-          'X-CMC_PRO_API_KEY': apiKey,
-          'Accept': 'application/json',
+    const { result: priceResponse, duration: priceDuration } = await performanceMonitor.timeOperation(
+      'coinmarketcap_price_lookup',
+      () => retryHandler.fetchWithRetry(
+        priceUrl,
+        {
+          headers: {
+            'X-CMC_PRO_API_KEY': apiKey,
+            'Accept': 'application/json',
+          },
         },
-      },
-      'get_token_price_from_coinmarketcap'
+        'get_token_price_from_coinmarketcap'
+      ),
+      { tokenId }
     );
 
     if (!priceResponse.ok) {
@@ -198,25 +250,44 @@ serve(async (req) => {
 
     const priceUSD = tokenPriceData.quote.USD.price;
 
-    logger.apiSuccess('get_token_price', {
-      operation: 'price_retrieval_complete',
-      tokenAddress,
-      chainId,
-      symbol: tokenData.symbol,
-      priceUSD
-    });
-
-    return responseBuilder.success({
+    // Cache the result (1 minute TTL for price data)
+    const priceResult = {
       tokenAddress,
       chainId,
       priceUSD,
       symbol: tokenData.symbol,
       name: tokenData.name,
       lastUpdated: tokenPriceData.quote.USD.last_updated,
+      cached: false
+    };
+    
+    tokenPriceCache.set(cacheKey, priceResult, 60 * 1000); // 1 minute cache
+
+    logger.apiSuccess('get_token_price', {
+      operation: 'price_retrieval_complete',
+      tokenAddress,
+      chainId,
+      symbol: tokenData.symbol,
+      priceUSD,
+      tokenInfoDuration,
+      priceDuration,
+      metadata: {
+        cacheKey,
+        cacheStats: tokenPriceCache.getStats()
+      }
     });
+
+    // Log performance summary
+    performanceMonitor.logSummary(logger);
+
+    return responseBuilder.success(priceResult);
 
   } catch (error) {
     logger.apiError('get_token_price', error as Error, { operation: 'price_retrieval_failed' });
+    
+    // Log performance summary even on error
+    performanceMonitor.logSummary(logger);
+    
     return errorHandler.createErrorResponse(
       error as Error, 
       500, 

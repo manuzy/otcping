@@ -29,3 +29,9 @@ verify_jwt = false
 
 [functions.check-kyc-status]
 verify_jwt = true
+
+[functions.health-check]
+verify_jwt = false
+
+[functions.system-metrics]
+verify_jwt = false
