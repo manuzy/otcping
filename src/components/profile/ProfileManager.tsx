@@ -10,6 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useAuth } from '@/hooks/useAuth';
+import { KycStatusBadge } from '@/components/kyc/KycStatusBadge';
+import { useKyc } from '@/hooks/useKyc';
 import { useToast } from '@/hooks/use-toast';
 import { useOnlinePresence } from '@/hooks/useOnlinePresence';
 import { useLicenses } from '@/hooks/useLicenses';
@@ -44,6 +46,7 @@ export default function ProfileManager() {
   const { toast } = useToast();
   const { isUserOnline } = useOnlinePresence();
   const { licenses } = useLicenses();
+  const { kycLevel, verificationDate } = useKyc();
 
   // Random avatar generation options
   const avatarOptions = {
@@ -402,15 +405,16 @@ export default function ProfileManager() {
           <h3 className="text-lg font-medium">Trading Information</h3>
           
           <div>
-            <Label>KYC Level</Label>
-            <Input
-              value={`${profile.kyc_level || 'Level 0'} - Set by administrators`}
-              disabled
-              className="bg-muted"
-            />
-            <p className="text-sm text-muted-foreground mt-1">
-              KYC verification is managed by administrators
-            </p>
+            <Label>KYC Verification Status</Label>
+            <div className="flex items-center gap-3 mt-2">
+              <KycStatusBadge 
+                level={kycLevel}
+                verificationDate={verificationDate}
+              />
+              <span className="text-sm text-muted-foreground">
+                Identity verification status
+              </span>
+            </div>
           </div>
 
           <div>
