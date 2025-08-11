@@ -1,10 +1,8 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "npm:resend@2.0.0";
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { EdgeLogger } from '../_shared/logger.ts';
+import { EdgeErrorHandler } from '../_shared/errorHandler.ts';
+import { ResponseBuilder, defaultCorsHeaders } from '../_shared/responseUtils.ts';
 
 interface TestEmailRequest {
   email: string;
@@ -12,25 +10,59 @@ interface TestEmailRequest {
 }
 
 const handler = async (req: Request): Promise<Response> => {
+  const logger = new EdgeLogger('test-email');
+  const errorHandler = new EdgeErrorHandler(logger, defaultCorsHeaders);
+  const responseBuilder = new ResponseBuilder(defaultCorsHeaders);
+
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return ResponseBuilder.cors(defaultCorsHeaders);
   }
 
   if (req.method !== 'POST') {
-    return new Response(JSON.stringify({ error: 'Method not allowed' }), {
-      status: 405,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    logger.error('Invalid method', { operation: 'method_validation' }, new Error('Method not allowed'));
+    return errorHandler.createErrorResponse(
+      new Error('Method not allowed'), 
+      405, 
+      { operation: 'method_validation' }
+    );
   }
 
   try {
+    logger.info('Test email request received');
+
+    // Validate environment
+    const envValidation = errorHandler.validateEnvironment(['RESEND_API_KEY']);
+    if (!envValidation.isValid) {
+      logger.error('Environment validation failed', {}, new Error(envValidation.error!));
+      return errorHandler.createErrorResponse(
+        new Error(envValidation.error!), 
+        500, 
+        { operation: 'environment_validation' }
+      );
+    }
+
     const resendApiKey = Deno.env.get('RESEND_API_KEY')!;
     const resend = new Resend(resendApiKey);
 
-    const { email, testType = 'basic' }: TestEmailRequest = await req.json();
+    // Validate and parse request body
+    const bodyValidation = await errorHandler.validateJsonBody<TestEmailRequest>(req);
+    if (!bodyValidation.isValid) {
+      logger.error('Request body validation failed', {}, new Error(bodyValidation.error));
+      return errorHandler.createErrorResponse(
+        new Error(bodyValidation.error), 
+        400, 
+        { operation: 'request_validation' }
+      );
+    }
 
-    console.log('Testing email sending to:', email, 'with type:', testType);
+    const { email, testType = 'basic' } = bodyValidation.data;
+
+    logger.info('Test email parameters validated', { 
+      operation: 'email_test_init',
+      email, 
+      testType 
+    });
 
     const emailSubject = 'OTCping Email Test';
     const emailBody = `
@@ -53,7 +85,11 @@ const handler = async (req: Request): Promise<Response> => {
       </html>
     `;
 
-    console.log('Attempting to send test email via Resend...');
+    logger.apiCall('send_test_email', 'resend', {
+      operation: 'test_email_sending',
+      email,
+      testType
+    });
 
     // Use Resend's email sending API
     const emailResponse = await resend.emails.send({
@@ -64,44 +100,43 @@ const handler = async (req: Request): Promise<Response> => {
     });
 
     if (emailResponse.error) {
-      console.error('Error sending test email:', emailResponse.error);
+      logger.error('Error sending test email', {
+        operation: 'test_email_failed',
+        email,
+        error: emailResponse.error
+      }, emailResponse.error);
       
-      return new Response(JSON.stringify({ 
-        success: false,
-        error: 'Failed to send email',
-        details: emailResponse.error.message,
-        emailService: 'resend'
-      }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      return errorHandler.createErrorResponse(
+        emailResponse.error, 
+        500, 
+        { operation: 'test_email_send', email, emailService: 'resend' },
+        'EMAIL_SEND_FAILED'
+      );
     }
 
-    console.log('Test email sent successfully to:', email);
+    logger.apiSuccess('send_test_email', {
+      operation: 'test_email_sent',
+      email,
+      emailId: emailResponse.data?.id,
+      testType
+    });
 
-    return new Response(JSON.stringify({ 
-      success: true, 
+    return responseBuilder.success({ 
       message: 'Test email sent successfully',
       email: email,
       emailId: emailResponse.data?.id,
       timestamp: new Date().toISOString(),
       emailService: 'resend'
-    }), {
-      status: 200,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 
   } catch (error) {
-    console.error('Error in test-email function:', error);
-    
-    return new Response(JSON.stringify({ 
-      success: false,
-      error: 'Internal server error',
-      details: error.message 
-    }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    logger.apiError('test_email', error as Error, { operation: 'test_email_failed' });
+    return errorHandler.createErrorResponse(
+      error as Error, 
+      500, 
+      { operation: 'test_email' },
+      'TEST_EMAIL_FAILED'
+    );
   }
 };
 
