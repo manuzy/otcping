@@ -92,7 +92,8 @@ const ToastTitle = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <ToastPrimitives.Title
     ref={ref}
-    className={cn("text-sm font-semibold select-text", className)}
+    className={cn("text-sm font-semibold select-text cursor-text", className)}
+    style={{ userSelect: 'text', WebkitUserSelect: 'text', MozUserSelect: 'text' }}
     {...props}
   />
 ))
@@ -104,7 +105,8 @@ const ToastDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <ToastPrimitives.Description
     ref={ref}
-    className={cn("text-sm opacity-90 select-text", className)}
+    className={cn("text-sm opacity-90 select-text cursor-text", className)}
+    style={{ userSelect: 'text', WebkitUserSelect: 'text', MozUserSelect: 'text' }}
     {...props}
   />
 ))
