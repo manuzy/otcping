@@ -10,14 +10,14 @@ import { useContacts } from "@/hooks/useContacts";
 import { useOnlinePresence } from "@/hooks/useOnlinePresence";
 import { useWalletAuth } from "@/hooks/useWalletAuth";
 import { useChats } from "@/hooks/useChats";
-import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
+import { logger } from "@/lib/logger";
+import { notifications } from "@/lib/notifications";
 
 export default function Contacts() {
   const [searchQuery, setSearchQuery] = useState("");
   const [creatingChat, setCreatingChat] = useState<{ [userId: string]: boolean }>({});
   const navigate = useNavigate();
-  const { toast } = useToast();
   const { isAuthenticated } = useWalletAuth();
   const { contacts, loading, removeContact } = useContacts();
   const { isUserOnline } = useOnlinePresence();
@@ -37,10 +37,9 @@ export default function Contacts() {
 
   const handleMessage = async (userId: string, displayName: string) => {
     if (!isAuthenticated) {
-      toast({
+      notifications.error({
         title: "Authentication Required",
-        description: "Please connect your wallet to send messages",
-        variant: "destructive",
+        description: "Please connect your wallet to send messages"
       });
       return;
     }
@@ -53,42 +52,59 @@ export default function Contacts() {
     setCreatingChat(prev => ({ ...prev, [userId]: true }));
 
     try {
-      console.log('Checking for existing chat with contact:', userId, displayName);
+      logger.debug('Checking for existing chat with contact', {
+        operation: 'find_contact_chat',
+        metadata: { contactUserId: userId, displayName }
+      });
       
       // First, check if a direct chat already exists with this contact
       const existingChat = await findExistingDirectChat(userId);
       
       if (existingChat) {
-        console.log('Found existing chat:', existingChat.id);
+        logger.info('Found existing chat with contact', {
+          operation: 'find_contact_chat',
+          metadata: { chatId: existingChat.id, contactUserId: userId }
+        });
         // Navigate to existing chat
         navigate(`/app?chat=${existingChat.id}`);
-        toast({
+        notifications.info({
           title: "Existing Chat Found",
-          description: `Redirected to your existing chat with ${displayName}.`,
+          description: `Redirected to your existing chat with ${displayName}.`
         });
       } else {
-        console.log('No existing chat found, creating new chat with contact:', userId, displayName);
+        logger.debug('Creating new chat with contact', {
+          operation: 'create_contact_chat',
+          metadata: { contactUserId: userId, displayName }
+        });
         
         // Create a new direct message chat
         const chatId = await createChat(`Chat with ${displayName}`, false, undefined, [userId]);
         
         if (chatId) {
-          console.log('Chat created successfully, navigating to:', chatId);
+          logger.info('Chat created successfully with contact', {
+            operation: 'create_contact_chat',
+            metadata: { chatId, contactUserId: userId }
+          });
           navigate(`/app?chat=${chatId}`);
-          toast({
+          notifications.success({
             title: "Chat Created",
-            description: `Started a new chat with ${displayName}.`,
+            description: `Started a new chat with ${displayName}.`
           });
         } else {
-          console.error('Chat creation returned null');
+          logger.error('Chat creation returned null', {
+            operation: 'create_contact_chat',
+            metadata: { contactUserId: userId, displayName }
+          });
         }
       }
     } catch (error) {
-      console.error('Error in handleMessage:', error);
-      toast({
+      logger.error('Error in handleMessage', {
+        operation: 'create_or_find_contact_chat',
+        metadata: { contactUserId: userId, displayName }
+      }, error as Error);
+      notifications.error({
         title: "Error",
-        description: "Failed to create or find chat. Please try again.",
-        variant: "destructive",
+        description: "Failed to create or find chat. Please try again."
       });
     } finally {
       setCreatingChat(prev => ({ ...prev, [userId]: false }));

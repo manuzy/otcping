@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
+import { logger } from '@/lib/logger';
 
 export interface Rating {
   id: string;
@@ -37,7 +38,10 @@ export function useRatings(userId?: string) {
         setUserRating(existingRating || null);
       }
     } catch (error) {
-      console.error('Error fetching ratings:', error);
+      logger.error('Error fetching ratings', {
+        operation: 'fetch_ratings',
+        metadata: { targetUserId }
+      }, error as Error);
     } finally {
       setLoading(false);
     }
@@ -87,7 +91,10 @@ export function useRatings(userId?: string) {
 
       return { success: true, data: result.data };
     } catch (error: any) {
-      console.error('Error submitting rating:', error);
+      logger.error('Error submitting rating', {
+        operation: 'submit_rating',
+        metadata: { ratedUserId, ratingValue, tradeId }
+      }, error);
       return { 
         success: false, 
         error: error.message || 'Failed to submit rating' 
@@ -114,7 +121,10 @@ export function useRatings(userId?: string) {
 
       return { success: true };
     } catch (error: any) {
-      console.error('Error deleting rating:', error);
+      logger.error('Error deleting rating', {
+        operation: 'delete_rating',
+        metadata: { ratingId }
+      }, error);
       return { 
         success: false, 
         error: error.message || 'Failed to delete rating' 

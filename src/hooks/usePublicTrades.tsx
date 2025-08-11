@@ -2,13 +2,13 @@ import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import type { Chat, Trade } from '@/types';
 import { useAuth } from './useAuth';
-import { useToast } from './use-toast';
+import { logger } from '@/lib/logger';
+import { notifications } from '@/lib/notifications';
 
 export function usePublicTrades() {
   const [trades, setTrades] = useState<Chat[]>([]);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
-  const { toast } = useToast();
   const isUnmountedRef = useRef(false);
   const errorToastTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -28,7 +28,10 @@ export function usePublicTrades() {
     }
 
     try {
-      console.log('Fetching public trades for user:', user?.id);
+      logger.debug('Fetching public trades', { 
+        userId: user?.id,
+        operation: 'fetch_public_trades' 
+      });
       
       const { data, error } = await supabase
         .from('chats')
@@ -52,7 +55,10 @@ export function usePublicTrades() {
       // Only update state if component is still mounted
       if (isUnmountedRef.current) return;
 
-      console.log('Raw public trades data:', data);
+      logger.debug('Retrieved public trades data', { 
+        operation: 'fetch_public_trades',
+        metadata: { tradesCount: data?.length || 0 }
+      });
 
       // Transform data to match Chat interface
       const transformedTrades: Chat[] = (data || []).map(chat => {
@@ -100,16 +106,25 @@ export function usePublicTrades() {
             lastActivity: chat.updated_at ? new Date(chat.updated_at) : new Date()
           };
         } catch (transformError) {
-          console.error('Error transforming chat data:', transformError, chat);
+          logger.error('Error transforming chat data', {
+            operation: 'transform_trade_data',
+            metadata: { chatId: chat?.id }
+          }, transformError as Error);
           return null;
         }
       }).filter(chat => chat !== null) as Chat[];
 
-      console.log('Transformed public trades:', transformedTrades);
+      logger.info('Public trades fetched successfully', {
+        operation: 'fetch_public_trades',
+        metadata: { tradesCount: transformedTrades.length }
+      });
       setTrades(transformedTrades);
       
     } catch (error) {
-      console.error('Error fetching public trades:', error);
+      logger.error('Error fetching public trades', {
+        operation: 'fetch_public_trades',
+        userId: user?.id
+      }, error as Error);
       
       // Debounce error toasts to prevent spam
       if (errorToastTimeoutRef.current) {
@@ -118,11 +133,7 @@ export function usePublicTrades() {
       
       errorToastTimeoutRef.current = setTimeout(() => {
         if (!isUnmountedRef.current) {
-          toast({
-            title: "Error loading public trades",
-            description: "Failed to load public trades. Please try again.",
-            variant: "destructive",
-          });
+          notifications.loadingError('public trades');
         }
       }, 1000);
     } finally {
@@ -145,7 +156,9 @@ export function usePublicTrades() {
   useEffect(() => {
     if (!user) return;
 
-    console.log('Setting up real-time subscriptions for public trades');
+    logger.debug('Setting up real-time subscriptions for public trades', {
+      operation: 'setup_realtime_subscriptions'
+    });
 
     const chatsChannel = supabase
       .channel('public_chats_changes')
@@ -158,7 +171,10 @@ export function usePublicTrades() {
           filter: 'is_public=eq.true'
         },
         (payload) => {
-          console.log('Public chat change detected:', payload);
+          logger.debug('Public chat change detected', {
+            operation: 'realtime_chat_change',
+            metadata: { eventType: payload.eventType, table: 'chats' }
+          });
           // Debounced fetch to avoid too many calls
           setTimeout(() => {
             if (!isUnmountedRef.current) {
@@ -179,7 +195,10 @@ export function usePublicTrades() {
           table: 'trades'
         },
         (payload) => {
-          console.log('Trade change detected:', payload);
+          logger.debug('Trade change detected', {
+            operation: 'realtime_trade_change',
+            metadata: { eventType: payload.eventType, table: 'trades' }
+          });
           // Debounced fetch to avoid too many calls
           setTimeout(() => {
             if (!isUnmountedRef.current) {
@@ -191,7 +210,9 @@ export function usePublicTrades() {
       .subscribe();
 
     return () => {
-      console.log('Cleaning up public trades subscriptions');
+      logger.debug('Cleaning up public trades subscriptions', {
+        operation: 'cleanup_realtime_subscriptions'
+      });
       supabase.removeChannel(chatsChannel);
       supabase.removeChannel(tradesChannel);
     };

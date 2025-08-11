@@ -1,9 +1,10 @@
 import React, { useState, useRef } from 'react';
 import { Upload, X, Image } from 'lucide-react';
 import { Button } from './button';
-import { toast } from './use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { logger } from '@/lib/logger';
+import { notifications } from '@/lib/notifications';
 
 interface FileUploadProps {
   currentImage?: string;
@@ -74,20 +75,15 @@ export function FileUpload({
 
     // Validate file type
     if (!file.type.startsWith('image/')) {
-      toast({
-        title: "Invalid file type",
-        description: "Please select an image file.",
-        variant: "destructive",
-      });
+      notifications.validationError('file type');
       return;
     }
 
     // Validate file size
     if (file.size > maxSizeInMB * 1024 * 1024) {
-      toast({
+      notifications.error({
         title: "File too large",
-        description: `Please select an image smaller than ${maxSizeInMB}MB.`,
-        variant: "destructive",
+        description: `Please select an image smaller than ${maxSizeInMB}MB.`
       });
       return;
     }
@@ -144,12 +140,19 @@ export function FileUpload({
         onImageUpload(cachebustedUrl);
         onImageSaved?.(true);
         
-        toast({
-          title: "Image uploaded successfully",
-          description: "Your profile image has been updated.",
+        notifications.success({
+          description: "Your profile image has been updated."
+        });
+
+        logger.info('Profile image uploaded successfully', {
+          operation: 'upload_profile_image',
+          userId: user.id
         });
       } catch (dbError) {
-        console.error('Database update error:', dbError);
+        logger.error('Database update error during image upload', {
+          operation: 'upload_profile_image',
+          userId: user.id
+        }, dbError as Error);
         
         // Rollback: Delete the uploaded file
         await supabase.storage
@@ -161,12 +164,15 @@ export function FileUpload({
       }
       
     } catch (error) {
-      console.error('Upload error:', error);
+      logger.error('Upload error', {
+        operation: 'upload_profile_image',
+        userId: user?.id
+      }, error as Error);
+      
       onImageSaved?.(false);
-      toast({
+      notifications.error({
         title: "Upload failed",
-        description: error instanceof Error ? error.message : "Failed to upload image. Please try again.",
-        variant: "destructive",
+        description: error instanceof Error ? error.message : "Failed to upload image. Please try again."
       });
       setPreview(null);
     } finally {

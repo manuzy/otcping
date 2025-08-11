@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { useIsAdmin } from './useIsAdmin';
-import { toast } from 'sonner';
+import { logger } from '@/lib/logger';
+import { notifications } from '@/lib/notifications';
 
 interface AdminSettings {
   skip_approval: boolean;
@@ -33,7 +34,10 @@ export function useAdminSettings() {
         .single();
 
       if (error && error.code !== 'PGRST116') { // PGRST116 = row not found
-        console.error('Error fetching admin settings:', error);
+        logger.error('Error fetching admin settings', {
+          operation: 'fetch_admin_settings',
+          userId: user?.id
+        }, error as Error);
         return;
       }
 
@@ -44,7 +48,10 @@ export function useAdminSettings() {
         await createDefaultSettings();
       }
     } catch (error) {
-      console.error('Error in fetchSettings:', error);
+      logger.error('Error in fetchSettings', {
+        operation: 'fetch_admin_settings',
+        userId: user?.id
+      }, error as Error);
     } finally {
       setLoading(false);
     }
@@ -60,10 +67,16 @@ export function useAdminSettings() {
         });
 
       if (error) {
-        console.error('Error creating default admin settings:', error);
+        logger.error('Error creating default admin settings', {
+          operation: 'create_default_admin_settings',
+          userId: user?.id
+        }, error as Error);
       }
     } catch (error) {
-      console.error('Error in createDefaultSettings:', error);
+      logger.error('Error in createDefaultSettings', {
+        operation: 'create_default_admin_settings',
+        userId: user?.id
+      }, error as Error);
     }
   };
 
@@ -82,16 +95,29 @@ export function useAdminSettings() {
         });
 
       if (error) {
-        toast.error('Failed to update settings');
-        console.error('Error updating admin settings:', error);
+        logger.error('Error updating admin settings', {
+          operation: 'update_admin_settings',
+          userId: user.id,
+          metadata: { skipApproval }
+        }, error as Error);
+        notifications.updateError('admin settings');
         return;
       }
 
       setSettings(prev => ({ ...prev, skip_approval: skipApproval }));
-      toast.success(`Skip approval ${skipApproval ? 'enabled' : 'disabled'}`);
+      notifications.updateSuccess('admin settings');
+      logger.info('Admin settings updated successfully', {
+        operation: 'update_admin_settings',
+        userId: user.id,
+        metadata: { skipApproval }
+      });
     } catch (error) {
-      toast.error('Failed to update settings');
-      console.error('Error in updateSkipApproval:', error);
+      logger.error('Error in updateSkipApproval', {
+        operation: 'update_admin_settings',
+        userId: user?.id,
+        metadata: { skipApproval }
+      }, error as Error);
+      notifications.updateError('admin settings');
     } finally {
       setUpdating(false);
     }
