@@ -135,7 +135,7 @@ export default function WalletAuthButton() {
       disabled={isAuthenticating}
       variant="outline"
       size="lg"
-      className="text-xl px-12 py-4 h-14 flex items-center gap-3"
+      className="text-xl font-semibold"
     >
       {isAuthenticating ? (
         <Loader2 className="h-6 w-6 animate-spin" />
