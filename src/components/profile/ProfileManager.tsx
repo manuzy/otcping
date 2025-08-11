@@ -10,7 +10,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useAuth } from '@/hooks/useAuth';
-import { useToast } from '@/hooks/use-toast';
 import { useOnlinePresence } from '@/hooks/useOnlinePresence';
 import { useLicenses } from '@/hooks/useLicenses';
 import { supabase } from '@/integrations/supabase/client';
@@ -19,6 +18,9 @@ import { KycStatusIndicator } from '@/components/kyc/KycStatusIndicator';
 import { KycVerificationModal } from '@/components/kyc/KycVerificationModal';
 import { sanitizeText, validateAvatarUrl, sanitizeDisplayName } from '@/components/ui/input-sanitizer';
 import { FileUpload } from '@/components/ui/file-upload';
+import { logger } from '@/lib/logger';
+import { errorHandler } from '@/lib/errorHandler';
+import { notifications } from '@/lib/notifications';
 
 interface Profile {
   id: string;
@@ -44,7 +46,6 @@ export default function ProfileManager() {
   const [pendingAvatarUrl, setPendingAvatarUrl] = useState<string | null>(null);
   const [showKycModal, setShowKycModal] = useState(false);
   const { user, session } = useAuth();
-  const { toast } = useToast();
   const { isUserOnline } = useOnlinePresence();
   const { licenses } = useLicenses();
 
@@ -134,11 +135,15 @@ export default function ProfileManager() {
         setProfile(newProfile);
       }
     } catch (error) {
-      console.error('Error fetching profile:', error);
-      toast({
+      const appError = errorHandler.handle(error, false);
+      logger.error('Error fetching profile', { 
+        component: 'ProfileManager',
+        operation: 'fetchProfile',
+        userId: user?.id 
+      }, appError);
+      notifications.error({
         title: "Error loading profile",
-        description: "Failed to load your profile information",
-        variant: "destructive",
+        description: "Failed to load your profile information"
       });
     } finally {
       setLoading(false);
@@ -146,7 +151,12 @@ export default function ProfileManager() {
   };
 
   const handleAvatarChange = (newAvatarUrl: string) => {
-    console.log('Avatar change:', newAvatarUrl);
+    logger.userAction('Avatar changed', { 
+      component: 'ProfileManager',
+      operation: 'handleAvatarChange',
+      userId: user?.id,
+      hasNewAvatar: !!newAvatarUrl 
+    });
     
     // Update profile state immediately
     setProfile(prev => prev ? { ...prev, avatar: newAvatarUrl } : null);
@@ -166,12 +176,17 @@ export default function ProfileManager() {
   };
 
   const handleAvatarSaved = (success: boolean) => {
-    console.log('Avatar saved:', success);
+    logger.userAction('Avatar save completed', { 
+      component: 'ProfileManager',
+      operation: 'handleAvatarSaved',
+      userId: user?.id,
+      success 
+    });
     if (success) {
       setPendingAvatarUrl(null);
-      toast({
+      notifications.success({
         title: "Avatar updated",
-        description: "Your profile image has been saved automatically.",
+        description: "Your profile image has been saved automatically."
       });
     }
   };
@@ -181,15 +196,19 @@ export default function ProfileManager() {
 
     // Check avatar validation before saving - only if we have an avatar and validation failed
     if (profile.avatar && avatarValidation && !avatarValidation.isValid) {
-      toast({
+      notifications.error({
         title: "Invalid avatar URL",
-        description: avatarValidation.error || "Please fix the avatar URL before saving",
-        variant: "destructive",
+        description: avatarValidation.error || "Please fix the avatar URL before saving"
       });
       return;
     }
 
-    console.log('Saving profile with avatar:', profile.avatar);
+    logger.userAction('Saving profile', { 
+      component: 'ProfileManager',
+      operation: 'handleSave',
+      userId: user?.id,
+      hasAvatar: !!profile.avatar 
+    });
 
     setSaving(true);
     try {
@@ -219,16 +238,25 @@ export default function ProfileManager() {
       // Update local state with sanitized values
       setProfile(prev => prev ? { ...prev, ...sanitizedProfile } : null);
 
-      toast({
+      logger.userAction('Profile saved successfully', { 
+        component: 'ProfileManager',
+        operation: 'handleSave',
+        userId: user?.id 
+      });
+      notifications.success({
         title: "Profile updated",
-        description: "Your profile has been saved successfully",
+        description: "Your profile has been saved successfully"
       });
     } catch (error) {
-      console.error('Error saving profile:', error);
-      toast({
+      const appError = errorHandler.handle(error, false);
+      logger.error('Error saving profile', { 
+        component: 'ProfileManager',
+        operation: 'handleSave',
+        userId: user?.id 
+      }, appError);
+      notifications.error({
         title: "Error saving profile",
-        description: "Failed to save your profile changes",
-        variant: "destructive",
+        description: "Failed to save your profile changes"
       });
     } finally {
       setSaving(false);

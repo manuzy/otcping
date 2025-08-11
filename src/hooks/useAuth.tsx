@@ -162,7 +162,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return { success: false, error: result.error || 'Signature verification failed' };
       }
 
-      console.log('[Wallet Auth] Signature verification successful, proceeding with Supabase auth...');
+      logger.authEvent('Signature verification successful, proceeding with Supabase auth', { 
+        component: 'useAuth',
+        walletAddress: address 
+      });
 
       // Step 2: Create or sign in user with Supabase Auth
       const email = address + '@wallet.local';
@@ -177,7 +180,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
 
       if (signInError) {
-        console.log('[Wallet Auth] User does not exist, creating new user...');
+        logger.authEvent('User does not exist, creating new user', { 
+          component: 'useAuth',
+          walletAddress: address 
+        });
         // User doesn't exist, create new user
         const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
           email,
@@ -192,34 +198,57 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         });
         
         if (signUpError) {
-          console.error('[Wallet Auth] Sign up error:', signUpError);
+          const appError = errorHandler.handle(signUpError, false);
+          logger.error('Sign up failed during wallet authentication', { 
+            component: 'useAuth',
+            walletAddress: address 
+          }, appError);
           return { success: false, error: 'Failed to create user account' };
         }
         authResult = signUpData;
       } else {
-        console.log('[Wallet Auth] User sign-in successful');
+        logger.authEvent('User sign-in successful', { 
+          component: 'useAuth',
+          walletAddress: address 
+        });
         authResult = signInData;
       }
 
       // Step 3: Critical - Ensure session is properly established
-      console.log('[Wallet Auth] Ensuring session is properly established...');
+      logger.authEvent('Ensuring session is properly established', { 
+        component: 'useAuth',
+        walletAddress: address 
+      });
       
       // Force a session refresh to ensure the JWT token is properly set
       const { data: { session }, error: refreshError } = await supabase.auth.refreshSession();
       if (refreshError) {
-        console.error('[Wallet Auth] Session refresh failed:', refreshError);
+        const appError = errorHandler.handle(refreshError, false);
+        logger.error('Session refresh failed during wallet authentication', { 
+          component: 'useAuth',
+          walletAddress: address 
+        }, appError);
         return { success: false, error: 'Failed to establish session' };
       }
 
       if (!session) {
-        console.error('[Wallet Auth] No session after refresh');
+        logger.error('No session after refresh during wallet authentication', { 
+          component: 'useAuth',
+          walletAddress: address 
+        });
         return { success: false, error: 'Failed to establish session' };
       }
 
-      console.log('[Wallet Auth] Session established successfully');
+      logger.authEvent('Session established successfully', { 
+        component: 'useAuth',
+        walletAddress: address 
+      });
 
       // Step 4: Enhanced database auth context validation with connection-level testing
-      console.log('[Wallet Auth] Validating database auth context with connection-level testing...');
+      logger.authEvent('Validating database auth context with connection-level testing', { 
+        component: 'useAuth',
+        walletAddress: address 
+      });
       
       // Wait for token propagation
       await new Promise(resolve => setTimeout(resolve, 1000));
@@ -245,14 +274,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Test connection-level auth context
       const { data: authTest, error: authTestError } = await testClient.rpc('auth_uid_test');
       if (authTestError || !authTest) {
-        console.error('[Wallet Auth] Connection-level database auth context validation failed:', authTestError);
+        const appError = errorHandler.handle(authTestError, false);
+        logger.error('Connection-level database auth context validation failed', { 
+          component: 'useAuth',
+          walletAddress: address 
+        }, appError);
         return { success: false, error: 'Authentication session not properly established at connection level' };
       }
 
-      console.log('[Wallet Auth] Connection-level database auth context validated successfully, uid:', authTest);
+      logger.authEvent('Connection-level database auth context validated successfully', { 
+        component: 'useAuth',
+        walletAddress: address,
+        authUid: authTest 
+      });
       return { success: true };
     } catch (error) {
-      console.error('[Wallet Auth] Error authenticating wallet:', error);
+      const appError = errorHandler.handle(error, false);
+      logger.error('Error authenticating wallet', { 
+        component: 'useAuth',
+        walletAddress: address 
+      }, appError);
       return { success: false, error: 'Authentication failed' };
     }
   };
@@ -261,7 +302,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const validateSession = async (): Promise<boolean> => {
     try {
       if (!session?.access_token) {
-        console.warn('No session or access token available');
+        logger.warn('Session validation failed: No session or access token available', { 
+          component: 'useAuth',
+          operation: 'validateSession' 
+        });
         return false;
       }
 
@@ -269,7 +313,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { data: { session: refreshedSession }, error } = await supabase.auth.refreshSession();
       
       if (error || !refreshedSession) {
-        console.warn('Session validation failed:', error);
+        const appError = errorHandler.handle(error, false);
+        logger.warn('Session validation failed', { 
+          component: 'useAuth',
+          operation: 'validateSession' 
+        }, appError);
         return false;
       }
 
@@ -279,19 +327,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .maybeSingle();
 
       if (testError) {
-        console.warn('Database auth context test failed:', testError);
+        const appError = errorHandler.handle(testError, false);
+        logger.warn('Database auth context test failed', { 
+          component: 'useAuth',
+          operation: 'validateSession' 
+        }, appError);
         return false;
       }
 
       if (!data) {
-        console.warn('auth.uid() returned null');
+        logger.warn('Session validation failed: auth.uid() returned null', { 
+          component: 'useAuth',
+          operation: 'validateSession' 
+        });
         return false;
       }
 
-      console.log('Session validation successful, auth.uid():', data);
+      logger.authEvent('Session validation successful', { 
+        component: 'useAuth',
+        operation: 'validateSession',
+        authUid: data 
+      });
       return true;
     } catch (error) {
-      console.error('Session validation error:', error);
+      const appError = errorHandler.handle(error, false);
+      logger.error('Session validation error', { 
+        component: 'useAuth',
+        operation: 'validateSession' 
+      }, appError);
       return false;
     }
   };
