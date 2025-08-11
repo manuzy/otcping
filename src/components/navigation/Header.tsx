@@ -24,23 +24,30 @@ const Header = () => {
 
   const isLandingPage = location.pathname === '/';
 
-  if (!isLandingPage) {
-    return null; // Don't show header on non-landing pages
-  }
-
-  const navItems = [
+  const landingNavItems = [
     { label: "Features", href: "#features" },
     { label: "How It Works", href: "#how-it-works" },
     { label: "Community", href: "#community" },
     { label: "Pricing", href: "#pricing" }
   ];
 
-  const scrollToSection = (href: string) => {
+  const appNavItems = [
+    { label: "Dashboard", href: "/app" },
+    { label: "Trades", href: "/public-trades" },
+    { label: "Contacts", href: "/contacts" },
+    { label: "Settings", href: "/settings" }
+  ];
+
+  const navItems = isLandingPage ? landingNavItems : appNavItems;
+
+  const handleNavClick = (href: string) => {
     if (href.startsWith('#')) {
       const element = document.getElementById(href.substring(1));
       if (element) {
         element.scrollIntoView({ behavior: 'smooth' });
       }
+    } else {
+      navigate(href);
     }
     setIsMobileMenuOpen(false);
   };
@@ -68,7 +75,7 @@ const Header = () => {
             {navItems.map((item) => (
               <button
                 key={item.label}
-                onClick={() => scrollToSection(item.href)}
+                onClick={() => handleNavClick(item.href)}
                 className="text-foreground hover:text-primary transition-colors duration-200 font-medium"
               >
                 {item.label}
@@ -113,7 +120,7 @@ const Header = () => {
               {navItems.map((item) => (
                 <button
                   key={item.label}
-                  onClick={() => scrollToSection(item.href)}
+                  onClick={() => handleNavClick(item.href)}
                   className="text-left text-foreground hover:text-primary transition-colors duration-200 font-medium py-2"
                 >
                   {item.label}
