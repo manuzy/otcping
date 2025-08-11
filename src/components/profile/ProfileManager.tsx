@@ -15,6 +15,8 @@ import { useOnlinePresence } from '@/hooks/useOnlinePresence';
 import { useLicenses } from '@/hooks/useLicenses';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2, User, AlertCircle, CheckCircle, Shuffle, X } from 'lucide-react';
+import { KycStatusIndicator } from '@/components/kyc/KycStatusIndicator';
+import { KycVerificationModal } from '@/components/kyc/KycVerificationModal';
 import { sanitizeText, validateAvatarUrl, sanitizeDisplayName } from '@/components/ui/input-sanitizer';
 import { FileUpload } from '@/components/ui/file-upload';
 
@@ -40,6 +42,7 @@ export default function ProfileManager() {
   const [avatarValidation, setAvatarValidation] = useState<{ isValid: boolean; error?: string } | null>(null);
   const [avatarMode, setAvatarMode] = useState<'url' | 'upload'>('url');
   const [pendingAvatarUrl, setPendingAvatarUrl] = useState<string | null>(null);
+  const [showKycModal, setShowKycModal] = useState(false);
   const { user, session } = useAuth();
   const { toast } = useToast();
   const { isUserOnline } = useOnlinePresence();
@@ -401,17 +404,9 @@ export default function ProfileManager() {
         <div className="space-y-4 pt-4 border-t">
           <h3 className="text-lg font-medium">Trading Information</h3>
           
-          <div>
-            <Label>KYC Level</Label>
-            <Input
-              value={`${profile.kyc_level || 'Level 0'} - Set by administrators`}
-              disabled
-              className="bg-muted"
-            />
-            <p className="text-sm text-muted-foreground mt-1">
-              KYC verification is managed by administrators
-            </p>
-          </div>
+          <KycStatusIndicator 
+            onStartVerification={() => setShowKycModal(true)}
+          />
 
           <div>
             <Label>Trader Type</Label>
@@ -526,6 +521,12 @@ export default function ProfileManager() {
             'Save Profile'
           )}
         </Button>
+
+        <KycVerificationModal
+          open={showKycModal}
+          onOpenChange={setShowKycModal}
+          currentKycLevel={profile?.kyc_level}
+        />
       </CardContent>
     </Card>
   );
