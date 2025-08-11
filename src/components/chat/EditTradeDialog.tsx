@@ -12,6 +12,7 @@ import { useTokens } from "@/hooks/useTokens";
 import { useCoinMarketCapPrice } from "@/hooks/useCoinMarketCapPrice";
 import { tokenToSelectOption, formatTokenDisplay, truncateAddress } from "@/lib/tokenUtils";
 import { formatNumberWithCommas, parseFormattedNumber, isValidNumberInput } from "@/lib/utils";
+import { logger } from "@/lib/logger";
 import { Trade } from "@/types";
 
 interface EditTradeDialogProps {
@@ -157,7 +158,11 @@ export const EditTradeDialog = ({ open, onOpenChange, trade, onSave }: EditTrade
       await onSave(updatedData);
       onOpenChange(false);
     } catch (error) {
-      console.error('Failed to save trade:', error);
+      logger.error('Failed to save trade', {
+        component: 'EditTradeDialog',
+        operation: 'handleSave',
+        tradeId: trade.id
+      }, error);
     } finally {
       setIsSaving(false);
     }

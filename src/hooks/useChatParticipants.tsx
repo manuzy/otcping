@@ -2,7 +2,9 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { useOnlinePresence } from './useOnlinePresence';
-import { useToast } from '@/components/ui/use-toast';
+import { logger } from '@/lib/logger';
+import { notifications } from '@/lib/notifications';
+import { errorHandler } from '@/lib/errorHandler';
 import type { User } from '@/types';
 
 // Add retry logic with exponential backoff
@@ -15,19 +17,16 @@ export function useChatParticipants(chatId: string | null) {
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
   const { onlineUsers } = useOnlinePresence();
-  const { toast } = useToast();
   const mountedRef = useRef(true);
   const lastErrorRef = useRef<number>(0);
   const abortControllerRef = useRef<AbortController | null>(null);
   const onlineUsersRef = useRef(onlineUsers);
-  const toastRef = useRef(toast);
   const requestInFlightRef = useRef(false);
   const fetchParticipantsRef = useRef<(retryCount?: number) => Promise<void>>();
 
   // Update refs to current values
   useEffect(() => {
     onlineUsersRef.current = onlineUsers;
-    toastRef.current = toast;
   });
 
   // Create stable fetch function
@@ -46,7 +45,12 @@ export function useChatParticipants(chatId: string | null) {
       abortControllerRef.current = abortController;
 
       try {
-        console.log('🔍 Fetching participants for chat:', chatId, `(attempt ${retryCount + 1})`);
+        logger.debug('Fetching chat participants', {
+          component: 'useChatParticipants',
+          operation: 'fetchParticipants',
+          chatId,
+          retryCount: retryCount + 1
+        });
         
         const { data, error } = await supabase
           .from('chat_participants')
@@ -76,12 +80,13 @@ export function useChatParticipants(chatId: string | null) {
           .eq('chat_id', chatId)
           .abortSignal(abortController.signal);
 
-        console.log('📊 Participants query result:', { data, error, retryCount });
-
         if (error) throw error;
 
         if (!data) {
-          console.warn('No participants data returned for chat:', chatId);
+          logger.warn('No participants data returned', {
+            component: 'useChatParticipants',
+            chatId
+          });
           requestInFlightRef.current = false;
           return;
         }
@@ -115,38 +120,53 @@ export function useChatParticipants(chatId: string | null) {
           setLoading(false);
         }
         requestInFlightRef.current = false;
+        
+        logger.info('Chat participants fetched successfully', {
+          component: 'useChatParticipants',
+          chatId,
+          count: transformedParticipants.length
+        });
       } catch (error: any) {
         requestInFlightRef.current = false;
         
         // Ignore aborted requests
         if (error?.name === 'AbortError') {
-          console.log('Request aborted for chat:', chatId);
+          logger.debug('Participants fetch request aborted', {
+            component: 'useChatParticipants',
+            chatId
+          });
           return;
         }
 
-        console.error('Error fetching participants:', error, { chatId, retryCount });
+        const appError = errorHandler.handle(error, false);
+        logger.error('Failed to fetch chat participants', {
+          component: 'useChatParticipants',
+          chatId,
+          retryCount
+        }, appError);
         
         // Retry with exponential backoff
         if (retryCount < MAX_RETRIES && mountedRef.current) {
           const delay = BASE_DELAY * Math.pow(2, retryCount);
-          console.log(`Retrying in ${delay}ms...`);
+          logger.debug('Retrying participants fetch', {
+            component: 'useChatParticipants',
+            chatId,
+            delay,
+            retryCount: retryCount + 1
+          });
           await sleep(delay);
           if (mountedRef.current) {
             return fetchParticipantsRef.current?.(retryCount + 1);
           }
         }
         
-        // Show error toast only after all retries failed
+        // Show error notification only after all retries failed
         if (retryCount >= MAX_RETRIES) {
           const now = Date.now();
           if (now - lastErrorRef.current > 5000) { // Only show error every 5 seconds
             lastErrorRef.current = now;
             if (mountedRef.current) {
-              toastRef.current({
-                title: "Error",
-                description: "Failed to load chat participants",
-                variant: "destructive",
-              });
+              notifications.loadingError('chat participants');
             }
           }
         }
@@ -178,18 +198,29 @@ export function useChatParticipants(chatId: string | null) {
 
       if (error) throw error;
 
-      toastRef.current({
-        title: "Participant added",
-        description: "User has been added to the chat",
+      notifications.success({
+        description: "User has been added to the chat"
+      });
+
+      logger.info('Participant added successfully', {
+        component: 'useChatParticipants',
+        operation: 'addParticipant',
+        chatId,
+        userId
       });
 
       return true;
     } catch (error) {
-      console.error('Error adding participant:', error);
-      toastRef.current({
-        title: "Error",
-        description: "Failed to add participant",
-        variant: "destructive",
+      const appError = errorHandler.handle(error);
+      logger.error('Failed to add participant', {
+        component: 'useChatParticipants',
+        operation: 'addParticipant',
+        chatId,
+        userId
+      }, appError);
+      
+      notifications.error({
+        description: "Failed to add participant"
       });
       return false;
     }
@@ -208,18 +239,29 @@ export function useChatParticipants(chatId: string | null) {
 
       if (error) throw error;
 
-      toastRef.current({
-        title: "Participant removed",
-        description: "User has been removed from the chat",
+      notifications.success({
+        description: "User has been removed from the chat"
+      });
+
+      logger.info('Participant removed successfully', {
+        component: 'useChatParticipants',
+        operation: 'removeParticipant',
+        chatId,
+        userId
       });
 
       return true;
     } catch (error) {
-      console.error('Error removing participant:', error);
-      toastRef.current({
-        title: "Error",
-        description: "Failed to remove participant",
-        variant: "destructive",
+      const appError = errorHandler.handle(error);
+      logger.error('Failed to remove participant', {
+        component: 'useChatParticipants',
+        operation: 'removeParticipant',
+        chatId,
+        userId
+      }, appError);
+      
+      notifications.error({
+        description: "Failed to remove participant"
       });
       return false;
     }
@@ -229,7 +271,11 @@ export function useChatParticipants(chatId: string | null) {
   useEffect(() => {
     if (!chatId) return;
 
-    console.log('🔄 Setting up participants subscription for chat:', chatId);
+    logger.debug('Setting up participants subscription', {
+      component: 'useChatParticipants',
+      operation: 'setupSubscription',
+      chatId
+    });
 
     const participantsChannel = supabase
       .channel(`participants-${chatId}`)
@@ -239,7 +285,12 @@ export function useChatParticipants(chatId: string | null) {
         table: 'chat_participants',
         filter: `chat_id=eq.${chatId}`
       }, (payload) => {
-        console.log('📡 Participants change detected:', payload);
+        logger.debug('Participants change detected', {
+          component: 'useChatParticipants',
+          operation: 'realtimeUpdate',
+          chatId,
+          event: payload.eventType
+        });
         // Increased debounce to prevent multiple calls
         setTimeout(() => {
           if (mountedRef.current && fetchParticipantsRef.current) {
@@ -248,11 +299,18 @@ export function useChatParticipants(chatId: string | null) {
         }, 500);
       })
       .subscribe((status) => {
-        console.log('📡 Participants subscription status:', status);
+        logger.debug('Participants subscription status updated', {
+          component: 'useChatParticipants',
+          chatId,
+          status
+        });
       });
 
     return () => {
-      console.log('🧹 Cleaning up participants subscription for chat:', chatId);
+      logger.debug('Cleaning up participants subscription', {
+        component: 'useChatParticipants',
+        chatId
+      });
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
       }

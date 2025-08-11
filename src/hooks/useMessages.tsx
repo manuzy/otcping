@@ -1,7 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
-import { useToast } from '@/hooks/use-toast';
+import { logger } from '@/lib/logger';
+import { notifications } from '@/lib/notifications';
+import { errorHandler } from '@/lib/errorHandler';
 import type { Message } from '@/types';
 
 export function useMessages(chatId: string | null) {
@@ -9,14 +11,18 @@ export function useMessages(chatId: string | null) {
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const { user } = useAuth();
-  const { toast } = useToast();
   const isUnmountedRef = useRef(false);
 
   // Fetch messages for a chat
   const fetchMessages = async () => {
     if (!chatId || !user || isUnmountedRef.current) return;
 
-    console.log('🔍 Fetching messages for chat:', chatId, 'user:', user.id);
+    logger.debug('Fetching messages', {
+      component: 'useMessages',
+      operation: 'fetchMessages',
+      chatId,
+      userId: user.id
+    });
 
     try {
       const { data, error } = await supabase
@@ -30,8 +36,6 @@ export function useMessages(chatId: string | null) {
 
       if (error) throw error;
 
-      console.log('📨 Fetched messages:', data?.length || 0, 'messages');
-
       if (isUnmountedRef.current) return;
 
       const transformedMessages: Message[] = (data || []).map(msg => ({
@@ -44,14 +48,22 @@ export function useMessages(chatId: string | null) {
       }));
 
       setMessages(transformedMessages);
+      
+      logger.info('Messages fetched successfully', {
+        component: 'useMessages',
+        chatId,
+        count: transformedMessages.length
+      });
     } catch (error) {
-      console.error('❌ Error fetching messages:', error);
+      const appError = errorHandler.handle(error);
+      logger.error('Failed to fetch messages', {
+        component: 'useMessages',
+        chatId,
+        userId: user.id
+      }, appError);
+      
       if (!isUnmountedRef.current) {
-        toast({
-          title: "Error",
-          description: "Failed to load messages",
-          variant: "destructive",
-        });
+        notifications.loadingError('messages');
       }
     } finally {
       if (!isUnmountedRef.current) {
@@ -64,7 +76,14 @@ export function useMessages(chatId: string | null) {
   const sendMessage = async (content: string, type: 'message' | 'trade_action' | 'system' = 'message') => {
     if (!chatId || !user || !content.trim() || isUnmountedRef.current) return false;
 
-    console.log('📤 Sending message:', content, 'in chat:', chatId, 'by user:', user.id);
+    logger.debug('Sending message', {
+      component: 'useMessages',
+      operation: 'sendMessage',
+      chatId,
+      userId: user.id,
+      messageType: type,
+      contentLength: content.trim().length
+    });
 
     setSending(true);
     try {
@@ -94,9 +113,14 @@ export function useMessages(chatId: string | null) {
 
       if (error) throw error;
 
-      console.log('✅ Message sent successfully:', data.id);
-
       if (isUnmountedRef.current) return true;
+      
+      logger.info('Message sent successfully', {
+        component: 'useMessages',
+        operation: 'sendMessage',
+        chatId,
+        messageId: data.id
+      });
 
       // Replace temp message with real one
       setMessages(prev => prev.map(msg => 
@@ -116,7 +140,11 @@ export function useMessages(chatId: string | null) {
       });
 
       if (rpcError) {
-        console.error('⚠️ Error incrementing unread count:', rpcError);
+        logger.warn('Failed to increment unread count', {
+          component: 'useMessages',
+          operation: 'incrementUnreadCount',
+          chatId
+        }, rpcError);
       }
 
       // Get chat participants to send notifications
@@ -131,7 +159,11 @@ export function useMessages(chatId: string | null) {
           .neq('user_id', user.id);
 
         if (participantsError) {
-          console.error('⚠️ Error getting chat participants:', participantsError);
+          logger.warn('Failed to get chat participants for notifications', {
+            component: 'useMessages',
+            operation: 'getParticipants',
+            chatId
+          }, participantsError);
         } else if (participants && participants.length > 0) {
           // Get sender's display name
           const { data: senderProfile } = await supabase
@@ -142,13 +174,15 @@ export function useMessages(chatId: string | null) {
 
           const senderDisplayName = senderProfile?.display_name || 'Someone';
 
-          // Send notification to each participant
-          console.log(`📧 Sending notifications to ${participants.length} participants for chat ${chatId}`);
+          logger.debug('Sending notifications to participants', {
+            component: 'useMessages',
+            operation: 'sendNotifications',
+            chatId,
+            participantCount: participants.length
+          });
           
           for (const participant of participants) {
             try {
-              console.log(`📧 Sending notification to user ${participant.user_id} for message: "${content.trim().substring(0, 50)}..."`);
-              
               const { data: notificationData, error: notificationError } = await supabase.functions.invoke('send-message-notification', {
                 body: {
                   chatId,
@@ -159,33 +193,56 @@ export function useMessages(chatId: string | null) {
               });
 
               if (notificationError) {
-                console.error('⚠️ Failed to send notification:', notificationError);
+                logger.warn('Failed to send notification to participant', {
+                  component: 'useMessages',
+                  operation: 'sendNotification',
+                  chatId,
+                  recipientUserId: participant.user_id
+                }, notificationError);
               } else {
-                console.log('✅ Notification response:', notificationData);
+                logger.debug('Notification sent successfully', {
+                  component: 'useMessages',
+                  operation: 'sendNotification',
+                  chatId,
+                  recipientUserId: participant.user_id
+                });
               }
             } catch (notificationError) {
-              console.error('⚠️ Error sending notification to user:', participant.user_id, notificationError);
+              logger.error('Error sending notification to participant', {
+                component: 'useMessages',
+                operation: 'sendNotification',
+                chatId,
+                recipientUserId: participant.user_id
+              }, notificationError);
               // Don't throw here - notification failures shouldn't break message sending
             }
           }
         }
       } catch (error) {
-        console.error('⚠️ Error in notification process:', error);
+        logger.warn('Error in notification process', {
+          component: 'useMessages',
+          operation: 'sendNotifications',
+          chatId
+        }, error);
         // Don't throw here - notification failures shouldn't break message sending
       }
 
       return true;
     } catch (error) {
-      console.error('❌ Error sending message:', error);
+      const appError = errorHandler.handle(error);
+      logger.error('Failed to send message', {
+        component: 'useMessages',
+        operation: 'sendMessage',
+        chatId,
+        userId: user.id
+      }, appError);
       
       if (!isUnmountedRef.current) {
         // Remove optimistic message on error
         setMessages(prev => prev.filter(msg => !msg.id.startsWith('temp-')));
         
-        toast({
-          title: "Error",
-          description: "Failed to send message",
-          variant: "destructive",
+        notifications.error({
+          description: "Failed to send message"
         });
       }
       return false;
@@ -203,7 +260,12 @@ export function useMessages(chatId: string | null) {
     // Mark component as mounted
     isUnmountedRef.current = false;
     
-    console.log('🔗 Setting up real-time subscription for chat:', chatId, 'user:', user.id);
+    logger.debug('Setting up messages subscription', {
+      component: 'useMessages',
+      operation: 'setupSubscription',
+      chatId,
+      userId: user.id
+    });
 
     fetchMessages();
 
@@ -215,7 +277,13 @@ export function useMessages(chatId: string | null) {
         table: 'messages',
         filter: `chat_id=eq.${chatId}`
       }, async (payload) => {
-        console.log('📨 Real-time message received:', payload);
+        logger.debug('Real-time message received', {
+          component: 'useMessages',
+          operation: 'realtimeMessage',
+          chatId,
+          messageId: payload.new.id,
+          senderId: payload.new.sender_id
+        });
         
         if (isUnmountedRef.current) return;
 
@@ -242,16 +310,26 @@ export function useMessages(chatId: string | null) {
           const exists = withoutTemp.some(msg => msg.id === newMessage.id);
           if (exists) return prev;
           
-          console.log('✅ Adding real-time message to UI:', newMessage.id);
+          logger.debug('Adding real-time message to UI', {
+            component: 'useMessages',
+            messageId: newMessage.id
+          });
           return [...withoutTemp, newMessage];
         });
       })
       .subscribe((status) => {
-        console.log('📡 Message subscription status:', status);
+        logger.debug('Messages subscription status updated', {
+          component: 'useMessages',
+          chatId,
+          status
+        });
       });
 
     return () => {
-      console.log('🔌 Cleaning up message subscription for chat:', chatId);
+      logger.debug('Cleaning up messages subscription', {
+        component: 'useMessages',
+        chatId
+      });
       isUnmountedRef.current = true;
       supabase.removeChannel(messagesChannel);
     };
