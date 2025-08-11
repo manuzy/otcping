@@ -13,7 +13,8 @@ import { useTokens } from "@/hooks/useTokens";
 import { useChains } from "@/hooks/useChains";
 import { useAuth } from "@/hooks/useAuth";
 import { usePublicUsers } from "@/hooks/usePublicUsers";
-import { useToast } from "@/hooks/use-toast";
+import { notifications } from "@/lib/notifications";
+import { logger } from "@/lib/logger";
 import { formatDistanceToNow, format } from "date-fns";
 import { formatNumberWithCommas } from "@/lib/utils";
 import { getExplorerUrl } from "@/lib/tokenUtils";
@@ -43,7 +44,7 @@ export default function PublicTrades() {
   const { chains } = useChains();
   const { user } = useAuth();
   const { users } = usePublicUsers();
-  const { toast } = useToast();
+  
   const [searchQuery, setSearchQuery] = useState("");
   const [filterChain, setFilterChain] = useState<string>("all");
   const [filterToken, setFilterToken] = useState<string>("all");
@@ -137,19 +138,14 @@ export default function PublicTrades() {
     event.stopPropagation();
     
     if (!user?.id) {
-      toast({
-        title: "Authentication Required",
-        description: "Please sign in to message traders",
-        variant: "destructive",
-      });
+      notifications.authError();
       return;
     }
 
     if (traderId === user.id) {
-      toast({
+      notifications.error({
         title: "Invalid Action",
-        description: "You cannot message yourself",
-        variant: "destructive",
+        description: "You cannot message yourself"
       });
       return;
     }
@@ -186,11 +182,14 @@ export default function PublicTrades() {
         }
       }
     } catch (error) {
-      console.error('Error messaging trader:', error);
-      toast({
+      logger.error('Failed to start conversation with trader', {
+        component: 'PublicTrades',
+        operation: 'message_trader',
+        metadata: { traderId }
+      }, error as Error);
+      notifications.error({
         title: "Error",
-        description: "Failed to start conversation. Please try again.",
-        variant: "destructive",
+        description: "Failed to start conversation. Please try again."
       });
     } finally {
       setMessagingTrader(null);

@@ -99,7 +99,11 @@ export function useChats() {
             lastActivity: chat.updated_at ? new Date(chat.updated_at) : new Date()
           };
         } catch (transformError) {
-          console.error('Error transforming chat data:', transformError, chat);
+          logger.error('Error transforming chat data', { 
+            component: 'useChats',
+            chatId: chat.id,
+            operation: 'transform_data'
+          }, transformError as Error);
           // Return a fallback chat object
           return {
             id: chat.id || '',
@@ -146,11 +150,17 @@ export function useChats() {
       // Get current session
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       if (sessionError || !session) {
-        console.log('[Auth Validation] No valid session found');
+        logger.debug('No valid session found during auth validation', {
+          component: 'useChats',
+          operation: 'auth_validation'
+        });
         return { valid: false };
       }
 
-      console.log('[Auth Validation] Session token exists, testing database auth context...');
+      logger.debug('Session token exists, testing database auth context', {
+        component: 'useChats',
+        operation: 'auth_validation'
+      });
 
       // Test the actual auth.uid() function that RLS policies use
       // This directly tests what the database sees
@@ -158,28 +168,48 @@ export function useChats() {
         .rpc('auth_uid_test');
 
       if (authError) {
-        console.log('[Auth Validation] Database auth.uid() test failed:', authError);
+        logger.warn('Database auth.uid() test failed', {
+          component: 'useChats',
+          operation: 'auth_validation'
+        }, authError);
         return { valid: false };
       }
 
       const dbUid = authTest;
-      console.log('[Auth Validation] Database auth.uid() returns:', dbUid);
-      console.log('[Auth Validation] Frontend user.id:', user?.id);
+      logger.debug('Database auth.uid() context check', {
+        component: 'useChats',
+        operation: 'auth_validation',
+        metadata: { dbUid, frontendUserId: user?.id }
+      });
 
       if (!dbUid) {
-        console.log('[Auth Validation] Database auth.uid() is NULL - this is the RLS issue!');
+        logger.warn('Database auth.uid() is NULL - RLS auth issue detected', {
+          component: 'useChats',
+          operation: 'auth_validation'
+        });
         return { valid: false };
       }
 
       if (dbUid !== user?.id) {
-        console.log('[Auth Validation] UID mismatch between frontend and database');
+        logger.warn('UID mismatch between frontend and database', {
+          component: 'useChats',
+          operation: 'auth_validation',
+          metadata: { dbUid, frontendUserId: user?.id }
+        });
         return { valid: false, uid: dbUid };
       }
 
-      console.log('[Auth Validation] Database auth context is valid and matches frontend');
+      logger.info('Database auth context validated successfully', {
+        component: 'useChats',
+        operation: 'auth_validation',
+        metadata: { uid: dbUid }
+      });
       return { valid: true, uid: dbUid };
     } catch (error) {
-      console.log('[Auth Validation] Validation failed:', error);
+      logger.error('Auth validation failed', {
+        component: 'useChats',
+        operation: 'auth_validation'
+      }, error as Error);
       return { valid: false };
     }
   };
@@ -187,20 +217,33 @@ export function useChats() {
   // Force token synchronization with database
   const synchronizeAuthToken = async (): Promise<boolean> => {
     try {
-      console.log('[Token Sync] Forcing session refresh and token sync...');
+      logger.debug('Forcing session refresh and token sync', {
+        component: 'useChats',
+        operation: 'token_sync'
+      });
       
       // First, get the current session to see what we have
       const { data: { session: currentSession } } = await supabase.auth.getSession();
-      console.log('[Token Sync] Current session exists:', !!currentSession);
+      logger.debug('Current session status', {
+        component: 'useChats',
+        operation: 'token_sync',
+        metadata: { hasSession: !!currentSession }
+      });
       
       // Force a session refresh to get the latest token
       const { data: { session }, error: sessionError } = await supabase.auth.refreshSession();
       if (sessionError || !session) {
-        console.log('[Token Sync] Session refresh failed:', sessionError);
+        logger.warn('Session refresh failed during token sync', {
+          component: 'useChats',
+          operation: 'token_sync'
+        }, sessionError);
         return false;
       }
 
-      console.log('[Token Sync] Session refreshed successfully');
+      logger.info('Session refreshed successfully', {
+        component: 'useChats',
+        operation: 'token_sync'
+      });
 
       // Give the database time to process the new token
       await new Promise(resolve => setTimeout(resolve, 1000));
@@ -213,14 +256,23 @@ export function useChats() {
         .limit(1);
 
       if (testError) {
-        console.log('[Token Sync] RLS test query failed:', testError);
+        logger.warn('RLS test query failed during token sync', {
+          component: 'useChats',
+          operation: 'token_sync'
+        }, testError);
         return false;
       }
 
-      console.log('[Token Sync] Token synchronized and RLS test passed');
+      logger.info('Token synchronized and RLS test passed', {
+        component: 'useChats',
+        operation: 'token_sync'
+      });
       return true;
     } catch (error) {
-      console.log('[Token Sync] Synchronization failed:', error);
+      logger.error('Token synchronization failed', {
+        component: 'useChats',
+        operation: 'token_sync'
+      }, error as Error);
       return false;
     }
   };
@@ -257,24 +309,35 @@ export function useChats() {
     participantIds: string[] = []
   ): Promise<string | null> => {
     if (!user) {
-      console.error('No user authenticated');
+      logger.warn('Chat creation attempted without authenticated user', {
+        component: 'useChats',
+        operation: 'create_chat'
+      });
       return null;
     }
 
-    console.log('[Chat Creation] Starting connection-level validated chat creation...');
+    logger.debug('Starting connection-level validated chat creation', {
+      component: 'useChats',
+      operation: 'create_chat',
+      metadata: { isPublic, hasTradeId: !!tradeId, participantCount: participantIds.length }
+    });
 
     try {
       // Get fresh session with explicit token
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       if (sessionError || !session) {
-      console.error('[Chat Creation] No valid session available');
-        notifications.error({
-          description: "Authentication issue - please try refreshing the page"
-        });
+        logger.error('No valid session available for chat creation', {
+          component: 'useChats',
+          operation: 'create_chat'
+        }, sessionError);
+        notifications.authError();
         return null;
       }
 
-      console.log('[Chat Creation] Session available, creating dedicated client...');
+      logger.debug('Session available, creating dedicated client', {
+        component: 'useChats',
+        operation: 'create_chat'
+      });
 
       // Create a dedicated client with explicit auth headers for this operation
       const chatClient = createClient(
@@ -295,18 +358,25 @@ export function useChats() {
       );
 
       // Test connection-level auth context before attempting to create
-      console.log('[Chat Creation] Testing connection-level auth context...');
+      logger.debug('Testing connection-level auth context', {
+        component: 'useChats',
+        operation: 'create_chat'
+      });
       const { data: authTest, error: authTestError } = await chatClient.rpc('auth_uid_test');
       
       if (authTestError || !authTest) {
-        console.error('[Chat Creation] Connection-level auth test failed:', authTestError);
-        notifications.error({
-          description: "Authentication issue - please try refreshing the page"
-        });
+        logger.error('Connection-level auth test failed', {
+          component: 'useChats',
+          operation: 'create_chat'
+        }, authTestError);
+        notifications.authError();
         return null;
       }
 
-      console.log('[Chat Creation] Connection-level auth validated, creating chat...');
+      logger.debug('Connection-level auth validated, creating chat', {
+        component: 'useChats',
+        operation: 'create_chat'
+      });
 
       // Create chat using the validated client with creator ownership
       const { data: chat, error: chatError } = await chatClient
@@ -321,23 +391,36 @@ export function useChats() {
         .single();
 
       if (chatError) {
-        console.error('[Chat Creation] Chat creation error:', chatError);
-        notifications.error({
-          description: chatError.message?.includes('row-level security policy') 
-            ? "Authentication issue - please try refreshing the page" 
-            : "Failed to create chat"
-        });
+        logger.error('Chat creation failed', {
+          component: 'useChats',
+          operation: 'create_chat',
+          metadata: { isRLSError: chatError.message?.includes('row-level security policy') }
+        }, chatError);
+        
+        if (chatError.message?.includes('row-level security policy')) {
+          notifications.authError();
+        } else {
+          notifications.error({ description: "Failed to create chat" });
+        }
         return null;
       }
 
-      console.log('[Chat Creation] Chat created successfully:', chat.id);
+      logger.info('Chat created successfully', {
+        component: 'useChats',
+        operation: 'create_chat',
+        metadata: { chatId: chat.id }
+      });
 
       // Add current user as participant using the same validated client
       const participantsToAdd = [user.id, ...participantIds].filter((id, index, arr) => 
         arr.indexOf(id) === index // Remove duplicates
       );
 
-      console.log('[Chat Creation] Adding participants:', participantsToAdd);
+      logger.debug('Adding participants to chat', {
+        component: 'useChats',
+        operation: 'create_chat',
+        metadata: { chatId: chat.id, participantCount: participantsToAdd.length }
+      });
       const { error: participantError } = await chatClient
         .from('chat_participants')
         .insert(
@@ -348,7 +431,11 @@ export function useChats() {
         );
 
       if (participantError) {
-        console.error('[Chat Creation] Participant creation error:', participantError);
+        logger.error('Participant creation failed', {
+          component: 'useChats',
+          operation: 'create_chat',
+          metadata: { chatId: chat.id }
+        }, participantError);
         // If participants fail, clean up the chat using the same client
         await chatClient.from('chats').delete().eq('id', chat.id);
         notifications.error({
@@ -357,7 +444,11 @@ export function useChats() {
         return null;
       }
 
-      console.log('[Chat Creation] Participants added successfully');
+      logger.info('Participants added successfully', {
+        component: 'useChats',
+        operation: 'create_chat',
+        metadata: { chatId: chat.id, participantCount: participantsToAdd.length }
+      });
       
       notifications.success({
         description: `Chat "${name}" has been created`
@@ -365,7 +456,10 @@ export function useChats() {
 
       return chat.id;
     } catch (error) {
-      console.error('[Chat Creation] Unexpected error:', error);
+      logger.error('Unexpected error during chat creation', {
+        component: 'useChats',
+        operation: 'create_chat'
+      }, error as Error);
       notifications.error({
         description: "Failed to create chat"
       });
@@ -393,7 +487,12 @@ export function useChats() {
 
       return true;
     } catch (error) {
-      console.error('Error joining chat:', error);
+      const appError = errorHandler.handle(error, false);
+      logger.error('Failed to join chat', {
+        component: 'useChats',
+        operation: 'join_chat',
+        metadata: { chatId }
+      }, appError);
       notifications.error({
         description: "Failed to join chat"
       });
@@ -421,7 +520,12 @@ export function useChats() {
           : chat
       ));
     } catch (error) {
-      console.error('Error marking as read:', error);
+      const appError = errorHandler.handle(error, false);
+      logger.error('Failed to mark messages as read', {
+        component: 'useChats',
+        operation: 'mark_as_read',
+        metadata: { chatId }
+      }, appError);
     }
   };
 

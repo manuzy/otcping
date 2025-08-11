@@ -12,7 +12,8 @@ import { ArrowLeft, Check } from "lucide-react";
 import { useAppKitAccount } from '@reown/appkit/react';
 import { useContacts } from "@/hooks/useContacts";
 import { useChats } from "@/hooks/useChats";
-import { useToast } from "@/components/ui/use-toast";
+import { notifications } from "@/lib/notifications";
+import { logger } from "@/lib/logger";
 import { useAuth } from "@/hooks/useAuth";
 import { useChains } from "@/hooks/useChains";
 import { useTokens } from "@/hooks/useTokens";
@@ -47,7 +48,7 @@ const CreateTrade = () => {
   const { contacts, loading: contactsLoading, addContact } = useContacts();
   const { createChat } = useChats();
   const { chains, loading: chainsLoading, error: chainsError } = useChains();
-  const { toast } = useToast();
+  
   const [currentStep, setCurrentStep] = useState(1);
   const [isPublicChat, setIsPublicChat] = useState(true);
   const [selectedContacts, setSelectedContacts] = useState<string[]>([]);
@@ -105,17 +106,16 @@ const CreateTrade = () => {
           addContact(userId).catch((error) => {
             // Only show error if it's not a duplicate key error
             if (!error.message?.includes('duplicate key')) {
-              toast({
+              notifications.error({
                 title: "Error",
-                description: "Failed to add contact. Please try again.",
-                variant: "destructive",
+                description: "Failed to add contact. Please try again."
               });
             }
           });
         }
       }
     }
-  }, [searchParams, hasProcessedParams, contactsLoading, contacts, addContact, toast]);
+  }, [searchParams, hasProcessedParams, contactsLoading, contacts, addContact]);
 
   const handleInputChange = (field: keyof TradeFormData, value: string) => {
     setFormData(prev => {
@@ -181,11 +181,7 @@ const CreateTrade = () => {
 
   const handlePublish = async () => {
     if (!user?.id) {
-      toast({
-        title: "Authentication Required",
-        description: "Please sign in to create a trade",
-        variant: "destructive",
-      });
+      notifications.authError();
       return;
     }
     
@@ -205,10 +201,14 @@ const CreateTrade = () => {
       // Calculate expiry timestamp
       let expiryTimestamp = null;
       
-      console.log('🔍 CreateTrade - Expiry calculation:', {
-        expiryType: formData.expiryType,
-        expiryValue: formData.expiryValue,
-        currentTime: new Date().toISOString()
+      logger.debug('Calculating trade expiry timestamp', {
+        component: 'CreateTrade',
+        operation: 'publish_trade',
+        metadata: {
+          expiryType: formData.expiryType,
+          expiryValue: formData.expiryValue,
+          currentTime: new Date().toISOString()
+        }
       });
       
       if (formData.expiryType !== "Never") {
@@ -218,9 +218,17 @@ const CreateTrade = () => {
           const customHours = parseInt(formData.expiryValue);
           if (!isNaN(customHours) && customHours > 0) {
             expiryTimestamp = new Date(now.getTime() + customHours * 60 * 60 * 1000).toISOString();
-            console.log('✅ Custom expiry calculated:', expiryTimestamp);
+            logger.debug('Custom expiry calculated', {
+              component: 'CreateTrade',
+              operation: 'publish_trade',
+              metadata: { customHours, expiryTimestamp }
+            });
           } else {
-            console.error('❌ Invalid custom expiry value:', formData.expiryValue);
+            logger.warn('Invalid custom expiry value, defaulting to 24 hours', {
+              component: 'CreateTrade',
+              operation: 'publish_trade',
+              metadata: { invalidValue: formData.expiryValue }
+            });
             // Default to 24 hours if custom value is invalid
             expiryTimestamp = new Date(now.getTime() + 24 * 60 * 60 * 1000).toISOString();
           }
@@ -232,11 +240,18 @@ const CreateTrade = () => {
             '1 month': 720
           }[formData.expiryType] || 24; // Default to 24 hours instead of 0
           expiryTimestamp = new Date(now.getTime() + hours * 60 * 60 * 1000).toISOString();
-          console.log('✅ Preset expiry calculated:', expiryTimestamp, 'for type:', formData.expiryType);
+          logger.debug('Preset expiry calculated', {
+            component: 'CreateTrade',
+            operation: 'publish_trade',
+            metadata: { expiryType: formData.expiryType, hours, expiryTimestamp }
+          });
         }
-      } else {
-        console.log('✅ No expiry set (Never)');
-      }
+        } else {
+          logger.debug('No expiry set (Never)', {
+            component: 'CreateTrade',
+            operation: 'publish_trade'
+          });
+        }
 
       // Create the trade first
       const { data: tradeData, error: tradeError } = await supabase
@@ -268,9 +283,9 @@ const CreateTrade = () => {
 
       if (isPublicChat) {
         // For public trades, just create the trade - no chat created
-        toast({
+        notifications.success({
           title: "Trade Created",
-          description: "Your trade has been published to the public market!",
+          description: "Your trade has been published to the public market!"
         });
 
         // Navigate to public trades page
@@ -307,20 +322,23 @@ const CreateTrade = () => {
 
         await Promise.all(chatCreationPromises);
 
-        toast({
+        notifications.success({
           title: "Trade Created",
-          description: `Your private trade has been shared with ${selectedContacts.length} contact(s)!`,
+          description: `Your private trade has been shared with ${selectedContacts.length} contact(s)!`
         });
 
         // Navigate to chats page
         navigate("/app");
       }
     } catch (error) {
-      console.error('Error creating trade:', error);
-      toast({
+      logger.error('Failed to create trade', {
+        component: 'CreateTrade',
+        operation: 'publish_trade',
+        metadata: { isPublic: isPublicChat }
+      }, error as Error);
+      notifications.error({
         title: "Error",
-        description: "Failed to create trade. Please try again.",
-        variant: "destructive",
+        description: "Failed to create trade. Please try again."
       });
     } finally {
       setIsPublishing(false);

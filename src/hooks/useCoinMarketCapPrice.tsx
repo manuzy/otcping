@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { logger } from '@/lib/logger';
 
 interface TokenPrice {
   tokenAddress: string;
@@ -83,7 +84,11 @@ export const useCoinMarketCapPrice = (
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
       setError(errorMessage);
-      console.error('Error fetching token price:', err);
+      logger.error('Failed to fetch token price', {
+        component: 'useCoinMarketCapPrice',
+        operation: 'fetch_price',
+        metadata: { tokenAddress, chainId }
+      }, err as Error);
     } finally {
       setLoading(false);
     }

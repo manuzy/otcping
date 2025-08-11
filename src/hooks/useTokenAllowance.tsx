@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useWalletClient, usePublicClient, useAccount } from 'wagmi';
 import { erc20Abi, parseUnits } from 'viem';
-import { useToast } from '@/hooks/use-toast';
+import { notifications } from '@/lib/notifications';
+import { logger } from '@/lib/logger';
 
 interface UseTokenAllowanceProps {
   tokenAddress?: string;
@@ -26,26 +27,38 @@ export const useTokenAllowance = ({
   const publicClient = usePublicClient();
   const { data: walletClient } = useWalletClient();
   const { address } = useAccount();
-  const { toast } = useToast();
+  
 
   const requiredAmountBigInt = requiredAmount ? parseUnits(requiredAmount, tokenDecimals) : 0n;
   const hasEnoughAllowance = allowance >= requiredAmountBigInt;
 
   const checkAllowance = async () => {
     if (!tokenAddress || !ownerAddress || !publicClient) {
-      console.log('🔍 Allowance check skipped:', { tokenAddress, ownerAddress, publicClient: !!publicClient });
+      logger.debug('Allowance check skipped due to missing parameters', {
+        component: 'useTokenAllowance',
+        operation: 'check_allowance',
+        metadata: { 
+          hasTokenAddress: !!tokenAddress, 
+          hasOwnerAddress: !!ownerAddress, 
+          hasPublicClient: !!publicClient 
+        }
+      });
       setAllowance(0n);
       return;
     }
 
     try {
       setIsLoading(true);
-      console.log('🔍 Checking allowance:', { 
-        tokenAddress, 
-        ownerAddress, 
-        spenderAddress,
-        requiredAmount,
-        requiredAmountBigInt: requiredAmountBigInt.toString()
+      logger.debug('Checking token allowance', {
+        component: 'useTokenAllowance',
+        operation: 'check_allowance',
+        metadata: { 
+          tokenAddress, 
+          ownerAddress, 
+          spenderAddress,
+          requiredAmount,
+          requiredAmountBigInt: requiredAmountBigInt.toString()
+        }
       });
       
       const result = await publicClient.readContract({
@@ -55,14 +68,24 @@ export const useTokenAllowance = ({
         args: [ownerAddress as `0x${string}`, spenderAddress as `0x${string}`],
       });
       
-      console.log('✅ Allowance result:', {
-        allowance: result.toString(),
-        hasEnoughAllowance: result >= requiredAmountBigInt
+      logger.info('Token allowance checked successfully', {
+        component: 'useTokenAllowance',
+        operation: 'check_allowance',
+        metadata: {
+          allowance: result.toString(),
+          hasEnoughAllowance: result >= requiredAmountBigInt,
+          tokenAddress,
+          spenderAddress
+        }
       });
       
       setAllowance(result as bigint);
     } catch (error) {
-      console.error('❌ Failed to check allowance:', error);
+      logger.error('Failed to check token allowance', {
+        component: 'useTokenAllowance',
+        operation: 'check_allowance',
+        metadata: { tokenAddress, ownerAddress, spenderAddress }
+      }, error as Error);
       setAllowance(0n);
     } finally {
       setIsLoading(false);
@@ -102,14 +125,18 @@ export const useTokenAllowance = ({
       // Refresh allowance after approval
       await checkAllowance();
 
-      toast({
+      notifications.success({
         title: "Approval Successful",
-        description: "Token approval confirmed. You can now place your order.",
+        description: "Token approval confirmed. You can now place your order."
       });
 
       return hash;
     } catch (error) {
-      console.error('Failed to approve token:', error);
+      logger.error('Token approval failed', {
+        component: 'useTokenAllowance',
+        operation: 'approve',
+        metadata: { tokenAddress, spenderAddress, amount }
+      }, error as Error);
       
       let errorMessage = 'Failed to approve token';
       if (error instanceof Error) {
@@ -120,10 +147,9 @@ export const useTokenAllowance = ({
         }
       }
       
-      toast({
+      notifications.error({
         title: "Approval Failed",
-        description: errorMessage,
-        variant: "destructive",
+        description: errorMessage
       });
       
       throw error;
