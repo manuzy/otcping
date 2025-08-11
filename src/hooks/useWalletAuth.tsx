@@ -1,5 +1,6 @@
 import { useAppKitAccount } from '@reown/appkit/react';
 import { useAuth } from './useAuth';
+import { useNavigate } from 'react-router-dom';
 
 export function useWalletAuth() {
   const { address, isConnected } = useAppKitAccount();

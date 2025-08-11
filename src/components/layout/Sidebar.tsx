@@ -59,7 +59,7 @@ export const Sidebar = ({ selectedChat, onChatSelect, onClose }: SidebarProps) =
               className="pl-9"
             />
           </div>
-          <Button className="w-full" size="sm" onClick={() => navigate("/create-trade")}>
+          <Button className="w-full" size="sm" onClick={() => navigate("/app/create-trade")}>
             <Plus className="h-4 w-4 mr-2" />
             New Trade
           </Button>

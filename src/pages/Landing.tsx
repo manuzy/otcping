@@ -5,8 +5,6 @@ import WalletAuthButton from "@/components/auth/WalletAuthButton";
 import { useWalletAuth } from "@/hooks/useWalletAuth";
 import { useNavigate } from "react-router-dom";
 import { Shield, MessageSquare, TrendingUp, Users, CheckCircle, ArrowRight, Zap, Lock, Globe, Star, DollarSign } from "lucide-react";
-import Header from "@/components/navigation/Header";
-import Footer from "@/components/layout/Footer";
 const Landing = () => {
   const {
     isAuthenticated
@@ -31,7 +29,6 @@ const Landing = () => {
   }];
   const benefits = ["No intermediary fees", "Direct peer-to-peer trading", "Secure wallet integration", "Real-time communication", "Transparent pricing", "Community-driven trust"];
   return <div className="min-h-screen bg-background">
-      <Header />
       {/* Hero Section */}
       <section className="relative overflow-hidden bg-gradient-to-br from-background via-background to-secondary/20">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(212,160,23,0.1),transparent_60%)]" />
@@ -51,7 +48,7 @@ const Landing = () => {
             </p>
 
             <div className="flex justify-center mb-16">
-              {isAuthenticated ? <Button variant="hero" size="lg" onClick={() => navigate('/app')} className="text-xl px-12 py-4 h-14">
+              {isAuthenticated ? <Button variant="hero" size="lg" onClick={() => navigate('/app/dashboard')} className="text-xl px-12 py-4 h-14">
                   Launch Platform
                   <ArrowRight className="ml-3 h-6 w-6" />
                 </Button> : <div className="flex justify-center">
@@ -212,7 +209,7 @@ const Landing = () => {
             </p>
             
             <div className="flex flex-col sm:flex-row gap-6 justify-center">
-              {isAuthenticated ? <Button variant="hero" size="lg" onClick={() => navigate('/app')} className="text-xl px-12 py-4 h-14 bg-primary hover:bg-primary/90">
+              {isAuthenticated ? <Button variant="hero" size="lg" onClick={() => navigate('/app/dashboard')} className="text-xl px-12 py-4 h-14 bg-primary hover:bg-primary/90">
                   Launch Platform
                   <ArrowRight className="ml-3 h-6 w-6" />
                 </Button> : <WalletAuthButton />}
@@ -223,7 +220,6 @@ const Landing = () => {
         </div>
       </section>
 
-      <Footer />
     </div>;
 };
 export default Landing;
