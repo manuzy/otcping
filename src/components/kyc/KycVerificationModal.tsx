@@ -83,7 +83,10 @@ export function KycVerificationModal({
             <div className="border rounded-lg overflow-hidden">
               <SumsubWebSdk
                 accessToken={accessToken}
-                expirationHandler={() => console.log('Token expired')}
+                expirationHandler={() => logger.warn('Sumsub access token expired', {
+                  component: 'KycVerificationModal',
+                  operation: 'token_expiration'
+                })}
                 config={{
                   lang: 'en',
                   theme: 'dark',

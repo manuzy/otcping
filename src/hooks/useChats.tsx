@@ -641,7 +641,11 @@ export function useChats() {
 
       return null;
     } catch (error) {
-      console.error('Error finding existing direct chat:', error);
+      logger.error('Error finding existing direct chat', {
+        component: 'useChats',
+        operation: 'find_existing_direct_chat',
+        metadata: { targetUserId }
+      }, error as Error);
       return null;
     }
   };
