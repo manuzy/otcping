@@ -10,6 +10,7 @@ export interface LogContext {
   component?: string;
   operation?: string;
   metadata?: Record<string, any>;
+  [key: string]: any; // Allow additional properties
 }
 
 export interface LogEntry {

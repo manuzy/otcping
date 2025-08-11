@@ -2,20 +2,28 @@ import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { createClient } from '@supabase/supabase-js';
 import { useAuth } from './useAuth';
-import { useToast } from '@/components/ui/use-toast';
 import type { Chat, User } from '@/types';
+import { logger } from '@/lib/logger';
+import { notifications } from '@/lib/notifications';
+import { ErrorHandler } from '@/lib/errorHandler';
+import { apiClient } from '@/lib/apiClient';
 
 export function useChats() {
   const [chats, setChats] = useState<Chat[]>([]);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
-  const { toast } = useToast();
   const lastErrorTimeRef = useRef<number>(0);
   const isUnmountedRef = useRef(false);
 
   // Fetch chats where user is a participant with error handling and debouncing
   const fetchChats = async (skipErrorToast = false) => {
     if (!user || isUnmountedRef.current) return;
+
+    logger.debug('Fetching chats', { 
+      component: 'useChats',
+      operation: 'fetchChats',
+      userId: user.id 
+    });
 
     try {
       const { data, error } = await supabase
@@ -107,18 +115,23 @@ export function useChats() {
       }).filter(chat => chat.id); // Filter out any chats that failed to transform
 
       setChats(transformedChats);
+      logger.info('Chats fetched successfully', { 
+        component: 'useChats',
+        count: transformedChats.length,
+        userId: user.id 
+      });
     } catch (error) {
-      console.error('Error fetching chats:', error);
+      const appError = ErrorHandler.handle(error, false);
+      logger.error('Failed to fetch chats', { 
+        component: 'useChats',
+        userId: user.id 
+      }, appError);
       
       // Only show toast if we haven't shown one recently (debounce errors)
       const now = Date.now();
       if (!skipErrorToast && now - lastErrorTimeRef.current > 5000) {
         lastErrorTimeRef.current = now;
-        toast({
-          title: "Error",
-          description: "Failed to load chats",
-          variant: "destructive",
-        });
+        notifications.loadingError('chats');
       }
     } finally {
       if (!isUnmountedRef.current) {
@@ -254,11 +267,9 @@ export function useChats() {
       // Get fresh session with explicit token
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       if (sessionError || !session) {
-        console.error('[Chat Creation] No valid session available');
-        toast({
-          title: "Error",
-          description: "Authentication issue - please try refreshing the page",
-          variant: "destructive",
+      console.error('[Chat Creation] No valid session available');
+        notifications.error({
+          description: "Authentication issue - please try refreshing the page"
         });
         return null;
       }
@@ -289,10 +300,8 @@ export function useChats() {
       
       if (authTestError || !authTest) {
         console.error('[Chat Creation] Connection-level auth test failed:', authTestError);
-        toast({
-          title: "Error", 
-          description: "Authentication issue - please try refreshing the page",
-          variant: "destructive",
+        notifications.error({
+          description: "Authentication issue - please try refreshing the page"
         });
         return null;
       }
@@ -313,12 +322,10 @@ export function useChats() {
 
       if (chatError) {
         console.error('[Chat Creation] Chat creation error:', chatError);
-        toast({
-          title: "Error",
+        notifications.error({
           description: chatError.message?.includes('row-level security policy') 
             ? "Authentication issue - please try refreshing the page" 
-            : "Failed to create chat",
-          variant: "destructive",
+            : "Failed to create chat"
         });
         return null;
       }
@@ -344,28 +351,23 @@ export function useChats() {
         console.error('[Chat Creation] Participant creation error:', participantError);
         // If participants fail, clean up the chat using the same client
         await chatClient.from('chats').delete().eq('id', chat.id);
-        toast({
-          title: "Error",
-          description: "Failed to add participants to chat",
-          variant: "destructive",
+        notifications.error({
+          description: "Failed to add participants to chat"
         });
         return null;
       }
 
       console.log('[Chat Creation] Participants added successfully');
       
-      toast({
-        title: "Chat created",
-        description: `Chat "${name}" has been created`,
+      notifications.success({
+        description: `Chat "${name}" has been created`
       });
 
       return chat.id;
     } catch (error) {
       console.error('[Chat Creation] Unexpected error:', error);
-      toast({
-        title: "Error",
-        description: "Failed to create chat",
-        variant: "destructive",
+      notifications.error({
+        description: "Failed to create chat"
       });
       return null;
     }
@@ -385,18 +387,15 @@ export function useChats() {
 
       if (error) throw error;
 
-      toast({
-        title: "Joined chat",
-        description: "You have joined the chat",
+      notifications.success({
+        description: "You have joined the chat"
       });
 
       return true;
     } catch (error) {
       console.error('Error joining chat:', error);
-      toast({
-        title: "Error",
-        description: "Failed to join chat",
-        variant: "destructive",
+      notifications.error({
+        description: "Failed to join chat"
       });
       return false;
     }

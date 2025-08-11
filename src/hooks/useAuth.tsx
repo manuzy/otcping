@@ -4,6 +4,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { createClient } from '@supabase/supabase-js';
 import { useAppKitAccount } from '@reown/appkit/react';
 import CryptoJS from 'crypto-js';
+import { logger } from '@/lib/logger';
+import { ErrorHandler } from '@/lib/errorHandler';
+import { notifications } from '@/lib/notifications';
 
 interface AuthContextType {
   user: User | null;
@@ -61,20 +64,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     // Don't act on wallet state changes while wallet is still loading
     if (walletLoading) {
-      console.log('[Auth] Wallet still loading, skipping disconnect check');
+      logger.debug('Wallet still loading, skipping disconnect check', { 
+        component: 'useAuth',
+        operation: 'walletStateCheck' 
+      });
       return;
     }
 
     // If wallet disconnects while user is authenticated, sign them out
-    // But only if we're sure the wallet is actually disconnected (not just loading)
     if (!isConnected && user && !walletLoading) {
-      console.log('[Auth] Wallet disconnected, signing out user');
+      logger.authEvent('Wallet disconnected, signing out user', { 
+        userId: user.id,
+        previousAddress 
+      });
       signOut();
     }
     
     // If wallet address changes while authenticated, sign out previous session
     if (isConnected && address && previousAddress && address !== previousAddress && user) {
-      console.log('[Auth] Wallet address changed, signing out previous session');
+      logger.authEvent('Wallet address changed, signing out previous session', { 
+        userId: user.id,
+        oldAddress: previousAddress,
+        newAddress: address 
+      });
       signOut();
     }
     
@@ -83,12 +95,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [isConnected, address, user, previousAddress, walletLoading]);
 
   const signOut = async () => {
+    logger.authEvent('User signing out', { userId: user?.id });
+    
     const { error } = await supabase.auth.signOut();
-    if (error) console.error('Error signing out:', error);
+    if (error) {
+      const appError = ErrorHandler.handle(error, false);
+      logger.error('Sign out failed', { userId: user?.id }, appError);
+    } else {
+      logger.authEvent('User signed out successfully', { userId: user?.id });
+      notifications.signedOut();
+    }
   };
 
   const createWalletChallenge = async (): Promise<{ message: string; nonce: string } | null> => {
     if (!address) return null;
+
+    logger.apiCall('create_wallet_challenge', 'supabase.rpc', { 
+      component: 'useAuth',
+      walletAddress: address 
+    });
 
     try {
       const { data, error } = await supabase.rpc('create_wallet_challenge', {
@@ -103,9 +128,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         throw new Error(result.error || 'Failed to create challenge');
       }
       
+      logger.apiSuccess('create_wallet_challenge', { walletAddress: address });
       return { message: result.message!, nonce: result.nonce! };
     } catch (error) {
-      console.error('Error creating wallet challenge:', error);
+      const appError = ErrorHandler.handle(error, false);
+      logger.apiError('create_wallet_challenge', appError, { walletAddress: address });
       return null;
     }
   };
@@ -113,9 +140,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const authenticateWallet = async (signature: string, message: string, nonce: string): Promise<{ success: boolean; error?: string }> => {
     if (!address) return { success: false, error: 'No wallet connected' };
 
+    logger.authEvent('Starting wallet authentication process', { 
+      component: 'useAuth',
+      walletAddress: address 
+    });
+
     try {
-      console.log('[Wallet Auth] Starting wallet authentication process...');
-      
       // Step 1: Verify signature with database function
       const { data, error } = await supabase.rpc('authenticate_wallet', {
         wallet_addr: address,

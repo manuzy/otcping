@@ -19,10 +19,12 @@ import { safeParseDate, formatNumberWithCommas } from '@/lib/utils';
 import { format, formatDistanceToNow } from 'date-fns';
 import { limitOrderService } from '@/lib/limitOrderService';
 import { useWalletClient, useAccount } from 'wagmi';
-import { useToast } from '@/hooks/use-toast';
 import { useTokenAllowance } from '@/hooks/useTokenAllowance';
 import { EditTradeDialog } from './EditTradeDialog';
-import { supabase } from '@/integrations/supabase/client';
+import { logger } from '@/lib/logger';
+import { notifications } from '@/lib/notifications';
+import { ErrorHandler } from '@/lib/errorHandler';
+import { apiClient } from '@/lib/apiClient';
 
 interface ChatViewProps {
   chat: Chat;
@@ -42,23 +44,20 @@ export const ChatView = ({ chat, onMenuClick }: ChatViewProps) => {
   const { chains } = useChains();
   const { data: walletClient } = useWalletClient();
   const { address } = useAccount();
-  const { toast } = useToast();
+  
   const { isAdmin, isAdminWallet } = useIsAdmin();
   const { settings: adminSettings } = useAdminSettings();
 
   // Get sell token for allowance checking
   const sellToken = chat.trade?.sellAsset ? tokens.find(t => t.address.toLowerCase() === chat.trade.sellAsset?.toLowerCase()) : undefined;
   
-  // DEBUG: Check what values we're passing to useTokenAllowance
-  console.log('🔍 ChatView - useTokenAllowance params:', {
+  logger.debug('ChatView - Token allowance params', {
+    component: 'ChatView',
     tokenAddress: sellToken?.address,
     ownerAddress: address,
     spenderAddress: '0x111111125421cA6dc452d289314280a0f8842A65',
     requiredAmount: chat.trade?.size,
-    tokenDecimals: sellToken?.decimals || 18,
-    chainId: chat.trade?.chain_id || 1,
-    sellToken,
-    tradeData: chat.trade
+    chainId: chat.trade?.chain_id || 1
   });
 
   // Check token allowance for 1inch limit order contract
@@ -110,22 +109,27 @@ export const ChatView = ({ chat, onMenuClick }: ChatViewProps) => {
 
   const handlePlaceOrder = async () => {
     if (!chat.trade || !walletClient || !user) {
-      toast({
-        title: "Error",
-        description: "Missing trade data or wallet connection",
-        variant: "destructive",
+      notifications.error({
+        description: "Missing trade data or wallet connection"
       });
       return;
     }
+
+    logger.userAction('Placing limit order', {
+      component: 'ChatView',
+      chatId: chat.id,
+      tradeId: chat.trade.id,
+      userId: user.id
+    });
 
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     
     try {
       // Step 1: Preparing order
       setOrderState('preparing');
-      toast({
+      notifications.info({
         title: "Preparing Order",
-        description: "Setting up your limit order parameters...",
+        description: "Setting up your limit order parameters..."
       });
 
       // Brief delay to show preparing state
@@ -133,11 +137,11 @@ export const ChatView = ({ chat, onMenuClick }: ChatViewProps) => {
 
       // Step 2: Waiting for signature
       setOrderState('signing');
-      toast({
+      notifications.info({
         title: "Please Sign Transaction",
         description: isMobile 
           ? "Open your wallet app to sign the limit order transaction"
-          : "Check your wallet extension to sign the limit order transaction",
+          : "Check your wallet extension to sign the limit order transaction"
       });
 
       const orderHash = await limitOrderService.createAndSubmitLimitOrder(
@@ -148,9 +152,9 @@ export const ChatView = ({ chat, onMenuClick }: ChatViewProps) => {
 
       // Step 3: Processing/submitting
       setOrderState('submitting');
-      toast({
+      notifications.info({
         title: "Processing Order",
-        description: "Submitting your signed order to 1inch protocol...",
+        description: "Submitting your signed order to 1inch protocol..."
       });
 
       // Brief delay to show processing state
@@ -164,9 +168,15 @@ export const ChatView = ({ chat, onMenuClick }: ChatViewProps) => {
         : '';
 
       // Success
-      toast({
+      logger.userAction('Limit order placed successfully', {
+        component: 'ChatView',
+        orderHash,
+        tradeId: chat.trade.id
+      });
+      
+      notifications.success({
         title: "Order Placed Successfully",
-        description: `Your limit order has been submitted to 1inch. Order hash: ${orderHash?.slice(0, 10) || 'Unknown'}...`,
+        description: `Your limit order has been submitted to 1inch. Order hash: ${orderHash?.slice(0, 10) || 'Unknown'}...`
       });
 
       // Send a system message to the chat about the order with the app link
@@ -177,29 +187,36 @@ export const ChatView = ({ chat, onMenuClick }: ChatViewProps) => {
       await sendMessage(orderMessage);
       
     } catch (error) {
-      console.error('Failed to place order:', error);
+      const appError = ErrorHandler.handle(error, false);
+      logger.error('Failed to place order', {
+        component: 'ChatView',
+        tradeId: chat.trade.id,
+        userId: user.id
+      }, appError);
       
       // Provide specific error messaging based on the error type
-      let errorTitle = "Failed to Place Order";
-      let errorDescription = "Unknown error occurred";
-      
       if (error instanceof Error) {
         if (error.message.includes('User rejected') || error.message.includes('denied')) {
-          errorTitle = "Transaction Cancelled";
-          errorDescription = "You cancelled the transaction in your wallet.";
+          notifications.info({
+            title: "Transaction Cancelled",
+            description: "You cancelled the transaction in your wallet."
+          });
         } else if (error.message.includes('insufficient')) {
-          errorTitle = "Insufficient Balance";
-          errorDescription = "You don't have enough tokens or ETH for gas fees.";
+          notifications.error({
+            title: "Insufficient Balance",
+            description: "You don't have enough tokens or ETH for gas fees."
+          });
         } else {
-          errorDescription = error.message;
+          notifications.error({
+            title: "Failed to Place Order",
+            description: error.message
+          });
         }
+      } else {
+        notifications.error({
+          description: "Failed to place order. Please try again."
+        });
       }
-      
-      toast({
-        title: errorTitle,
-        description: errorDescription,
-        variant: "destructive",
-      });
     } finally {
       setOrderState('idle');
     }
@@ -208,25 +225,35 @@ export const ChatView = ({ chat, onMenuClick }: ChatViewProps) => {
   const handleEditTrade = async (updatedTrade: Partial<Trade>) => {
     if (!chat.trade?.id || !user) return;
 
-    setUpdatingTrade(true);
-    try {
-      // Update the trade in the database
-      const { error } = await supabase
-        .from('trades')
-        .update({
-          token_amount: updatedTrade.tokenAmount,
-          limit_price: updatedTrade.limitPrice,
-          expected_execution: updatedTrade.expectedExecution?.toISOString(),
-          expiry_timestamp: updatedTrade.expiryTimestamp?.toISOString(),
-          expiry_type: updatedTrade.expiryType,
-          trigger_asset: updatedTrade.triggerAsset,
-          trigger_condition: updatedTrade.triggerCondition,
-          trigger_price: updatedTrade.triggerPrice,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', chat.trade.id);
+    logger.userAction('Editing trade', {
+      component: 'ChatView',
+      tradeId: chat.trade.id,
+      userId: user.id
+    });
 
-      if (error) throw error;
+    setUpdatingTrade(true);
+    
+    const { error } = await apiClient.update('trades', chat.trade.id, {
+      token_amount: updatedTrade.tokenAmount,
+      limit_price: updatedTrade.limitPrice,
+      expected_execution: updatedTrade.expectedExecution?.toISOString(),
+      expiry_timestamp: updatedTrade.expiryTimestamp?.toISOString(),
+      expiry_type: updatedTrade.expiryType,
+      trigger_asset: updatedTrade.triggerAsset,
+      trigger_condition: updatedTrade.triggerCondition,
+      trigger_price: updatedTrade.triggerPrice,
+      updated_at: new Date().toISOString()
+    }, {
+      context: { component: 'ChatView', operation: 'editTrade' },
+      showSuccessToast: false
+    });
+
+    if (error) {
+      logger.error('Failed to update trade', { tradeId: chat.trade.id }, new Error(error.message));
+      notifications.updateError('trade');
+      setUpdatingTrade(false);
+      return;
+    }
 
       // Generate change notification message
       const changes: string[] = [];
@@ -271,23 +298,12 @@ export const ChatView = ({ chat, onMenuClick }: ChatViewProps) => {
         await sendMessage(changeMessage);
       }
 
-      // Refresh chat data to show updated trade
-      await refetchChats();
+    // Refresh chat data to show updated trade
+    await refetchChats();
 
-      toast({
-        title: "Trade Updated",
-        description: "Trade has been successfully updated.",
-      });
-    } catch (error) {
-      console.error('Failed to update trade:', error);
-      toast({
-        title: "Error",
-        description: "Failed to update trade. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setUpdatingTrade(false);
-    }
+    logger.info('Trade updated successfully', { tradeId: chat.trade.id });
+    notifications.updateSuccess('trade');
+    setUpdatingTrade(false);
   };
 
   const formatTime = (date: Date) => {
@@ -329,15 +345,12 @@ export const ChatView = ({ chat, onMenuClick }: ChatViewProps) => {
     }
   };
 
-  // DEBUG: Log all relevant data
-  console.log('🔍 ChatView Debug:', {
+  logger.debug('ChatView render data', {
+    component: 'ChatView',
     chatId: chat.id,
     chatName: chat.name,
     chatIsPublic: chat.isPublic,
-    currentUserId: user?.id,
-    currentUserMetadata: user?.user_metadata,
-    participantsCount: participants.length,
-    participants: participants.map(p => ({ id: p.id, displayName: p.displayName, avatar: p.avatar }))
+    participantsCount: participants.length
   });
 
   // For direct messages, get the other participant for display
@@ -346,13 +359,11 @@ export const ChatView = ({ chat, onMenuClick }: ChatViewProps) => {
   const displayName = isDirectMessage && otherParticipant ? otherParticipant.displayName : chat.name;
   const displayAvatar = isDirectMessage && otherParticipant ? otherParticipant.avatar : undefined;
   
-  // DEBUG: Log computed values
-  console.log('📊 ChatView Computed:', {
+  logger.debug('ChatView computed values', {
+    component: 'ChatView',
     chatId: chat.id,
     isDirectMessage,
-    otherParticipant: otherParticipant ? { id: otherParticipant.id, displayName: otherParticipant.displayName, avatar: otherParticipant.avatar } : null,
-    displayName,
-    displayAvatar
+    displayName
   });
 
   const renderMessage = (msg: Message) => {

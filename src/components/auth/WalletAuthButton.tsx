@@ -2,17 +2,18 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useAppKitAccount, useAppKit } from '@reown/appkit/react';
 import { useAuth } from '@/hooks/useAuth';
-import { useToast } from '@/hooks/use-toast';
 import { Loader2, Wallet, Shield, X } from 'lucide-react';
 import { useWalletClient } from 'wagmi';
 import { useWalletAuth } from '@/hooks/useWalletAuth';
+import { logger } from '@/lib/logger';
+import { notifications } from '@/lib/notifications';
+import { ErrorHandler } from '@/lib/errorHandler';
 
 export default function WalletAuthButton() {
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const { address, isConnected } = useAppKitAccount();
   const { open } = useAppKit();
   const { user, createWalletChallenge, authenticateWallet } = useAuth();
-  const { toast } = useToast();
   const { data: walletClient } = useWalletClient();
   const { isConnectedButNotAuthenticated, loading: authLoading } = useWalletAuth();
 
@@ -23,13 +24,17 @@ export default function WalletAuthButton() {
     }
 
     if (user) {
-      toast({
-        title: "Already authenticated",
-        description: "You are already signed in with your wallet.",
+      notifications.info({
+        description: "You are already signed in with your wallet."
       });
       return;
     }
 
+    logger.userAction('Starting wallet authentication', { 
+      component: 'WalletAuthButton',
+      walletAddress: address 
+    });
+    
     setIsAuthenticating(true);
     
     try {
@@ -44,9 +49,8 @@ export default function WalletAuthButton() {
         throw new Error('Wallet client not available');
       }
 
-      toast({
-        title: "Sign Message",
-        description: "Please sign the message in your wallet to authenticate.",
+      notifications.info({
+        description: "Please sign the message in your wallet to authenticate."
       });
 
       // Get real signature from wallet
@@ -59,20 +63,18 @@ export default function WalletAuthButton() {
       const result = await authenticateWallet(signature, challenge.message, challenge.nonce);
       
       if (result.success) {
-        toast({
-          title: "Authentication successful",
-          description: "You are now signed in and ready to use the platform.",
-        });
+        logger.authEvent('Wallet authentication successful', { walletAddress: address });
+        notifications.authSuccess();
       } else {
         throw new Error(result.error || 'Authentication failed');
       }
     } catch (error) {
-      console.error('Authentication error:', error);
-      toast({
-        title: "Authentication failed",
-        description: error instanceof Error ? error.message : "Failed to authenticate with wallet",
-        variant: "destructive",
-      });
+      const appError = ErrorHandler.handle(error, false);
+      logger.error('Wallet authentication failed', { 
+        component: 'WalletAuthButton',
+        walletAddress: address 
+      }, appError);
+      notifications.authError();
     } finally {
       setIsAuthenticating(false);
     }

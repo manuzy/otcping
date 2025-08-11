@@ -7,15 +7,17 @@ import { Switch } from "@/components/ui/switch";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { useToast } from "@/hooks/use-toast";
 import { useNotificationSettings } from "@/hooks/useNotificationSettings";
 import ProfileManager from "@/components/profile/ProfileManager";
 import { useWalletAuth } from "@/hooks/useWalletAuth";
 import { useAuth } from "@/hooks/useAuth";
-import { supabase } from "@/integrations/supabase/client";
+import { apiClient } from "@/lib/apiClient";
+import { logger } from "@/lib/logger";
+import { notifications } from "@/lib/notifications";
+import { ErrorBoundary } from "@/components/error/ErrorBoundary";
+import { LoadingState } from "@/components/ui/loading-state";
 
 export default function Settings() {
-  const { toast } = useToast();
   const { isAuthenticated, address } = useWalletAuth();
   const { user } = useAuth();
   const { settings: notificationSettings, loading: notificationLoading, saving: notificationSaving, saveSettings } = useNotificationSettings();
@@ -37,48 +39,51 @@ export default function Settings() {
   const fetchProfileData = async () => {
     if (!user) return;
 
-    try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('is_public')
-        .eq('id', user.id)
-        .single();
+    logger.info('Fetching profile data', { 
+      component: 'Settings',
+      operation: 'fetchProfileData',
+      userId: user.id 
+    });
 
-      if (error && error.code !== 'PGRST116') {
-        throw error;
-      }
+    const { data, error } = await apiClient.selectSingle('profiles', `id.eq.${user.id}`, {
+      context: { component: 'Settings', operation: 'fetchProfileData' }
+    });
 
-      if (data) {
-        setPrivacy(prev => ({ ...prev, publicProfile: data.is_public }));
-      }
-    } catch (error) {
-      console.error('Error fetching profile data:', error);
+    if (error) {
+      logger.error('Failed to fetch profile data', { userId: user.id }, new Error(error.message));
+      return;
+    }
+
+    if (data) {
+      setPrivacy(prev => ({ ...prev, publicProfile: data.is_public }));
+      logger.info('Profile data loaded successfully', { userId: user.id });
     }
   };
 
   const handleSavePrivacy = async () => {
     if (!user) return;
 
-    try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({ is_public: privacy.publicProfile })
-        .eq('id', user.id);
+    logger.userAction('Saving privacy settings', { 
+      component: 'Settings',
+      userId: user.id,
+      settings: privacy 
+    });
 
-      if (error) throw error;
+    const { error } = await apiClient.update('profiles', user.id, {
+      is_public: privacy.publicProfile
+    }, {
+      context: { component: 'Settings', operation: 'savePrivacy' },
+      showSuccessToast: false
+    });
 
-      toast({
-        title: "Privacy settings updated",
-        description: "Your privacy preferences have been saved.",
-      });
-    } catch (error) {
-      console.error('Error saving privacy settings:', error);
-      toast({
-        title: "Error saving settings",
-        description: "Failed to save your privacy preferences",
-        variant: "destructive",
-      });
+    if (error) {
+      logger.error('Failed to save privacy settings', { userId: user.id }, new Error(error.message));
+      notifications.saveError('privacy settings');
+      return;
     }
+
+    notifications.saveSuccess('privacy settings');
+    logger.info('Privacy settings saved successfully', { userId: user.id });
   };
 
   const handleSaveNotifications = async () => {
@@ -93,7 +98,8 @@ export default function Settings() {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-background">
+    <ErrorBoundary>
+      <div className="flex flex-col h-screen bg-background">
       {/* Header */}
       <div className="border-b border-border p-4 flex items-center justify-between">
         <h1 className="text-2xl font-bold">Settings</h1>
@@ -320,5 +326,6 @@ export default function Settings() {
         </Card>
       </div>
     </div>
+    </ErrorBoundary>
   );
 }

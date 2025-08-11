@@ -233,3 +233,7 @@ export const retryOperation = <T>(
   delay = 1000,
   context?: LogContext
 ) => ErrorHandler.retry(operation, maxRetries, delay, context);
+
+// Export singleton instance
+const errorHandlerInstance = new ErrorHandler();
+export { errorHandlerInstance as errorHandler };

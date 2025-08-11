@@ -29,6 +29,19 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Structured logging helper
+const log = (level: string, message: string, context?: any) => {
+  const timestamp = new Date().toISOString();
+  const logEntry = {
+    timestamp,
+    level,
+    function: 'generate-kyc-token',
+    message,
+    context
+  };
+  console.log(JSON.stringify(logEntry));
+};
+
 // Valid KYC levels based on Sumsub dashboard configuration
 const VALID_KYC_LEVELS = [
   'id-and-liveness',
@@ -186,7 +199,7 @@ function createErrorResponse(error: any, statusCode: number = 500): Response {
     details: error?.details
   };
   
-  console.error('KYC token generation error:', errorResponse);
+  log('error', 'KYC token generation error', errorResponse);
   
   return new Response(
     JSON.stringify(errorResponse),
@@ -203,7 +216,7 @@ serve(async (req) => {
   }
 
   const startTime = Date.now();
-  console.log('Starting KYC token generation request');
+  log('info', 'Starting KYC token generation request');
 
   try {
     // Validate environment variables
@@ -283,10 +296,12 @@ serve(async (req) => {
     const url = buildSumsubUrl(externalUserId, level, ttlInSecs);
     
     // Log request details for debugging (without sensitive data)
-    console.log('Generating KYC token for user:', externalUserId);
-    console.log('KYC level:', level);
-    console.log('URL path:', url);
-    console.log('Timestamp:', timestamp);
+    log('info', 'Generating KYC token', {
+      externalUserId,
+      level,
+      url,
+      timestamp
+    });
     
     // Generate HMAC signature
     const signatureHex = await generateHmacSignature(timestamp, method, url, secretKey);
@@ -368,14 +383,10 @@ serve(async (req) => {
 
     // Calculate processing time for metrics
     const processingTime = Date.now() - startTime;
-    console.log(`KYC token generation completed successfully in ${processingTime}ms`);
-    
-    // Log success metrics (without sensitive data)
-    console.log('Success metrics:', {
+    log('info', 'KYC token generation completed successfully', {
       userId: user.id,
       level,
-      processingTimeMs: processingTime,
-      timestamp: new Date().toISOString()
+      processingTimeMs: processingTime
     });
 
     return new Response(
@@ -393,11 +404,9 @@ serve(async (req) => {
     // Calculate processing time for error metrics
     const processingTime = Date.now() - startTime;
     
-    // Log error metrics
-    console.error('Error metrics:', {
+    log('error', 'KYC token generation failed', {
       processingTimeMs: processingTime,
-      errorType: error.constructor.name,
-      timestamp: new Date().toISOString()
+      errorType: error.constructor.name
     });
     
     return createErrorResponse(error);

@@ -7,15 +7,43 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Structured logging helper
+const log = (level: string, message: string, context?: any) => {
+  const timestamp = new Date().toISOString();
+  const logEntry = {
+    timestamp,
+    level,
+    function: 'check-kyc-status',
+    message,
+    context
+  };
+  console.log(JSON.stringify(logEntry));
+};
+
+// Error response helper
+const createErrorResponse = (message: string, statusCode: number = 500, context?: any) => {
+  log('error', message, context);
+  return new Response(
+    JSON.stringify({ error: message, context }),
+    {
+      status: statusCode,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    }
+  );
+};
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const startTime = Date.now();
+  log('info', 'KYC status check request started');
+
   try {
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
-      throw new Error('No authorization header');
+      return createErrorResponse('No authorization header', 401);
     }
 
     const supabaseClient = createClient(
@@ -30,17 +58,24 @@ serve(async (req) => {
 
     const { data: { user } } = await supabaseClient.auth.getUser();
     if (!user) {
-      throw new Error('Unauthorized');
+      return createErrorResponse('Unauthorized', 401);
     }
 
+    log('info', 'User authenticated successfully', { userId: user.id });
+
     // Get KYC verification record
-    const { data: kycRecord } = await supabaseClient
+    const { data: kycRecord, error: kycError } = await supabaseClient
       .from('kyc_verifications')
       .select('*')
       .eq('user_id', user.id)
       .single();
 
+    if (kycError && kycError.code !== 'PGRST116') {
+      return createErrorResponse('Database error retrieving KYC record', 500, { error: kycError });
+    }
+
     if (!kycRecord || !kycRecord.sumsub_applicant_id) {
+      log('info', 'KYC verification not started', { userId: user.id });
       return new Response(
         JSON.stringify({ 
           status: 'not_started',
@@ -56,8 +91,13 @@ serve(async (req) => {
     const secretKey = Deno.env.get('SUMSUB_SECRET_KEY');
 
     if (!appToken || !secretKey) {
-      throw new Error('Sumsub credentials not configured');
+      return createErrorResponse('Sumsub credentials not configured', 500);
     }
+
+    log('info', 'Calling Sumsub API', { 
+      userId: user.id, 
+      applicantId: kycRecord.sumsub_applicant_id 
+    });
 
     // Create signature for Sumsub API
     const timestamp = Math.floor(Date.now() / 1000);
@@ -95,11 +135,18 @@ serve(async (req) => {
 
     if (!sumsubResponse.ok) {
       const errorText = await sumsubResponse.text();
-      console.error('Sumsub API error:', errorText);
-      throw new Error(`Sumsub API error: ${sumsubResponse.status}`);
+      return createErrorResponse(
+        `Sumsub API error: ${sumsubResponse.status}`, 
+        sumsubResponse.status >= 500 ? 503 : 400,
+        { responseText: errorText }
+      );
     }
 
     const applicantData = await sumsubResponse.json();
+    log('info', 'Sumsub API response received', { 
+      userId: user.id,
+      status: applicantData.review?.reviewStatus 
+    });
 
     // Update local KYC record with latest status
     const { error: updateError } = await supabaseClient
@@ -111,7 +158,10 @@ serve(async (req) => {
       .eq('user_id', user.id);
 
     if (updateError) {
-      console.error('Error updating KYC verification:', updateError);
+      log('error', 'Error updating KYC verification', { 
+        userId: user.id, 
+        error: updateError 
+      });
     }
 
     // Update profile KYC level if completed
@@ -132,9 +182,24 @@ serve(async (req) => {
         .eq('id', user.id);
 
       if (profileError) {
-        console.error('Error updating profile KYC level:', profileError);
+        log('error', 'Error updating profile KYC level', { 
+          userId: user.id, 
+          error: profileError 
+        });
+      } else {
+        log('info', 'Profile KYC level updated', { 
+          userId: user.id, 
+          level: kycLevel 
+        });
       }
     }
+
+    const processingTime = Date.now() - startTime;
+    log('info', 'KYC status check completed successfully', { 
+      userId: user.id,
+      processingTimeMs: processingTime,
+      status: applicantData.review?.reviewStatus || 'init'
+    });
 
     return new Response(
       JSON.stringify({
@@ -149,12 +214,13 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('Error checking KYC status:', error);
-    return new Response(
-      JSON.stringify({ error: error.message }),
-      {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    const processingTime = Date.now() - startTime;
+    return createErrorResponse(
+      error.message || 'Unknown error occurred',
+      500,
+      { 
+        processingTimeMs: processingTime,
+        errorType: error.constructor.name 
       }
     );
   }
