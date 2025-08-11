@@ -42,6 +42,7 @@
     "@radix-ui/react-tooltip": "^1.1.4",
     "@reown/appkit": "^1.7.16",
     "@reown/appkit-adapter-wagmi": "^1.7.16",
+    "@sumsub/websdk-react": "^2.3.19",
     "@supabase/supabase-js": "^2.52.1",
     "@tanstack/react-query": "^5.56.2",
     "@types/crypto-js": "^4.2.2",
