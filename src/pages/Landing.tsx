@@ -7,45 +7,30 @@ import { useNavigate } from "react-router-dom";
 import { Shield, MessageSquare, TrendingUp, Users, CheckCircle, ArrowRight, Zap, Lock, Globe, Star, DollarSign } from "lucide-react";
 import Header from "@/components/navigation/Header";
 import Footer from "@/components/layout/Footer";
-
 const Landing = () => {
-  const { isAuthenticated } = useWalletAuth();
+  const {
+    isAuthenticated
+  } = useWalletAuth();
   const navigate = useNavigate();
-
-  const features = [
-    {
-      icon: Shield,
-      title: "Secure Wallet Authentication",
-      description: "Connect safely with your crypto wallet using industry-standard security protocols"
-    },
-    {
-      icon: MessageSquare,
-      title: "Direct P2P Communication",
-      description: "Chat directly with trading counterparts in real-time secure messaging"
-    },
-    {
-      icon: TrendingUp,
-      title: "OTC Trading Made Simple",
-      description: "Create and manage over-the-counter trades with transparent pricing"
-    },
-    {
-      icon: Users,
-      title: "Trusted Community",
-      description: "Trade with verified users and build your reputation in the community"
-    }
-  ];
-
-  const benefits = [
-    "No intermediary fees",
-    "Direct peer-to-peer trading", 
-    "Secure wallet integration",
-    "Real-time communication",
-    "Transparent pricing",
-    "Community-driven trust"
-  ];
-
-  return (
-    <div className="min-h-screen bg-background">
+  const features = [{
+    icon: Shield,
+    title: "Secure Wallet Authentication",
+    description: "Connect safely with your crypto wallet using industry-standard security protocols"
+  }, {
+    icon: MessageSquare,
+    title: "Direct P2P Communication",
+    description: "Chat directly with trading counterparts in real-time secure messaging"
+  }, {
+    icon: TrendingUp,
+    title: "OTC Trading Made Simple",
+    description: "Create and manage over-the-counter trades with transparent pricing"
+  }, {
+    icon: Users,
+    title: "Trusted Community",
+    description: "Trade with verified users and build your reputation in the community"
+  }];
+  const benefits = ["No intermediary fees", "Direct peer-to-peer trading", "Secure wallet integration", "Real-time communication", "Transparent pricing", "Community-driven trust"];
+  return <div className="min-h-screen bg-background">
       <Header />
       {/* Hero Section */}
       <section className="relative overflow-hidden bg-gradient-to-br from-background via-background to-secondary/20">
@@ -66,21 +51,12 @@ const Landing = () => {
             </p>
 
             <div className="flex justify-center mb-16">
-              {isAuthenticated ? (
-                <Button 
-                  variant="hero" 
-                  size="lg" 
-                  onClick={() => navigate('/app')} 
-                  className="text-xl px-12 py-4 h-14"
-                >
+              {isAuthenticated ? <Button variant="hero" size="lg" onClick={() => navigate('/app')} className="text-xl px-12 py-4 h-14">
                   Launch Platform
                   <ArrowRight className="ml-3 h-6 w-6" />
-                </Button>
-              ) : (
-                <div className="flex justify-center">
+                </Button> : <div className="flex justify-center">
                   <WalletAuthButton />
-                </div>
-              )}
+                </div>}
             </div>
 
             {/* Stats */}
@@ -115,8 +91,7 @@ const Landing = () => {
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-7xl mx-auto">
-            {features.map((feature, index) => (
-              <Card key={index} className="text-center border-0 bg-card shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
+            {features.map((feature, index) => <Card key={index} className="text-center border-0 bg-card shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
                 <CardHeader className="pb-4">
                   <div className="mx-auto w-16 h-16 bg-primary/10 rounded-xl flex items-center justify-center mb-6">
                     <feature.icon className="w-8 h-8 text-primary" />
@@ -128,8 +103,7 @@ const Landing = () => {
                     {feature.description}
                   </CardDescription>
                 </CardContent>
-              </Card>
-            ))}
+              </Card>)}
           </div>
         </div>
       </section>
@@ -196,12 +170,10 @@ const Landing = () => {
                 </p>
                 
                 <div className="space-y-6">
-                  {benefits.map((benefit, index) => (
-                    <div key={index} className="flex items-center gap-4">
+                  {benefits.map((benefit, index) => <div key={index} className="flex items-center gap-4">
                       <CheckCircle className="w-6 h-6 text-primary flex-shrink-0" />
                       <span className="text-lg text-foreground font-medium">{benefit}</span>
-                    </div>
-                  ))}
+                    </div>)}
                 </div>
               </div>
 
@@ -216,9 +188,7 @@ const Landing = () => {
                   </p>
                   
                   <div className="flex items-center justify-center gap-2 mb-8">
-                    {[...Array(5)].map((_, i) => (
-                      <Star key={i} className="w-5 h-5 fill-primary text-primary" />
-                    ))}
+                    {[...Array(5)].map((_, i) => <Star key={i} className="w-5 h-5 fill-primary text-primary" />)}
                     <span className="ml-2 text-muted-foreground">4.9/5 from 2,500+ reviews</span>
                   </div>
 
@@ -242,36 +212,18 @@ const Landing = () => {
             </p>
             
             <div className="flex flex-col sm:flex-row gap-6 justify-center">
-              {isAuthenticated ? (
-                <Button 
-                  variant="hero" 
-                  size="lg" 
-                  onClick={() => navigate('/app')} 
-                  className="text-xl px-12 py-4 h-14 bg-primary hover:bg-primary/90"
-                >
+              {isAuthenticated ? <Button variant="hero" size="lg" onClick={() => navigate('/app')} className="text-xl px-12 py-4 h-14 bg-primary hover:bg-primary/90">
                   Launch Platform
                   <ArrowRight className="ml-3 h-6 w-6" />
-                </Button>
-              ) : (
-                <WalletAuthButton />
-              )}
+                </Button> : <WalletAuthButton />}
               
-              <Button 
-                variant="outline" 
-                size="lg" 
-                className="text-xl px-12 py-4 h-14 border-background/20 text-background hover:bg-background/10"
-              >
-                <DollarSign className="mr-3 h-6 w-6" />
-                View Pricing
-              </Button>
+              
             </div>
           </div>
         </div>
       </section>
 
       <Footer />
-    </div>
-  );
+    </div>;
 };
-
 export default Landing;
