@@ -2,7 +2,16 @@ import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
-// Types and interfaces
+import { EdgeLogger } from '../_shared/logger.ts';
+import { EdgeErrorHandler } from '../_shared/errorHandler.ts';
+import { ResponseBuilder, defaultCorsHeaders } from '../_shared/responseUtils.ts';
+import { RetryHandler } from '../_shared/retryUtils.ts';
+
+const logger = new EdgeLogger('generate-kyc-token');
+const errorHandler = new EdgeErrorHandler(logger, defaultCorsHeaders);
+const responseBuilder = new ResponseBuilder(defaultCorsHeaders);
+const retryHandler = new RetryHandler(logger);
+
 interface KycTokenRequest {
   level?: string;
 }
@@ -12,40 +21,9 @@ interface SumsubTokenResponse {
   userId: string;
 }
 
-interface KycErrorResponse {
-  error: string;
-  code?: string;
-  details?: string;
-}
-
-interface ValidationResult {
-  isValid: boolean;
-  error?: string;
-}
-
-// Constants
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
-
-// Structured logging helper
-const log = (level: string, message: string, context?: any) => {
-  const timestamp = new Date().toISOString();
-  const logEntry = {
-    timestamp,
-    level,
-    function: 'generate-kyc-token',
-    message,
-    context
-  };
-  console.log(JSON.stringify(logEntry));
-};
-
 // Valid KYC levels based on Sumsub dashboard configuration
 const VALID_KYC_LEVELS = [
   'id-and-liveness',
-  // Legacy support for existing levels
   'basic-kyc-level',
   'enhanced-kyc-level', 
   'level-1',
@@ -55,78 +33,32 @@ const VALID_KYC_LEVELS = [
 ] as const;
 
 const DEFAULT_TTL_SECONDS = 1800; // 30 minutes
-const MAX_RETRIES = 3;
-const RETRY_DELAYS = [1000, 2000, 4000]; // Progressive delays in ms
-const REQUEST_TIMEOUT = 30000; // 30 seconds
 
-/**
- * Validates environment variables required for KYC token generation
- * @returns ValidationResult indicating if all required env vars are present
- */
-function validateEnvironmentVariables(): ValidationResult {
-  const requiredVars = ['SUPABASE_URL', 'SUPABASE_ANON_KEY', 'SUMSUB_APP_TOKEN', 'SUMSUB_SECRET_KEY'];
-  
-  for (const varName of requiredVars) {
-    const value = Deno.env.get(varName);
-    if (!value || value.trim() === '') {
-      return {
-        isValid: false,
-        error: `Missing required environment variable: ${varName}`
-      };
-    }
-  }
-  
-  return { isValid: true };
-}
-
-/**
- * Validates and sanitizes the KYC level parameter
- * @param level - The KYC level to validate
- * @returns ValidationResult with validated level
- */
-function validateKycLevel(level: string): ValidationResult {
+// Validate KYC level parameter
+function validateKycLevel(level: string): { isValid: boolean; error?: string } {
   if (!level || typeof level !== 'string') {
-    return {
-      isValid: false,
-      error: 'KYC level must be a non-empty string'
-    };
+    return { isValid: false, error: 'KYC level must be a non-empty string' };
   }
   
   const trimmedLevel = level.trim();
   if (trimmedLevel.length === 0) {
-    return {
-      isValid: false,
-      error: 'KYC level cannot be empty'
-    };
+    return { isValid: false, error: 'KYC level cannot be empty' };
   }
   
-  // For now, allow any level but log if it's not in our known list
+  // Log warning for non-standard levels but allow them
   if (!VALID_KYC_LEVELS.includes(trimmedLevel as any)) {
-    console.warn(`Using non-standard KYC level: ${trimmedLevel}`);
+    logger.warn('Using non-standard KYC level', { metadata: { level: trimmedLevel } });
   }
   
   return { isValid: true };
 }
 
-/**
- * Builds the Sumsub API URL with query parameters
- * @param externalUserId - The external user identifier
- * @param level - The KYC verification level
- * @param ttlInSecs - Token time-to-live in seconds
- * @returns The complete URL path with encoded parameters
- */
+// Build Sumsub API URL with query parameters
 function buildSumsubUrl(externalUserId: string, level: string, ttlInSecs: number): string {
   return `/resources/accessTokens?userId=${encodeURIComponent(externalUserId)}&levelName=${encodeURIComponent(level)}&ttlInSecs=${ttlInSecs}`;
 }
 
-/**
- * Generates HMAC signature for Sumsub API authentication
- * @param timestamp - Unix timestamp
- * @param method - HTTP method
- * @param url - URL path with query parameters
- * @param secretKey - Sumsub secret key
- * @returns Promise resolving to hex-encoded signature
- */
+// Generate HMAC signature for Sumsub API authentication
 async function generateHmacSignature(
   timestamp: number,
   method: string,
@@ -152,83 +84,117 @@ async function generateHmacSignature(
     .join('');
 }
 
-/**
- * Makes a request to Sumsub API with retry logic
- * @param url - Complete API URL
- * @param headers - Request headers
- * @param attempt - Current retry attempt (0-based)
- * @returns Promise resolving to API response
- */
-async function callSumsubApiWithRetry(
+// Call Sumsub API to generate access token
+async function callSumsubApi(
   url: string,
-  headers: Record<string, string>,
-  attempt: number = 0
-): Promise<Response> {
-  try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT);
-    
-    const response = await fetch(url, {
+  headers: Record<string, string>
+): Promise<SumsubTokenResponse> {
+  const fullUrl = `https://api.sumsub.com${url}`;
+  
+  logger.apiCall('sumsub_token_generation', fullUrl);
+  
+  const response = await retryHandler.fetchWithRetry(
+    fullUrl,
+    {
       method: 'POST',
       headers,
-      signal: controller.signal,
+    },
+    'Sumsub API call'
+  );
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    logger.apiError('sumsub_token_generation', new Error(`API returned ${response.status}`), {
+      metadata: { status: response.status, response: errorText }
     });
     
-    clearTimeout(timeoutId);
-    return response;
-  } catch (error) {
-    if (attempt < MAX_RETRIES - 1) {
-      console.warn(`Sumsub API call failed (attempt ${attempt + 1}/${MAX_RETRIES}):`, error.message);
-      await new Promise(resolve => setTimeout(resolve, RETRY_DELAYS[attempt]));
-      return callSumsubApiWithRetry(url, headers, attempt + 1);
+    // Return user-friendly error based on status
+    if (response.status === 400) {
+      throw new Error('Invalid request parameters for KYC verification');
+    } else if (response.status === 401) {
+      throw new Error('Authentication failed with KYC provider');
+    } else if (response.status === 403) {
+      throw new Error('Access denied by KYC provider');
+    } else if (response.status === 404) {
+      throw new Error('KYC verification level not found');
+    } else if (response.status >= 500) {
+      throw new Error('KYC provider service temporarily unavailable');
+    } else {
+      throw new Error(`KYC provider error: ${response.status}`);
     }
-    throw error;
   }
+
+  const tokenData: SumsubTokenResponse = await response.json();
+  logger.apiSuccess('sumsub_token_generation', {
+    metadata: { userId: tokenData.userId }
+  });
+  
+  return tokenData;
 }
 
-/**
- * Creates a standardized error response
- * @param error - Error object or message
- * @param statusCode - HTTP status code
- * @returns Response object with error details
- */
-function createErrorResponse(error: any, statusCode: number = 500): Response {
-  const errorResponse: KycErrorResponse = {
-    error: error?.message || 'Unknown error occurred',
-    code: error?.code,
-    details: error?.details
-  };
-  
-  log('error', 'KYC token generation error', errorResponse);
-  
-  return new Response(
-    JSON.stringify(errorResponse),
-    {
-      status: statusCode,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    }
-  );
+// Update or create KYC verification record
+async function updateKycRecord(
+  supabaseClient: any,
+  userId: string,
+  applicantId: string,
+  level: string
+): Promise<void> {
+  const { error } = await supabaseClient
+    .from('kyc_verifications')
+    .upsert({
+      user_id: userId,
+      sumsub_applicant_id: applicantId,
+      verification_level: level,
+      review_status: 'init',
+    }, {
+      onConflict: 'user_id'
+    });
+
+  if (error) {
+    logger.error('Failed to update KYC verification record', { userId }, error);
+    // Don't fail the entire request for database errors
+  } else {
+    logger.info('KYC verification record updated', { 
+      userId,
+      metadata: { applicantId, level }
+    });
+  }
 }
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return ResponseBuilder.cors(defaultCorsHeaders);
   }
 
-  const startTime = Date.now();
-  log('info', 'Starting KYC token generation request');
+  logger.info('KYC token generation request started');
 
   try {
     // Validate environment variables
-    const envValidation = validateEnvironmentVariables();
+    const envValidation = errorHandler.validateEnvironment([
+      'SUPABASE_URL', 
+      'SUPABASE_ANON_KEY', 
+      'SUMSUB_APP_TOKEN', 
+      'SUMSUB_SECRET_KEY'
+    ]);
     if (!envValidation.isValid) {
-      return createErrorResponse({ message: envValidation.error }, 500);
+      return errorHandler.createErrorResponse(
+        envValidation.error!,
+        500,
+        { operation: 'environment_validation' },
+        'ENV_CONFIG_ERROR'
+      );
     }
 
     // Validate authorization
     const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      return createErrorResponse({ message: 'No authorization header provided' }, 401);
+    const authValidation = errorHandler.validateAuth(authHeader);
+    if (!authValidation.isValid) {
+      return errorHandler.createErrorResponse(
+        authValidation.error!,
+        401,
+        { operation: 'auth_validation' },
+        'AUTH_ERROR'
+      );
     }
 
     // Initialize Supabase client
@@ -237,7 +203,7 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_ANON_KEY')!,
       {
         global: {
-          headers: { Authorization: authHeader },
+          headers: { Authorization: authHeader! },
         },
       }
     );
@@ -245,25 +211,45 @@ serve(async (req) => {
     // Authenticate user
     const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
     if (userError || !user) {
-      return createErrorResponse({ message: 'Unauthorized - invalid token' }, 401);
+      logger.authEvent('authentication_failed', { metadata: { error: userError?.message } });
+      return errorHandler.createErrorResponse(
+        'Unauthorized - invalid token',
+        401,
+        { operation: 'user_authentication' },
+        'INVALID_TOKEN'
+      );
     }
+
+    logger.authEvent('user_authenticated', { userId: user.id });
 
     // Parse and validate request body
-    let requestBody: KycTokenRequest;
-    try {
-      requestBody = await req.json();
-    } catch {
-      return createErrorResponse({ message: 'Invalid JSON in request body' }, 400);
+    const bodyValidation = await errorHandler.validateJsonBody<KycTokenRequest>(req);
+    if (!bodyValidation.isValid) {
+      return errorHandler.createErrorResponse(
+        bodyValidation.error,
+        400,
+        { operation: 'body_validation' },
+        'INVALID_JSON'
+      );
     }
 
-    // Use configured Sumsub level name - default to 'id-and-liveness'
-    const { level = 'id-and-liveness' } = requestBody;
+    const { level = 'id-and-liveness' } = bodyValidation.data;
     
     // Validate KYC level
     const levelValidation = validateKycLevel(level);
     if (!levelValidation.isValid) {
-      return createErrorResponse({ message: levelValidation.error }, 400);
+      return errorHandler.createErrorResponse(
+        levelValidation.error!,
+        400,
+        { operation: 'level_validation' },
+        'INVALID_LEVEL'
+      );
     }
+
+    logger.userAction('kyc_token_request', {
+      userId: user.id,
+      metadata: { level }
+    });
 
     // Get user profile for external user ID
     const { data: profile, error: profileError } = await supabaseClient
@@ -273,42 +259,43 @@ serve(async (req) => {
       .maybeSingle();
 
     if (profileError) {
-      return createErrorResponse({ message: 'Database error retrieving profile', details: profileError.message }, 500);
+      return errorHandler.handleSupabaseError(
+        profileError,
+        'profile_fetch',
+        { userId: user.id }
+      );
     }
 
     if (!profile) {
-      return createErrorResponse({ message: 'User profile not found. Please complete your profile setup.' }, 404);
+      return errorHandler.createErrorResponse(
+        'User profile not found. Please complete your profile setup.',
+        404,
+        { userId: user.id, operation: 'profile_check' },
+        'PROFILE_NOT_FOUND'
+      );
     }
 
-    // Get Sumsub credentials (already validated above)
+    // Prepare Sumsub API request
     const appToken = Deno.env.get('SUMSUB_APP_TOKEN')!;
     const secretKey = Deno.env.get('SUMSUB_SECRET_KEY')!;
-
-    // Generate external user ID (prefer wallet address over user ID)
     const externalUserId = profile.wallet_address || user.id;
-    
-    // Create access token request parameters
     const timestamp = Math.floor(Date.now() / 1000);
     const method = 'POST';
     const ttlInSecs = DEFAULT_TTL_SECONDS;
     
-    // Build URL with all required query parameters
+    // Build URL and generate signature
     const url = buildSumsubUrl(externalUserId, level, ttlInSecs);
-    
-    // Log request details for debugging (without sensitive data)
-    log('info', 'Generating KYC token', {
-      externalUserId,
-      level,
-      url,
-      timestamp
-    });
-    
-    // Generate HMAC signature
     const signatureHex = await generateHmacSignature(timestamp, method, url, secretKey);
     
-    // Log signature details for debugging (without exposing secrets)
-    console.log('String to sign:', timestamp + method + url);
-    console.log('Signature hex length:', signatureHex.length);
+    logger.info('Sumsub API request prepared', {
+      userId: user.id,
+      metadata: {
+        externalUserId,
+        level,
+        timestamp,
+        urlPath: url
+      }
+    });
     
     // Prepare headers for Sumsub API call
     const headers = {
@@ -318,97 +305,29 @@ serve(async (req) => {
       'X-App-Access-Ts': timestamp.toString(),
     };
     
-    // Log the complete request being sent to Sumsub for debugging
-    const fullUrl = `https://api.sumsub.com${url}`;
-    console.log('Making request to Sumsub:', {
-      url: fullUrl,
-      method: 'POST',
-      headers: {
-        'Accept': headers.Accept,
-        'X-App-Token': headers['X-App-Token']?.substring(0, 10) + '...',
-        'X-App-Access-Ts': headers['X-App-Access-Ts'],
-        'X-App-Access-Sig': headers['X-App-Access-Sig']?.substring(0, 10) + '...'
-      }
-    });
-    
-    // Call Sumsub API with retry logic
-    const sumsubResponse = await callSumsubApiWithRetry(fullUrl, headers);
+    // Call Sumsub API
+    const tokenData = await callSumsubApi(url, headers);
 
-    if (!sumsubResponse.ok) {
-      const errorText = await sumsubResponse.text();
-      console.error('Sumsub API error response:', errorText);
-      console.error('Request URL:', url);
-      console.error('Response status:', sumsubResponse.status);
-      console.error('Response headers:', Object.fromEntries(sumsubResponse.headers.entries()));
-      
-      // Categorize error types
-      let errorMessage = `Sumsub API error: ${sumsubResponse.status}`;
-      if (sumsubResponse.status === 400) {
-        errorMessage = 'Invalid request parameters for KYC verification';
-      } else if (sumsubResponse.status === 401) {
-        errorMessage = 'Authentication failed with KYC provider';
-      } else if (sumsubResponse.status === 403) {
-        errorMessage = 'Access denied by KYC provider';
-      } else if (sumsubResponse.status === 404) {
-        errorMessage = 'KYC verification level not found';
-      } else if (sumsubResponse.status >= 500) {
-        errorMessage = 'KYC provider service temporarily unavailable';
-      }
-      
-      return createErrorResponse({ 
-        message: errorMessage, 
-        details: errorText,
-        code: `SUMSUB_${sumsubResponse.status}`
-      }, sumsubResponse.status >= 500 ? 503 : 400);
-    }
+    // Update KYC verification record
+    await updateKycRecord(supabaseClient, user.id, tokenData.userId, level);
 
-    const tokenData: SumsubTokenResponse = await sumsubResponse.json();
-
-    // Update or create KYC verification record
-    const { error: upsertError } = await supabaseClient
-      .from('kyc_verifications')
-      .upsert({
-        user_id: user.id,
-        sumsub_applicant_id: tokenData.userId,
-        verification_level: level,
-        review_status: 'init',
-      }, {
-        onConflict: 'user_id'
-      });
-
-    if (upsertError) {
-      console.error('Error updating KYC verification:', upsertError);
-      // Don't fail the entire request for database errors, but log them
-    }
-
-    // Calculate processing time for metrics
-    const processingTime = Date.now() - startTime;
-    log('info', 'KYC token generation completed successfully', {
+    logger.performance('kyc_token_generation', Date.now() - responseBuilder.startTime, {
       userId: user.id,
-      level,
-      processingTimeMs: processingTime
+      metadata: { level, applicantId: tokenData.userId }
     });
 
-    return new Response(
-      JSON.stringify({
-        token: tokenData.token,
-        userId: tokenData.userId,
-        level: level,
-      }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      }
-    );
+    return responseBuilder.success({
+      token: tokenData.token,
+      userId: tokenData.userId,
+      level: level,
+    });
 
   } catch (error) {
-    // Calculate processing time for error metrics
-    const processingTime = Date.now() - startTime;
-    
-    log('error', 'KYC token generation failed', {
-      processingTimeMs: processingTime,
-      errorType: error.constructor.name
-    });
-    
-    return createErrorResponse(error);
+    return errorHandler.createErrorResponse(
+      error.message || 'Unknown error occurred',
+      500,
+      { operation: 'token_generation' },
+      'GENERATION_ERROR'
+    );
   }
 });
