@@ -24,12 +24,12 @@ const customStyles: StylesConfig<ReactSelectOption, false> = {
   control: (provided, state) => ({
     ...provided,
     minHeight: '40px',
-    border: `1px solid var(--border)`,
+    border: `1px solid hsl(var(--border))`,
     borderRadius: '6px',
-    backgroundColor: `var(--background)`,
-    boxShadow: state.isFocused ? `0 0 0 2px var(--ring)` : 'none',
+    backgroundColor: `hsl(var(--background))`,
+    boxShadow: state.isFocused ? `0 0 0 2px hsl(var(--ring))` : 'none',
     '&:hover': {
-      borderColor: `var(--border)`,
+      borderColor: `hsl(var(--border))`,
     },
   }),
   input: (provided) => ({
@@ -46,12 +46,13 @@ const customStyles: StylesConfig<ReactSelectOption, false> = {
   }),
   menu: (provided) => ({
     ...provided,
-    backgroundColor: `var(--popover)`,
-    border: `1px solid var(--border)`,
+    backgroundColor: `hsl(var(--popover))`,
+    border: `1px solid hsl(var(--border))`,
     borderRadius: '6px',
     boxShadow: 'var(--shadow-lg)',
     zIndex: 9999,
-    position: 'relative',
+    position: 'absolute',
+    backdropFilter: 'blur(8px)',
   }),
   menuPortal: (provided) => ({
     ...provided,
@@ -65,19 +66,19 @@ const customStyles: StylesConfig<ReactSelectOption, false> = {
   option: (provided, state) => ({
     ...provided,
     backgroundColor: state.isFocused 
-      ? `var(--accent)` 
+      ? `hsl(var(--accent))` 
       : state.isSelected 
-        ? `var(--primary)` 
-        : `var(--popover)`,
+        ? `hsl(var(--primary))` 
+        : `hsl(var(--popover))`,
     color: state.isSelected 
-      ? `var(--primary-foreground)` 
-      : `var(--popover-foreground)`,
+      ? `hsl(var(--primary-foreground))` 
+      : `hsl(var(--popover-foreground))`,
     borderRadius: '4px',
     margin: '2px 0',
     padding: '8px 12px',
     cursor: 'pointer',
     '&:active': {
-      backgroundColor: `var(--accent)`,
+      backgroundColor: `hsl(var(--accent))`,
     },
   }),
   dropdownIndicator: (provided) => ({

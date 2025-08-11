@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const { isAuthenticated } = useWalletAuth();
+  const { isAuthenticated, loading } = useWalletAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -85,18 +85,13 @@ const Header = () => {
 
           {/* Desktop CTA */}
           <div className="hidden lg:flex items-center space-x-4">
-            {isAuthenticated ? (
-              <Button 
-                onClick={() => navigate('/app')}
-                variant="default"
-                className="font-semibold"
-              >
+            {/* Show Launch App button only on landing page for unauthenticated users */}
+            {isLandingPage && !isAuthenticated && !loading && (
+              <Button onClick={() => navigate('/app')} variant="outline" size="sm">
                 Launch App
-                <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
-            ) : (
-              <WalletAuthButton />
             )}
+            <WalletAuthButton />
           </div>
 
           {/* Mobile Menu Button */}
@@ -128,21 +123,13 @@ const Header = () => {
               ))}
               
               <div className="pt-4 border-t border-border">
-                {isAuthenticated ? (
-                  <Button 
-                    onClick={() => {
-                      navigate('/app');
-                      setIsMobileMenuOpen(false);
-                    }}
-                    variant="default"
-                    className="w-full font-semibold"
-                  >
+                {/* Show Launch App button only on landing page for unauthenticated users */}
+                {isLandingPage && !isAuthenticated && !loading && (
+                  <Button onClick={() => navigate('/app')} variant="outline" size="sm" className="w-full">
                     Launch App
-                    <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
-                ) : (
-                  <WalletAuthButton />
                 )}
+                <WalletAuthButton />
               </div>
             </nav>
           </div>
