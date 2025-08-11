@@ -249,6 +249,36 @@ export type Database = {
           },
         ]
       }
+      kyc_verifications: {
+        Row: {
+          created_at: string | null
+          id: string
+          review_status: string | null
+          sumsub_applicant_id: string | null
+          updated_at: string | null
+          user_id: string | null
+          verification_level: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          review_status?: string | null
+          sumsub_applicant_id?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+          verification_level?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          review_status?: string | null
+          sumsub_applicant_id?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+          verification_level?: string | null
+        }
+        Relationships: []
+      }
       messages: {
         Row: {
           chat_id: string
@@ -344,10 +374,13 @@ export type Database = {
             | Database["public"]["Enums"]["kyb_verification_type"]
             | null
           kyb_verified_at: string | null
+          kyc_documents_status: Json | null
           kyc_level: Database["public"]["Enums"]["kyc_level"]
+          kyc_verification_date: string | null
           licenses: string[]
           reputation: number
           successful_trades: number
+          sumsub_applicant_id: string | null
           total_trades: number
           trader_type: Database["public"]["Enums"]["trader_type"]
           updated_at: string
@@ -366,10 +399,13 @@ export type Database = {
             | Database["public"]["Enums"]["kyb_verification_type"]
             | null
           kyb_verified_at?: string | null
+          kyc_documents_status?: Json | null
           kyc_level?: Database["public"]["Enums"]["kyc_level"]
+          kyc_verification_date?: string | null
           licenses?: string[]
           reputation?: number
           successful_trades?: number
+          sumsub_applicant_id?: string | null
           total_trades?: number
           trader_type?: Database["public"]["Enums"]["trader_type"]
           updated_at?: string
@@ -388,10 +424,13 @@ export type Database = {
             | Database["public"]["Enums"]["kyb_verification_type"]
             | null
           kyb_verified_at?: string | null
+          kyc_documents_status?: Json | null
           kyc_level?: Database["public"]["Enums"]["kyc_level"]
+          kyc_verification_date?: string | null
           licenses?: string[]
           reputation?: number
           successful_trades?: number
+          sumsub_applicant_id?: string | null
           total_trades?: number
           trader_type?: Database["public"]["Enums"]["trader_type"]
           updated_at?: string

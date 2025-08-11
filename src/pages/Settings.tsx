@@ -13,6 +13,8 @@ import ProfileManager from "@/components/profile/ProfileManager";
 import { useWalletAuth } from "@/hooks/useWalletAuth";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { KycVerificationCard } from "@/components/kyc/KycVerificationCard";
+import { KycLevel } from "@/components/kyc/KycStatusBadge";
 
 export default function Settings() {
   const { toast } = useToast();
@@ -27,12 +29,15 @@ export default function Settings() {
     publicProfile: true,
   });
 
+  const [profile, setProfile] = useState<any>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
+
   // Load current profile data to get public setting
   useEffect(() => {
     if (user) {
       fetchProfileData();
     }
-  }, [user]);
+  }, [user, refreshKey]);
 
   const fetchProfileData = async () => {
     if (!user) return;
@@ -40,7 +45,7 @@ export default function Settings() {
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('is_public')
+        .select('is_public, kyc_level, kyc_verification_date, sumsub_applicant_id')
         .eq('id', user.id)
         .single();
 
@@ -49,6 +54,7 @@ export default function Settings() {
       }
 
       if (data) {
+        setProfile(data);
         setPrivacy(prev => ({ ...prev, publicProfile: data.is_public }));
       }
     } catch (error) {
@@ -114,6 +120,13 @@ export default function Settings() {
         
         {/* Profile Settings */}
         <ProfileManager />
+
+        {/* KYC Verification */}
+        <KycVerificationCard
+          kycLevel={(profile?.kyc_level as KycLevel) || 'Level 0'}
+          verificationDate={profile?.kyc_verification_date}
+          onVerificationUpdate={() => setRefreshKey(prev => prev + 1)}
+        />
 
         {/* Notification Settings */}
         <Card>
