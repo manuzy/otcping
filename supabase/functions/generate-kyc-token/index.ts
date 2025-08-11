@@ -29,11 +29,14 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Updated with standard Sumsub level names
 const VALID_KYC_LEVELS = [
   'basic-kyc-level',
-  'enhanced-kyc-level',
+  'enhanced-kyc-level', 
   'level-1',
-  'level-2'
+  'level-2',
+  'basic',
+  'enhanced'
 ] as const;
 
 const DEFAULT_TTL_SECONDS = 1800; // 30 minutes
@@ -238,7 +241,8 @@ serve(async (req) => {
       return createErrorResponse({ message: 'Invalid JSON in request body' }, 400);
     }
 
-    const { level = 'basic-kyc-level' } = requestBody;
+    // Use standard Sumsub level name - most common is 'basic'
+    const { level = 'basic' } = requestBody;
     
     // Validate KYC level
     const levelValidation = validateKycLevel(level);
@@ -297,8 +301,21 @@ serve(async (req) => {
       'X-App-Access-Ts': timestamp.toString(),
     };
     
+    // Log the complete request being sent to Sumsub for debugging
+    const fullUrl = `https://api.sumsub.com${url}`;
+    console.log('Making request to Sumsub:', {
+      url: fullUrl,
+      method: 'POST',
+      headers: {
+        'Accept': headers.Accept,
+        'X-App-Token': headers['X-App-Token']?.substring(0, 10) + '...',
+        'X-App-Access-Ts': headers['X-App-Access-Ts'],
+        'X-App-Access-Sig': headers['X-App-Access-Sig']?.substring(0, 10) + '...'
+      }
+    });
+    
     // Call Sumsub API with retry logic
-    const sumsubResponse = await callSumsubApiWithRetry(`https://api.sumsub.com${url}`, headers);
+    const sumsubResponse = await callSumsubApiWithRetry(fullUrl, headers);
 
     if (!sumsubResponse.ok) {
       const errorText = await sumsubResponse.text();
