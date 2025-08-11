@@ -34,6 +34,7 @@ const Header = () => {
   const appNavItems = [
     { label: "Dashboard", href: "/app" },
     { label: "Trades", href: "/public-trades" },
+    { label: "Traders", href: "/users" },
     { label: "Contacts", href: "/contacts" },
     { label: "Settings", href: "/settings" }
   ];
