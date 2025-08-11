@@ -53,9 +53,9 @@ serve(async (req) => {
       );
     }
 
-    // First, get token info by contract address (let CoinMarketCap auto-detect platform)
-    const tokenInfoUrl = `https://pro-api.coinmarketcap.com/v2/cryptocurrency/info?address=${tokenAddress}`;
-    console.log(`Fetching token info for address ${tokenAddress} on chain ${chainId}`);
+    // First, get token info by contract address with platform specification
+    const tokenInfoUrl = `https://pro-api.coinmarketcap.com/v2/cryptocurrency/info?address=${tokenAddress}&platform=${platformId}`;
+    console.log(`Fetching token info for address ${tokenAddress} on platform ${platformId} (chain ${chainId})`);
     
     const tokenInfoResponse = await fetch(tokenInfoUrl, {
       headers: {
@@ -66,9 +66,9 @@ serve(async (req) => {
 
     if (!tokenInfoResponse.ok) {
       const errorText = await tokenInfoResponse.text();
-      console.error(`CoinMarketCap token info API error for ${tokenAddress}:`, errorText);
+      console.error(`CoinMarketCap token info API error for ${tokenAddress} on ${platformId}:`, errorText);
       return new Response(
-        JSON.stringify({ error: 'Failed to fetch token information' }),
+        JSON.stringify({ error: `Failed to fetch token information for ${platformId} chain` }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
