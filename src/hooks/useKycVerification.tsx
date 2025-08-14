@@ -38,10 +38,16 @@ export function useKycVerification() {
       );
 
       if (result.success && result.data) {
-        logger.info('KYC token generated successfully', { userId: user.id });
+        logger.info('KYC token generated successfully', { 
+          userId: user.id, 
+          metadata: { tokenStructure: typeof result.data, hasToken: !!result.data?.token }
+        });
         return result.data;
       } else {
-        logger.error('KYC token generation failed', { userId: user.id }, result.error?.originalError);
+        logger.error('KYC token generation failed', { 
+          userId: user.id, 
+          metadata: { result: result }
+        }, result.error?.originalError);
         return null;
       }
     } catch (error) {

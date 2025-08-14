@@ -181,6 +181,20 @@ class ApiClient {
 
       if (error) throw error;
 
+      // Handle edge function response structure
+      // Edge functions return structured responses with { success, data, timestamp, etc. }
+      if (data && typeof data === 'object' && 'success' in data && 'data' in data) {
+        if (data.success) {
+          logger.apiSuccess('FUNCTION', context);
+          return data.data;
+        } else {
+          const errorMessage = data.error || 'Edge function returned success: false';
+          logger.error('Edge function failed', context, errorMessage);
+          throw new Error(errorMessage);
+        }
+      }
+
+      // Fallback for edge functions that return data directly
       logger.apiSuccess('FUNCTION', context);
       return data;
     }, { ...options, context });
