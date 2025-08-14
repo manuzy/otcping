@@ -5,6 +5,7 @@ import { Navigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ShieldCheck, Mail, Loader2, Settings, AlertTriangle } from "lucide-react";
 import { EmailTestPanel } from "@/components/debug/EmailTestPanel";
+import { SecurityDashboard } from "@/components/security/SecurityDashboard";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -101,6 +102,9 @@ export default function Underground() {
             <EmailTestPanel />
           </CardContent>
         </Card>
+
+        {/* Security Dashboard Section */}
+        <SecurityDashboard />
 
         {/* Future Admin Sections Placeholder */}
         <Card className="opacity-50">
