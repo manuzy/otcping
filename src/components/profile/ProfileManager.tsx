@@ -517,7 +517,7 @@ export default function ProfileManager() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => navigate('/institution-settings')}
+                      onClick={() => navigate('/institutional-profile')}
                       className="h-7 px-2 text-xs"
                     >
                       Edit
@@ -532,11 +532,11 @@ export default function ProfileManager() {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => navigate('/institution-settings')}
+                    onClick={() => navigate('/institutional-profile')}
                     className="flex items-center gap-2 mt-2 w-full"
                   >
                     <Building2 className="h-4 w-4" />
-                    Edit Institutional Profile
+                    Manage Institutional Profile
                   </Button>
                 )}
               </div>
