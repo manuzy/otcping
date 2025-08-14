@@ -58,17 +58,17 @@ export const useInstitution = () => {
 
       console.log('Institution data:', institutionData);
 
-      // Step 2: Fetch members separately
+      // Step 2: Fetch members with profiles manually
       const { data: membersData, error: membersError } = await supabase
         .from('institution_members')
         .select(`
-          *,
-          profiles!user_id (
-            id,
-            display_name,
-            avatar,
-            wallet_address
-          )
+          id,
+          institution_id,
+          user_id,
+          role,
+          job_title,
+          joined_at,
+          added_by
         `)
         .eq('institution_id', profile.institution_id);
 
@@ -77,13 +77,38 @@ export const useInstitution = () => {
         throw membersError;
       }
 
-      console.log('Members data:', membersData);
+      console.log('Members data (basic):', membersData);
+
+      // Step 3: Fetch profile data for each member
+      let membersWithProfiles = [];
+      if (membersData && membersData.length > 0) {
+        const userIds = membersData.map(member => member.user_id);
+        const { data: profilesData, error: profilesError } = await supabase
+          .from('profiles')
+          .select('id, display_name, avatar, wallet_address')
+          .in('id', userIds);
+
+        if (profilesError) {
+          console.error('Profiles fetch error:', profilesError);
+          throw profilesError;
+        }
+
+        console.log('Profiles data:', profilesData);
+
+        // Manually join the data
+        membersWithProfiles = membersData.map(member => ({
+          ...member,
+          user_profile: profilesData?.find(profile => profile.id === member.user_id)
+        }));
+      }
+
+      console.log('Members with profiles:', membersWithProfiles);
 
       // Log data access
       await monitorDataAccess(user.id, 'institution', profile.institution_id, 'read');
 
       // Check if user is admin
-      const userMember = membersData?.find(
+      const userMember = membersWithProfiles?.find(
         (member: any) => member.user_id === user.id
       );
       
@@ -95,12 +120,12 @@ export const useInstitution = () => {
         updated_at: new Date(institutionData.updated_at),
         kyb_verified_at: institutionData.kyb_verified_at ? new Date(institutionData.kyb_verified_at) : undefined,
         kyb_status: institutionData.kyb_status as 'not_verified' | 'pending' | 'verified',
-        members: (membersData || []).map((member: any) => ({
+        members: (membersWithProfiles || []).map((member: any) => ({
           ...member,
           joined_at: new Date(member.joined_at),
-          user_profile: member.profiles
+          user_profile: member.user_profile
         })),
-        member_count: membersData?.length || 0,
+        member_count: membersWithProfiles?.length || 0,
         is_member: !!userMember,
         is_admin: userMember?.role === 'admin'
       };
