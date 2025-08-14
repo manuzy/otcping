@@ -396,3 +396,73 @@ export const useInstitutionMembers = (institutionId?: string) => {
     error
   };
 };
+
+export const useInstitutionUpdate = () => {
+  const { user } = useAuth();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const updateInstitution = useCallback(async (institutionId: string, data: Partial<InstitutionCreationData>) => {
+    if (!user?.id) {
+      throw new Error('User not authenticated');
+    }
+
+    try {
+      setLoading(true);
+      setError(null);
+
+      logger.debug('Updating institution', { institutionId, userId: user.id });
+
+      const { data: updatedInstitution, error: updateError } = await supabase
+        .from('institutions')
+        .update(data)
+        .eq('id', institutionId)
+        .eq('created_by', user.id) // Ensure only creator can update
+        .select()
+        .single();
+
+      if (updateError) {
+        throw updateError;
+      }
+
+      logger.info('Institution updated successfully', { 
+        institutionId, 
+        userId: user.id 
+      });
+
+      // Log audit trail asynchronously (non-blocking)
+      try {
+        await auditLogger.logAdmin(
+          'INSTITUTION_UPDATED' as any,
+          'INSTITUTION' as any,
+          institutionId,
+          { changes: data }
+        );
+        logger.debug('Audit log recorded for institution update', { institutionId });
+      } catch (auditError: any) {
+        // Don't fail the entire operation if audit logging fails
+        logger.warn('Failed to record audit log for institution update', 
+          { institutionId }, 
+          auditError
+        );
+        console.warn('Audit logging failed:', auditError);
+      }
+
+      return updatedInstitution;
+
+    } catch (err: any) {
+      const handledError = errorHandler.handle(err, true);
+      setError(handledError.userMessage);
+      logger.error('Failed to update institution', { institutionId, userId: user.id }, err);
+      throw handledError;
+    } finally {
+      setLoading(false);
+    }
+  }, [user?.id]);
+
+  return {
+    updateInstitution,
+    loading,
+    error
+  };
+};

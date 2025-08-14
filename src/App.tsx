@@ -10,6 +10,7 @@ import Contacts from "./pages/Contacts";
 import PublicTrades from "./pages/PublicTrades";
 import PublicUsers from "./pages/PublicUsers";
 import Settings from "./pages/Settings";
+import InstitutionSettings from "./pages/InstitutionSettings";
 import CreateTrade from "./pages/CreateTrade";
 import Underground from "./pages/Underground";
 import { BottomTabs } from "./components/navigation/BottomTabs";
@@ -38,6 +39,7 @@ const App = () => (
                 <Route path="/public-trades" element={<ProtectedRoute><PublicTrades /></ProtectedRoute>} />
                 <Route path="/users" element={<ProtectedRoute><PublicUsers /></ProtectedRoute>} />
                 <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+                <Route path="/institution-settings" element={<ProtectedRoute><InstitutionSettings /></ProtectedRoute>} />
                 <Route path="/create-trade" element={<ProtectedRoute><CreateTrade /></ProtectedRoute>} />
                 <Route path="/underground" element={<ProtectedRoute><Underground /></ProtectedRoute>} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

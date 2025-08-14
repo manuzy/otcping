@@ -448,8 +448,18 @@ export default function ProfileManager() {
               className="flex flex-row gap-6 mt-2"
             >
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="Degen" id="degen" />
-                <Label htmlFor="degen">Degen Trader</Label>
+                <RadioGroupItem 
+                  value="Degen" 
+                  id="degen" 
+                  disabled={!!institution} // Disable if user has institution
+                />
+                <Label 
+                  htmlFor="degen" 
+                  className={institution ? "text-muted-foreground" : ""}
+                >
+                  Degen Trader
+                  {institution && <span className="text-xs block">(Locked to Institutional)</span>}
+                </Label>
               </div>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="Institutional" id="institutional" />
@@ -475,17 +485,40 @@ export default function ProfileManager() {
               </div>
             )}
             
-            {/* Institution Info Display */}
+            {/* Institution Info Display & Edit Button */}
             {institution && (
               <div className="mt-3 p-3 bg-muted/50 rounded-lg">
-                <div className="flex items-center gap-2 mb-2">
-                  <Building2 className="h-4 w-4 text-primary" />
-                  <span className="font-medium text-sm">{institution.name}</span>
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <Building2 className="h-4 w-4 text-primary" />
+                    <span className="font-medium text-sm">{institution.name}</span>
+                  </div>
+                  {institution.is_admin && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => window.location.href = '/institution-settings'}
+                      className="h-7 px-2 text-xs"
+                    >
+                      Edit
+                    </Button>
+                  )}
                 </div>
                 <div className="text-xs text-muted-foreground">
                   <p>Role: {institution.is_admin ? 'Administrator' : 'Member'}</p>
                   <p>{institution.member_count} members</p>
                 </div>
+                {institution.is_admin && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => window.location.href = '/institution-settings'}
+                    className="flex items-center gap-2 mt-2 w-full"
+                  >
+                    <Building2 className="h-4 w-4" />
+                    Edit Institutional Profile
+                  </Button>
+                )}
               </div>
             )}
           </div>
