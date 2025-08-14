@@ -37,6 +37,7 @@ interface Profile {
   kyc_level?: 'Level 0' | 'Level 1' | 'Level 2';
   trader_type?: 'Degen' | 'Institutional';
   licenses?: string[];
+  institution_id?: string;
 }
 
 export default function ProfileManager() {
@@ -55,6 +56,14 @@ export default function ProfileManager() {
 
   // Derive trader type from institution presence - institution members are always Institutional
   const effectiveTraderType = institution ? 'Institutional' : (profile?.trader_type || 'Degen');
+
+  // Debug logging to troubleshoot button visibility
+  console.log('Debug - Institution state:', {
+    institution: institution ? { name: institution.name, id: institution.id } : null,
+    profileTraderType: profile?.trader_type,
+    effectiveTraderType,
+    institutionId: profile?.institution_id
+  });
 
   // Random avatar generation options
   const avatarOptions = {
@@ -471,7 +480,7 @@ export default function ProfileManager() {
             </RadioGroup>
             
             {/* Institution Creation Button */}
-            {profile.trader_type === 'Institutional' && !institution && (
+            {effectiveTraderType === 'Institutional' && !institution && (
               <div className="mt-3">
                 <Button
                   variant="outline"
