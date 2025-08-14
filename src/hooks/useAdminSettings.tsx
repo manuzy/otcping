@@ -11,18 +11,18 @@ interface AdminSettings {
 
 export function useAdminSettings() {
   const { user } = useAuth();
-  const { isAdmin } = useIsAdmin();
+  const { isAdmin, loading: adminLoading } = useIsAdmin();
   const [settings, setSettings] = useState<AdminSettings>({ skip_approval: false });
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
 
   useEffect(() => {
-    if (user && isAdmin) {
+    if (!adminLoading && user && isAdmin) {
       fetchSettings();
-    } else {
+    } else if (!adminLoading) {
       setLoading(false);
     }
-  }, [user, isAdmin]);
+  }, [user, isAdmin, adminLoading]);
 
   const fetchSettings = async () => {
     try {
@@ -81,7 +81,7 @@ export function useAdminSettings() {
   };
 
   const updateSkipApproval = async (skipApproval: boolean) => {
-    if (!user || !isAdmin) return;
+    if (!user || !isAdmin || adminLoading) return;
 
     try {
       setUpdating(true);

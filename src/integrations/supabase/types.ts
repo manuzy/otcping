@@ -569,6 +569,30 @@ export type Database = {
           },
         ]
       }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       wallet_sessions: {
         Row: {
           created_at: string
@@ -629,6 +653,17 @@ export type Database = {
         Args: { wallet_addr: string }
         Returns: Json
       }
+      get_user_role: {
+        Args: { _user_id: string }
+        Returns: Database["public"]["Enums"]["app_role"]
+      }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
       increment_unread_count: {
         Args: { chat_id: string; sender_id: string }
         Returns: undefined
@@ -639,6 +674,7 @@ export type Database = {
       }
     }
     Enums: {
+      app_role: "admin" | "moderator" | "user"
       kyb_status: "verified" | "not_verified" | "pending"
       kyb_verification_type: "basic" | "full"
       kyc_level: "Level 0" | "Level 1" | "Level 2"
@@ -773,6 +809,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      app_role: ["admin", "moderator", "user"],
       kyb_status: ["verified", "not_verified", "pending"],
       kyb_verification_type: ["basic", "full"],
       kyc_level: ["Level 0", "Level 1", "Level 2"],
