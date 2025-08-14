@@ -30,69 +30,87 @@ export const useInstitution = () => {
         .single();
 
       if (profileError) {
+        console.error('Profile fetch error:', profileError);
         throw profileError;
       }
 
+      console.log('Profile data:', profile);
+
       if (!profile?.institution_id) {
+        console.log('No institution_id found in profile');
         setInstitution(null);
         return;
       }
 
-      // Fetch full institution data with members
+      console.log('Found institution_id:', profile.institution_id);
+
+      // Step 1: Fetch institution basic data
       const { data: institutionData, error: institutionError } = await supabase
         .from('institutions')
-        .select(`
-          *,
-          institution_members!inner (
-            id,
-            user_id,
-            role,
-            job_title,
-            joined_at,
-            added_by,
-            profiles!user_id (
-              id,
-              display_name,
-              avatar,
-              wallet_address
-            )
-          )
-        `)
+        .select('*')
         .eq('id', profile.institution_id)
         .single();
 
       if (institutionError) {
+        console.error('Institution fetch error:', institutionError);
         throw institutionError;
       }
+
+      console.log('Institution data:', institutionData);
+
+      // Step 2: Fetch members separately
+      const { data: membersData, error: membersError } = await supabase
+        .from('institution_members')
+        .select(`
+          *,
+          profiles!user_id (
+            id,
+            display_name,
+            avatar,
+            wallet_address
+          )
+        `)
+        .eq('institution_id', profile.institution_id);
+
+      if (membersError) {
+        console.error('Members fetch error:', membersError);
+        throw membersError;
+      }
+
+      console.log('Members data:', membersData);
 
       // Log data access
       await monitorDataAccess(user.id, 'institution', profile.institution_id, 'read');
 
       // Check if user is admin
-      const userMember = institutionData.institution_members.find(
+      const userMember = membersData?.find(
         (member: any) => member.user_id === user.id
       );
       
+      console.log('User member data:', userMember);
+
       const enrichedInstitution: InstitutionWithMembers = {
         ...institutionData,
         created_at: new Date(institutionData.created_at),
         updated_at: new Date(institutionData.updated_at),
         kyb_verified_at: institutionData.kyb_verified_at ? new Date(institutionData.kyb_verified_at) : undefined,
         kyb_status: institutionData.kyb_status as 'not_verified' | 'pending' | 'verified',
-        members: institutionData.institution_members.map((member: any) => ({
+        members: (membersData || []).map((member: any) => ({
           ...member,
           joined_at: new Date(member.joined_at),
           user_profile: member.profiles
         })),
-        member_count: institutionData.institution_members.length,
+        member_count: membersData?.length || 0,
         is_member: !!userMember,
         is_admin: userMember?.role === 'admin'
       };
 
+      console.log('Final enriched institution:', enrichedInstitution);
       setInstitution(enrichedInstitution);
       logger.info('Institution fetched successfully', { institutionId: institutionData.id });
 
     } catch (err: any) {
+      console.error('Full institution fetch error:', err);
       const handledError = errorHandler.handle(err, false);
       setError(handledError.userMessage);
       logger.error('Failed to fetch institution', { userId: user.id }, err);
