@@ -288,6 +288,410 @@ export type Database = {
           },
         ]
       }
+      institution_aml_program: {
+        Row: {
+          aml_policy_url: string | null
+          authorized_signatories: Json | null
+          client_types: string[] | null
+          created_at: string
+          expected_products_volumes: string | null
+          geographic_exposure: string[] | null
+          id: string
+          institution_id: string
+          kyc_onboarding_checklist: string | null
+          kyt_alert_handling: string | null
+          kyt_monitoring_tool: string | null
+          kyt_rule_coverage: string | null
+          kyt_thresholds: Json | null
+          mlro_contact_id: string | null
+          pep_screening_enabled: boolean | null
+          periodic_review_cycle: string | null
+          retention_periods: Json | null
+          risk_assessment_methodology: string | null
+          sanctions_lists: string[] | null
+          screening_tools: string[] | null
+          source_of_funds_wealth: string | null
+          travel_rule_coverage_jurisdictions: string[] | null
+          travel_rule_message_standard: string | null
+          travel_rule_provider: string | null
+          ubo_evidence_documents: Json | null
+          updated_at: string
+        }
+        Insert: {
+          aml_policy_url?: string | null
+          authorized_signatories?: Json | null
+          client_types?: string[] | null
+          created_at?: string
+          expected_products_volumes?: string | null
+          geographic_exposure?: string[] | null
+          id?: string
+          institution_id: string
+          kyc_onboarding_checklist?: string | null
+          kyt_alert_handling?: string | null
+          kyt_monitoring_tool?: string | null
+          kyt_rule_coverage?: string | null
+          kyt_thresholds?: Json | null
+          mlro_contact_id?: string | null
+          pep_screening_enabled?: boolean | null
+          periodic_review_cycle?: string | null
+          retention_periods?: Json | null
+          risk_assessment_methodology?: string | null
+          sanctions_lists?: string[] | null
+          screening_tools?: string[] | null
+          source_of_funds_wealth?: string | null
+          travel_rule_coverage_jurisdictions?: string[] | null
+          travel_rule_message_standard?: string | null
+          travel_rule_provider?: string | null
+          ubo_evidence_documents?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          aml_policy_url?: string | null
+          authorized_signatories?: Json | null
+          client_types?: string[] | null
+          created_at?: string
+          expected_products_volumes?: string | null
+          geographic_exposure?: string[] | null
+          id?: string
+          institution_id?: string
+          kyc_onboarding_checklist?: string | null
+          kyt_alert_handling?: string | null
+          kyt_monitoring_tool?: string | null
+          kyt_rule_coverage?: string | null
+          kyt_thresholds?: Json | null
+          mlro_contact_id?: string | null
+          pep_screening_enabled?: boolean | null
+          periodic_review_cycle?: string | null
+          retention_periods?: Json | null
+          risk_assessment_methodology?: string | null
+          sanctions_lists?: string[] | null
+          screening_tools?: string[] | null
+          source_of_funds_wealth?: string | null
+          travel_rule_coverage_jurisdictions?: string[] | null
+          travel_rule_message_standard?: string | null
+          travel_rule_provider?: string | null
+          ubo_evidence_documents?: Json | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "institution_aml_program_institution_id_fkey"
+            columns: ["institution_id"]
+            isOneToOne: false
+            referencedRelation: "institutions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "institution_aml_program_mlro_contact_id_fkey"
+            columns: ["mlro_contact_id"]
+            isOneToOne: false
+            referencedRelation: "institution_contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      institution_contacts: {
+        Row: {
+          created_at: string
+          deputy_contact_id: string | null
+          email: string
+          id: string
+          institution_id: string
+          name: string
+          phone: string | null
+          role: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          deputy_contact_id?: string | null
+          email: string
+          id?: string
+          institution_id: string
+          name: string
+          phone?: string | null
+          role: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          deputy_contact_id?: string | null
+          email?: string
+          id?: string
+          institution_id?: string
+          name?: string
+          phone?: string | null
+          role?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "institution_contacts_deputy_contact_id_fkey"
+            columns: ["deputy_contact_id"]
+            isOneToOne: false
+            referencedRelation: "institution_contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "institution_contacts_institution_id_fkey"
+            columns: ["institution_id"]
+            isOneToOne: false
+            referencedRelation: "institutions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      institution_corporate_profile: {
+        Row: {
+          created_at: string
+          id: string
+          incorporation_country: string | null
+          incorporation_date: string | null
+          institution_id: string
+          legal_form: string | null
+          legal_name: string
+          lei: string | null
+          organizational_chart_url: string | null
+          principal_address: Json | null
+          registration_number: string
+          registry_name: string
+          trading_name: string | null
+          updated_at: string
+          website: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          incorporation_country?: string | null
+          incorporation_date?: string | null
+          institution_id: string
+          legal_form?: string | null
+          legal_name: string
+          lei?: string | null
+          organizational_chart_url?: string | null
+          principal_address?: Json | null
+          registration_number: string
+          registry_name: string
+          trading_name?: string | null
+          updated_at?: string
+          website?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          incorporation_country?: string | null
+          incorporation_date?: string | null
+          institution_id?: string
+          legal_form?: string | null
+          legal_name?: string
+          lei?: string | null
+          organizational_chart_url?: string | null
+          principal_address?: Json | null
+          registration_number?: string
+          registry_name?: string
+          trading_name?: string | null
+          updated_at?: string
+          website?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "institution_corporate_profile_institution_id_fkey"
+            columns: ["institution_id"]
+            isOneToOne: false
+            referencedRelation: "institutions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      institution_declarations: {
+        Row: {
+          created_at: string
+          id: string
+          information_truthful_complete: boolean | null
+          institution_id: string
+          notification_days_limit: number | null
+          notification_obligation_accepted: boolean | null
+          signature_date: string | null
+          signature_level: string | null
+          signature_place: string | null
+          signer_name: string | null
+          signer_role: string | null
+          signer_title: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          information_truthful_complete?: boolean | null
+          institution_id: string
+          notification_days_limit?: number | null
+          notification_obligation_accepted?: boolean | null
+          signature_date?: string | null
+          signature_level?: string | null
+          signature_place?: string | null
+          signer_name?: string | null
+          signer_role?: string | null
+          signer_title?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          information_truthful_complete?: boolean | null
+          institution_id?: string
+          notification_days_limit?: number | null
+          notification_obligation_accepted?: boolean | null
+          signature_date?: string | null
+          signature_level?: string | null
+          signature_place?: string | null
+          signer_name?: string | null
+          signer_role?: string | null
+          signer_title?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "institution_declarations_institution_id_fkey"
+            columns: ["institution_id"]
+            isOneToOne: false
+            referencedRelation: "institutions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      institution_financials: {
+        Row: {
+          as_of_date: string | null
+          audit_opinion: string | null
+          auditor_name: string | null
+          auditor_regulation: string | null
+          capital_requirement_currency: string | null
+          created_at: string
+          current_ratio: number | null
+          financial_statements: Json | null
+          id: string
+          institution_id: string
+          insurance_details: Json | null
+          minimum_capital_requirement: number | null
+          quick_ratio: number | null
+          regulatory_capital_amount: number | null
+          regulatory_capital_currency: string | null
+          updated_at: string
+        }
+        Insert: {
+          as_of_date?: string | null
+          audit_opinion?: string | null
+          auditor_name?: string | null
+          auditor_regulation?: string | null
+          capital_requirement_currency?: string | null
+          created_at?: string
+          current_ratio?: number | null
+          financial_statements?: Json | null
+          id?: string
+          institution_id: string
+          insurance_details?: Json | null
+          minimum_capital_requirement?: number | null
+          quick_ratio?: number | null
+          regulatory_capital_amount?: number | null
+          regulatory_capital_currency?: string | null
+          updated_at?: string
+        }
+        Update: {
+          as_of_date?: string | null
+          audit_opinion?: string | null
+          auditor_name?: string | null
+          auditor_regulation?: string | null
+          capital_requirement_currency?: string | null
+          created_at?: string
+          current_ratio?: number | null
+          financial_statements?: Json | null
+          id?: string
+          institution_id?: string
+          insurance_details?: Json | null
+          minimum_capital_requirement?: number | null
+          quick_ratio?: number | null
+          regulatory_capital_amount?: number | null
+          regulatory_capital_currency?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "institution_financials_institution_id_fkey"
+            columns: ["institution_id"]
+            isOneToOne: false
+            referencedRelation: "institutions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      institution_governance: {
+        Row: {
+          board_committees: Json | null
+          compliance_officer: string | null
+          compliance_qualifications: string | null
+          compliance_reporting_line: string | null
+          core_policies: Json | null
+          created_at: string
+          id: string
+          institution_id: string
+          internal_audit_officer: string | null
+          internal_audit_qualifications: string | null
+          internal_audit_reporting_line: string | null
+          risk_officer: string | null
+          risk_qualifications: string | null
+          risk_reporting_line: string | null
+          three_lines_description: string | null
+          three_lines_implemented: boolean | null
+          updated_at: string
+        }
+        Insert: {
+          board_committees?: Json | null
+          compliance_officer?: string | null
+          compliance_qualifications?: string | null
+          compliance_reporting_line?: string | null
+          core_policies?: Json | null
+          created_at?: string
+          id?: string
+          institution_id: string
+          internal_audit_officer?: string | null
+          internal_audit_qualifications?: string | null
+          internal_audit_reporting_line?: string | null
+          risk_officer?: string | null
+          risk_qualifications?: string | null
+          risk_reporting_line?: string | null
+          three_lines_description?: string | null
+          three_lines_implemented?: boolean | null
+          updated_at?: string
+        }
+        Update: {
+          board_committees?: Json | null
+          compliance_officer?: string | null
+          compliance_qualifications?: string | null
+          compliance_reporting_line?: string | null
+          core_policies?: Json | null
+          created_at?: string
+          id?: string
+          institution_id?: string
+          internal_audit_officer?: string | null
+          internal_audit_qualifications?: string | null
+          internal_audit_reporting_line?: string | null
+          risk_officer?: string | null
+          risk_qualifications?: string | null
+          risk_reporting_line?: string | null
+          three_lines_description?: string | null
+          three_lines_implemented?: boolean | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "institution_governance_institution_id_fkey"
+            columns: ["institution_id"]
+            isOneToOne: false
+            referencedRelation: "institutions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       institution_job_titles: {
         Row: {
           created_at: string
@@ -311,6 +715,53 @@ export type Database = {
           title?: string
         }
         Relationships: []
+      }
+      institution_legal_status: {
+        Row: {
+          adverse_media_check_date: string | null
+          adverse_media_method: string | null
+          adverse_media_report_url: string | null
+          adverse_media_summary: string | null
+          created_at: string
+          id: string
+          institution_id: string
+          litigation_investigations: Json | null
+          regulatory_actions: Json | null
+          updated_at: string
+        }
+        Insert: {
+          adverse_media_check_date?: string | null
+          adverse_media_method?: string | null
+          adverse_media_report_url?: string | null
+          adverse_media_summary?: string | null
+          created_at?: string
+          id?: string
+          institution_id: string
+          litigation_investigations?: Json | null
+          regulatory_actions?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          adverse_media_check_date?: string | null
+          adverse_media_method?: string | null
+          adverse_media_report_url?: string | null
+          adverse_media_summary?: string | null
+          created_at?: string
+          id?: string
+          institution_id?: string
+          litigation_investigations?: Json | null
+          regulatory_actions?: Json | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "institution_legal_status_institution_id_fkey"
+            columns: ["institution_id"]
+            isOneToOne: false
+            referencedRelation: "institutions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       institution_members: {
         Row: {
@@ -343,6 +794,295 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "institution_members_institution_id_fkey"
+            columns: ["institution_id"]
+            isOneToOne: false
+            referencedRelation: "institutions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      institution_operations: {
+        Row: {
+          access_model: string | null
+          bcp_rpo_minutes: number | null
+          bcp_rto_minutes: number | null
+          bcp_test_results: string | null
+          created_at: string
+          data_residency_locations: string[] | null
+          emergency_contacts: Json | null
+          id: string
+          institution_id: string
+          it_operating_model: string | null
+          last_bcp_test_date: string | null
+          last_pentest_date: string | null
+          outsourcing_arrangements: Json | null
+          primary_providers: string[] | null
+          regulatory_reporting_supported: boolean | null
+          reporting_interfaces: string[] | null
+          security_certifications: string[] | null
+          updated_at: string
+        }
+        Insert: {
+          access_model?: string | null
+          bcp_rpo_minutes?: number | null
+          bcp_rto_minutes?: number | null
+          bcp_test_results?: string | null
+          created_at?: string
+          data_residency_locations?: string[] | null
+          emergency_contacts?: Json | null
+          id?: string
+          institution_id: string
+          it_operating_model?: string | null
+          last_bcp_test_date?: string | null
+          last_pentest_date?: string | null
+          outsourcing_arrangements?: Json | null
+          primary_providers?: string[] | null
+          regulatory_reporting_supported?: boolean | null
+          reporting_interfaces?: string[] | null
+          security_certifications?: string[] | null
+          updated_at?: string
+        }
+        Update: {
+          access_model?: string | null
+          bcp_rpo_minutes?: number | null
+          bcp_rto_minutes?: number | null
+          bcp_test_results?: string | null
+          created_at?: string
+          data_residency_locations?: string[] | null
+          emergency_contacts?: Json | null
+          id?: string
+          institution_id?: string
+          it_operating_model?: string | null
+          last_bcp_test_date?: string | null
+          last_pentest_date?: string | null
+          outsourcing_arrangements?: Json | null
+          primary_providers?: string[] | null
+          regulatory_reporting_supported?: boolean | null
+          reporting_interfaces?: string[] | null
+          security_certifications?: string[] | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "institution_operations_institution_id_fkey"
+            columns: ["institution_id"]
+            isOneToOne: false
+            referencedRelation: "institutions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      institution_ownership: {
+        Row: {
+          country: string | null
+          created_at: string
+          date_of_birth: string | null
+          documents: Json | null
+          holder_name: string
+          holder_type: string
+          id: string
+          institution_id: string
+          is_ubo: boolean | null
+          nationality: string | null
+          percentage: number
+          residency: string | null
+          updated_at: string
+        }
+        Insert: {
+          country?: string | null
+          created_at?: string
+          date_of_birth?: string | null
+          documents?: Json | null
+          holder_name: string
+          holder_type: string
+          id?: string
+          institution_id: string
+          is_ubo?: boolean | null
+          nationality?: string | null
+          percentage: number
+          residency?: string | null
+          updated_at?: string
+        }
+        Update: {
+          country?: string | null
+          created_at?: string
+          date_of_birth?: string | null
+          documents?: Json | null
+          holder_name?: string
+          holder_type?: string
+          id?: string
+          institution_id?: string
+          is_ubo?: boolean | null
+          nationality?: string | null
+          percentage?: number
+          residency?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "institution_ownership_institution_id_fkey"
+            columns: ["institution_id"]
+            isOneToOne: false
+            referencedRelation: "institutions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      institution_regulatory_status: {
+        Row: {
+          created_at: string
+          id: string
+          initial_issue_date: string | null
+          institution_id: string
+          last_renewal_date: string | null
+          license_categories: string[] | null
+          license_documents: Json | null
+          license_number: string
+          operating_jurisdictions: string[] | null
+          passporting_details: string | null
+          passporting_enabled: boolean | null
+          primary_authority: string
+          public_register_urls: string[] | null
+          restrictions_conditions: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          initial_issue_date?: string | null
+          institution_id: string
+          last_renewal_date?: string | null
+          license_categories?: string[] | null
+          license_documents?: Json | null
+          license_number: string
+          operating_jurisdictions?: string[] | null
+          passporting_details?: string | null
+          passporting_enabled?: boolean | null
+          primary_authority: string
+          public_register_urls?: string[] | null
+          restrictions_conditions?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          initial_issue_date?: string | null
+          institution_id?: string
+          last_renewal_date?: string | null
+          license_categories?: string[] | null
+          license_documents?: Json | null
+          license_number?: string
+          operating_jurisdictions?: string[] | null
+          passporting_details?: string | null
+          passporting_enabled?: boolean | null
+          primary_authority?: string
+          public_register_urls?: string[] | null
+          restrictions_conditions?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "institution_regulatory_status_institution_id_fkey"
+            columns: ["institution_id"]
+            isOneToOne: false
+            referencedRelation: "institutions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      institution_section_completion: {
+        Row: {
+          completion_percentage: number | null
+          created_at: string
+          id: string
+          institution_id: string
+          is_completed: boolean | null
+          last_updated_at: string | null
+          section_name: string
+        }
+        Insert: {
+          completion_percentage?: number | null
+          created_at?: string
+          id?: string
+          institution_id: string
+          is_completed?: boolean | null
+          last_updated_at?: string | null
+          section_name: string
+        }
+        Update: {
+          completion_percentage?: number | null
+          created_at?: string
+          id?: string
+          institution_id?: string
+          is_completed?: boolean | null
+          last_updated_at?: string | null
+          section_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "institution_section_completion_institution_id_fkey"
+            columns: ["institution_id"]
+            isOneToOne: false
+            referencedRelation: "institutions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      institution_trading_profile: {
+        Row: {
+          asset_classes: string[] | null
+          best_execution_policy_url: string | null
+          collateral_practices: string | null
+          conflict_management_description: string | null
+          conflict_policy_url: string | null
+          counterparties: string[] | null
+          created_at: string
+          custodians: string[] | null
+          custody_model: string | null
+          id: string
+          institution_id: string
+          rehypothecation_policy: string | null
+          settlement_methods: string[] | null
+          updated_at: string
+          venues_methods: string[] | null
+        }
+        Insert: {
+          asset_classes?: string[] | null
+          best_execution_policy_url?: string | null
+          collateral_practices?: string | null
+          conflict_management_description?: string | null
+          conflict_policy_url?: string | null
+          counterparties?: string[] | null
+          created_at?: string
+          custodians?: string[] | null
+          custody_model?: string | null
+          id?: string
+          institution_id: string
+          rehypothecation_policy?: string | null
+          settlement_methods?: string[] | null
+          updated_at?: string
+          venues_methods?: string[] | null
+        }
+        Update: {
+          asset_classes?: string[] | null
+          best_execution_policy_url?: string | null
+          collateral_practices?: string | null
+          conflict_management_description?: string | null
+          conflict_policy_url?: string | null
+          counterparties?: string[] | null
+          created_at?: string
+          custodians?: string[] | null
+          custody_model?: string | null
+          id?: string
+          institution_id?: string
+          rehypothecation_policy?: string | null
+          settlement_methods?: string[] | null
+          updated_at?: string
+          venues_methods?: string[] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "institution_trading_profile_institution_id_fkey"
             columns: ["institution_id"]
             isOneToOne: false
             referencedRelation: "institutions"
