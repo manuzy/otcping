@@ -12,6 +12,35 @@ interface PriceRequest {
   chainId: number;
 }
 
+// Enhanced input validation for edge functions
+function validateTokenAddress(address: string): string {
+  if (!address || typeof address !== 'string') {
+    throw new Error('Token address is required');
+  }
+  
+  // Ethereum address format validation
+  const addressRegex = /^0x[a-fA-F0-9]{40}$/;
+  if (!addressRegex.test(address)) {
+    throw new Error('Invalid token address format');
+  }
+  
+  return address.toLowerCase();
+}
+
+function validateChainId(chainId: number): number {
+  if (!chainId || typeof chainId !== 'number' || chainId <= 0) {
+    throw new Error('Invalid chain ID');
+  }
+  
+  // Supported chain IDs
+  const supportedChains = [1, 56, 137, 42161, 10, 8453];
+  if (!supportedChains.includes(chainId)) {
+    throw new Error('Unsupported chain ID');
+  }
+  
+  return chainId;
+}
+
 serve(async (req) => {
   const logger = new EdgeLogger('get-token-price');
   const errorHandler = new EdgeErrorHandler(logger, defaultCorsHeaders);
@@ -61,6 +90,22 @@ serve(async (req) => {
     }
 
     const { tokenAddress, chainId } = bodyValidation.data;
+    
+    // Enhanced input validation
+    let validatedTokenAddress: string;
+    let validatedChainId: number;
+    
+    try {
+      validatedTokenAddress = validateTokenAddress(tokenAddress);
+      validatedChainId = validateChainId(chainId);
+    } catch (validationError) {
+      logger.error('Input validation failed', {}, validationError as Error);
+      return errorHandler.createErrorResponse(
+        validationError as Error,
+        400,
+        { operation: 'input_validation' }
+      );
+    }
 
     // Generate cache key
     const cacheKey = MemoryCache.generateKey('token_price', tokenAddress, chainId);
@@ -103,25 +148,25 @@ serve(async (req) => {
       8453: 'base',       // Base
     };
 
-    const platformId = chainIdToPlatform[chainId];
+    const platformId = chainIdToPlatform[validatedChainId];
     if (!platformId) {
-      logger.error('Unsupported chain', { operation: 'chain_validation', chainId });
+      logger.error('Unsupported chain', { operation: 'chain_validation', chainId: validatedChainId });
       return errorHandler.createErrorResponse(
         new Error('Unsupported chain'), 
         400, 
-        { operation: 'chain_validation', chainId }
+        { operation: 'chain_validation', chainId: validatedChainId }
       );
     }
 
     logger.info('Chain validated and mapped', {
       operation: 'chain_mapping',
-      chainId,
+      chainId: validatedChainId,
       platformId,
-      tokenAddress
+      tokenAddress: validatedTokenAddress
     });
 
     // First, get token info by contract address with platform specification
-    const tokenInfoUrl = `https://pro-api.coinmarketcap.com/v2/cryptocurrency/info?address=${tokenAddress}&platform=${platformId}`;
+    const tokenInfoUrl = `https://pro-api.coinmarketcap.com/v2/cryptocurrency/info?address=${validatedTokenAddress}&platform=${platformId}`;
     
     logger.apiCall('get_token_info', tokenInfoUrl, { 
       operation: 'token_info_lookup',
@@ -252,8 +297,8 @@ serve(async (req) => {
 
     // Cache the result (1 minute TTL for price data)
     const priceResult = {
-      tokenAddress,
-      chainId,
+      tokenAddress: validatedTokenAddress,
+      chainId: validatedChainId,
       priceUSD,
       symbol: tokenData.symbol,
       name: tokenData.name,
@@ -265,8 +310,8 @@ serve(async (req) => {
 
     logger.apiSuccess('get_token_price', {
       operation: 'price_retrieval_complete',
-      tokenAddress,
-      chainId,
+      tokenAddress: validatedTokenAddress,
+      chainId: validatedChainId,
       symbol: tokenData.symbol,
       priceUSD,
       tokenInfoDuration,

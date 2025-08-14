@@ -12,6 +12,38 @@ interface NotificationRequest {
   recipientUserId: string;
 }
 
+// Enhanced input validation
+function validateInput(input: string, maxLength: number = 2000): string {
+  if (!input || typeof input !== 'string') {
+    throw new Error('Invalid input: must be a non-empty string');
+  }
+  
+  // Check for potentially malicious patterns
+  const sqlPatterns = /(union|select|insert|update|delete|drop|create|alter|exec|execute)/i;
+  const xssPatterns = /<script|javascript:|vbscript:|on\w+\s*=/i;
+  
+  if (sqlPatterns.test(input) || xssPatterns.test(input)) {
+    throw new Error('Input contains potentially malicious content');
+  }
+  
+  // Sanitize and trim
+  let sanitized = input.replace(/[<>]/g, '').trim();
+  
+  if (sanitized.length > maxLength) {
+    sanitized = sanitized.substring(0, maxLength);
+  }
+  
+  return sanitized;
+}
+
+function validateUUID(uuid: string): string {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  if (!uuidRegex.test(uuid)) {
+    throw new Error('Invalid UUID format');
+  }
+  return uuid;
+}
+
 const handler = async (req: Request): Promise<Response> => {
   const logger = new EdgeLogger('send-message-notification');
   const errorHandler = new EdgeErrorHandler(logger, defaultCorsHeaders);
@@ -64,6 +96,21 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     const { chatId, senderDisplayName, messageContent, recipientUserId } = bodyValidation.data;
+    
+    // Enhanced input validation
+    try {
+      validateUUID(chatId);
+      validateUUID(recipientUserId);
+      validateInput(senderDisplayName, 100);
+      validateInput(messageContent, 2000);
+    } catch (validationError) {
+      logger.error('Input validation failed', {}, validationError as Error);
+      return errorHandler.createErrorResponse(
+        validationError as Error,
+        400,
+        { operation: 'input_validation' }
+      );
+    }
 
     logger.info('Processing notification request', { 
       operation: 'notification_processing',
