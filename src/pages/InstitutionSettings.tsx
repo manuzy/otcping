@@ -5,18 +5,20 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Loader2, Building2, ArrowLeft, Users, Settings, Save } from 'lucide-react';
+import { Loader2, Building2, ArrowLeft, Users, Settings, Save, FileText, CheckCircle2, Clock } from 'lucide-react';
 import { useInstitution, useInstitutionUpdate } from '@/hooks/useInstitution';
 import { useAuth } from '@/hooks/useAuth';
 import { notifications } from '@/lib/notifications';
 import { sanitizeText, sanitizeDisplayName } from '@/components/ui/input-sanitizer';
 import { InstitutionCreationData } from '@/types/institution';
+import { useSectionCompletion } from '@/hooks/useSectionCompletion';
 
 export default function InstitutionSettings() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { institution, loading, refetch } = useInstitution();
   const { updateInstitution, loading: updating } = useInstitutionUpdate();
+  const { overallProgress, completedSections, loading: progressLoading } = useSectionCompletion(institution?.id || '');
   
   const [formData, setFormData] = useState<InstitutionCreationData>({
     name: '',
@@ -207,6 +209,58 @@ export default function InstitutionSettings() {
                 rows={3}
               />
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Due Diligence Navigation */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5" />
+              Due Diligence
+            </CardTitle>
+            <CardDescription>
+              Complete institutional due diligence requirements for regulatory compliance
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <div className="text-sm font-medium">Overall Progress</div>
+                <div className="text-2xl font-bold text-primary">
+                  {progressLoading ? (
+                    <Loader2 className="h-6 w-6 animate-spin" />
+                  ) : (
+                    `${overallProgress}%`
+                  )}
+                </div>
+              </div>
+              <div className="text-center">
+                <div className="text-sm text-muted-foreground">Completed Sections</div>
+                <div className="text-lg font-semibold">
+                  {progressLoading ? '...' : `${completedSections}/9`}
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                {overallProgress === 100 ? (
+                  <CheckCircle2 className="h-5 w-5 text-green-600" />
+                ) : (
+                  <Clock className="h-5 w-5 text-orange-500" />
+                )}
+                <span className="text-sm text-muted-foreground">
+                  {overallProgress === 100 ? 'Complete' : 'In Progress'}
+                </span>
+              </div>
+            </div>
+            
+            <Button 
+              onClick={() => navigate('/institution-due-diligence')} 
+              className="w-full"
+              size="lg"
+            >
+              <FileText className="mr-2 h-4 w-4" />
+              {overallProgress === 0 ? 'Start Due Diligence' : 'Continue Due Diligence'}
+            </Button>
           </CardContent>
         </Card>
 

@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, CheckCircle, Circle, AlertCircle } from 'lucide-react';
+import { ArrowLeft, CheckCircle, Circle, AlertCircle, CheckCircle2, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { useInstitution } from '@/hooks/useInstitution';
+import { useSectionCompletion } from '@/hooks/useSectionCompletion';
 import CorporateProfileSection from '@/components/institution/dueDiligence/CorporateProfileSection';
 import RegulatoryStatusSection from '@/components/institution/dueDiligence/RegulatoryStatusSection';
 import GovernanceSection from '@/components/institution/dueDiligence/GovernanceSection';
@@ -84,9 +85,8 @@ export default function InstitutionDueDiligence() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { institution, loading: institutionLoading } = useInstitution();
+  const { completions, updateCompletion, overallProgress, completedSections } = useSectionCompletion(institution?.id || '');
   const [activeTab, setActiveTab] = useState<DueDiligenceSection>('corporate_profile');
-  const [sectionCompletions, setSectionCompletions] = useState<Record<DueDiligenceSection, SectionCompletion>>({} as any);
-  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (!institutionLoading && !institution) {
@@ -105,37 +105,53 @@ export default function InstitutionDueDiligence() {
     }
   }, [institution, institutionLoading, navigate, toast]);
 
-  const getSectionIcon = (section: DueDiligenceSection) => {
-    const completion = sectionCompletions[section];
-    if (!completion) {
+  const handleSectionUpdate = async (sectionName: DueDiligenceSection, completion: SectionCompletion) => {
+    try {
+      await updateCompletion(sectionName, completion);
+      toast({
+        title: "Section Updated",
+        description: `${sections.find(s => s.id === sectionName)?.title} progress saved.`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to save section progress.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const getSectionIcon = (sectionId: DueDiligenceSection) => {
+    const completion = completions[sectionId];
+    if (completion?.is_completed) {
+      return <CheckCircle2 className="h-4 w-4 text-green-600" />;
+    } else if (completion?.completion_percentage && completion.completion_percentage > 0) {
+      return <Clock className="h-4 w-4 text-orange-500" />;
+    } else {
       return <Circle className="h-4 w-4 text-muted-foreground" />;
     }
-    
-    if (completion.is_completed) {
-      return <CheckCircle className="h-4 w-4 text-success" />;
-    }
-    
-    if (completion.completion_percentage > 0) {
-      return <AlertCircle className="h-4 w-4 text-warning" />;
-    }
-    
-    return <Circle className="h-4 w-4 text-muted-foreground" />;
   };
 
-  const getSectionStatus = (section: DueDiligenceSection) => {
-    const completion = sectionCompletions[section];
-    if (!completion) return 'Not Started';
-    
-    if (completion.is_completed) return 'Complete';
-    if (completion.completion_percentage > 0) return `${completion.completion_percentage}% Complete`;
-    return 'Not Started';
+  const getSectionStatus = (sectionId: DueDiligenceSection) => {
+    const completion = completions[sectionId];
+    if (completion?.is_completed) {
+      return 'Complete';
+    } else if (completion?.completion_percentage && completion.completion_percentage > 0) {
+      return `${completion.completion_percentage}%`;
+    } else {
+      return 'Not Started';
+    }
   };
 
-  const getSectionVariant = (section: DueDiligenceSection): "default" | "secondary" | "destructive" | "outline" => {
-    const completion = sectionCompletions[section];
-    if (!completion || completion.completion_percentage === 0) return 'outline';
-    if (completion.is_completed) return 'default';
-    return 'secondary';
+  const getSectionVariant = (sectionId: DueDiligenceSection): "default" | "secondary" | "destructive" | "outline" => {
+    const completion = completions[sectionId];
+    if (completion?.is_completed) {
+      return 'default';
+    } else if (completion?.completion_percentage && completion.completion_percentage > 0) {
+      return 'secondary';
+    } else {
+      return 'outline';
+    }
   };
 
   const renderSectionContent = () => {
@@ -143,12 +159,7 @@ export default function InstitutionDueDiligence() {
 
     const props = {
       institutionId: institution.id,
-      onSectionUpdate: (sectionName: DueDiligenceSection, completion: SectionCompletion) => {
-        setSectionCompletions(prev => ({
-          ...prev,
-          [sectionName]: completion
-        }));
-      }
+      onSectionUpdate: handleSectionUpdate
     };
 
     switch (activeTab) {
@@ -175,7 +186,7 @@ export default function InstitutionDueDiligence() {
     }
   };
 
-  if (institutionLoading || loading) {
+  if (institutionLoading) {
     return (
       <div className="container mx-auto py-6">
         <div className="animate-pulse">
@@ -211,13 +222,7 @@ export default function InstitutionDueDiligence() {
     );
   }
 
-  const overallProgress = Object.values(sectionCompletions).reduce((sum, completion) => 
-    sum + (completion?.completion_percentage || 0), 0
-  ) / sections.length;
-
-  const completedSections = Object.values(sectionCompletions).filter(completion => 
-    completion?.is_completed
-  ).length;
+  // Progress is calculated in the hook
 
   return (
     <div className="container mx-auto py-6 space-y-6">
