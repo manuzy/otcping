@@ -157,18 +157,28 @@ export const useInstitutionCreation = () => {
         throw createError;
       }
 
-      // Log audit trail
-      await auditLogger.logAdmin(
-        'INSTITUTION_CREATED' as any,
-        'INSTITUTION' as any,
-        newInstitution.id,
-        { institution_name: data.name }
-      );
-
       logger.info('Institution created successfully', { 
         institutionId: newInstitution.id, 
         userId: user.id 
       });
+
+      // Log audit trail asynchronously (non-blocking)
+      try {
+        await auditLogger.logAdmin(
+          'INSTITUTION_CREATED' as any,
+          'INSTITUTION' as any,
+          newInstitution.id,
+          { institution_name: data.name }
+        );
+        logger.debug('Audit log recorded for institution creation', { institutionId: newInstitution.id });
+      } catch (auditError: any) {
+        // Don't fail the entire operation if audit logging fails
+        logger.warn('Failed to record audit log for institution creation', 
+          { institutionId: newInstitution.id }, 
+          auditError
+        );
+        console.warn('Audit logging failed:', auditError);
+      }
 
       return newInstitution;
 
@@ -288,23 +298,33 @@ export const useInstitutionMembers = (institutionId?: string) => {
         throw memberError;
       }
 
-      // Log audit trail
-      await auditLogger.logAdmin(
-        'INSTITUTION_MEMBER_ADDED' as any,
-        'INSTITUTION_MEMBER' as any,
-        newMember.id,
-        { 
-          institution_id: institutionId,
-          target_user_id: targetUser.id,
-          wallet_address: walletAddress,
-          job_title: jobTitle 
-        }
-      );
-
       logger.info('Institution member added successfully', { 
         memberId: newMember.id,
         institutionId 
       });
+
+      // Log audit trail asynchronously (non-blocking)
+      try {
+        await auditLogger.logAdmin(
+          'INSTITUTION_MEMBER_ADDED' as any,
+          'INSTITUTION_MEMBER' as any,
+          newMember.id,
+          { 
+            institution_id: institutionId,
+            target_user_id: targetUser.id,
+            wallet_address: walletAddress,
+            job_title: jobTitle 
+          }
+        );
+        logger.debug('Audit log recorded for member addition', { memberId: newMember.id });
+      } catch (auditError: any) {
+        // Don't fail the entire operation if audit logging fails
+        logger.warn('Failed to record audit log for member addition', 
+          { memberId: newMember.id }, 
+          auditError
+        );
+        console.warn('Audit logging failed:', auditError);
+      }
 
       return newMember;
 
@@ -339,15 +359,25 @@ export const useInstitutionMembers = (institutionId?: string) => {
         throw deleteError;
       }
 
-      // Log audit trail
-      await auditLogger.logAdmin(
-        'INSTITUTION_MEMBER_REMOVED' as any,
-        'INSTITUTION_MEMBER' as any,
-        memberId,
-        { institution_id: institutionId }
-      );
-
       logger.info('Institution member removed successfully', { memberId, institutionId });
+
+      // Log audit trail asynchronously (non-blocking)
+      try {
+        await auditLogger.logAdmin(
+          'INSTITUTION_MEMBER_REMOVED' as any,
+          'INSTITUTION_MEMBER' as any,
+          memberId,
+          { institution_id: institutionId }
+        );
+        logger.debug('Audit log recorded for member removal', { memberId });
+      } catch (auditError: any) {
+        // Don't fail the entire operation if audit logging fails
+        logger.warn('Failed to record audit log for member removal', 
+          { memberId }, 
+          auditError
+        );
+        console.warn('Audit logging failed:', auditError);
+      }
 
     } catch (err: any) {
       const handledError = errorHandler.handle(err, true);
