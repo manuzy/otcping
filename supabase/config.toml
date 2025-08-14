@@ -35,3 +35,6 @@ verify_jwt = false
 
 [functions.system-metrics]
 verify_jwt = false
+
+[functions.audit-logger]
+verify_jwt = true

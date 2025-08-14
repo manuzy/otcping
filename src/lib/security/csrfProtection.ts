@@ -46,7 +46,7 @@ class CSRFProtection {
   }
 
   // Middleware function for sensitive operations
-  protected<T extends (...args: any[]) => Promise<any>>(
+  protectOperation<T extends (...args: any[]) => Promise<any>>(
     operation: T,
     requiredToken?: string
   ): T {
@@ -72,16 +72,16 @@ export function withCSRFProtection<T extends Record<string, any>>(
   hookOrComponent: T,
   sensitiveOperations: (keyof T)[]
 ): T {
-  const protected = { ...hookOrComponent };
+  const protectedComponent = { ...hookOrComponent };
 
   sensitiveOperations.forEach((operation) => {
-    const originalMethod = protected[operation];
+    const originalMethod = protectedComponent[operation];
     if (typeof originalMethod === 'function') {
-      protected[operation] = csrfProtection.protected(originalMethod);
+      protectedComponent[operation] = csrfProtection.protectOperation(originalMethod);
     }
   });
 
-  return protected;
+  return protectedComponent;
 }
 
 // Helper for form submissions

@@ -139,6 +139,13 @@ class Logger {
       metadata: { duration }
     });
   }
+
+  security(message: string, context?: Partial<LogContext>) {
+    this.warn(`Security Event: ${message}`, {
+      ...context,
+      operation: 'security_event'
+    });
+  }
 }
 
 export const logger = new Logger();

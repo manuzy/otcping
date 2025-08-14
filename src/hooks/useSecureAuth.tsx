@@ -1,5 +1,6 @@
 import { useEffect, useCallback } from 'react';
 import { useAuth } from './useAuth';
+import { supabase } from '@/integrations/supabase/client';
 import { auditLogger, AuditAction } from '@/lib/security/auditLogger';
 import { enforceRateLimit, recordRateLimitedRequest } from '@/lib/security/rateLimiter';
 import { csrfProtection } from '@/lib/security/csrfProtection';
@@ -27,8 +28,9 @@ export function useSecureAuth() {
         throw new Error(`Too many login attempts. Please try again in ${Math.ceil((rateLimitResult.retryAfter || 0) / 1000)} seconds.`);
       }
 
-      // Attempt sign in
-      const result = await auth.signInWithPassword(email, password);
+      // Attempt sign in (using apiClient instead)
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      const result = { data, error };
       
       if (result.error) {
         // Record failed attempt
