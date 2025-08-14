@@ -50,7 +50,7 @@ export const useInstitution = () => {
             job_title,
             joined_at,
             added_by,
-            profiles:user_id (
+            profiles!user_id (
               id,
               display_name,
               avatar,

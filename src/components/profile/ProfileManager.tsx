@@ -57,13 +57,6 @@ export default function ProfileManager() {
   // Derive trader type from institution presence - institution members are always Institutional
   const effectiveTraderType = institution ? 'Institutional' : (profile?.trader_type || 'Degen');
 
-  // Debug logging to troubleshoot button visibility
-  console.log('Debug - Institution state:', {
-    institution: institution ? { name: institution.name, id: institution.id } : null,
-    profileTraderType: profile?.trader_type,
-    effectiveTraderType,
-    institutionId: profile?.institution_id
-  });
 
   // Random avatar generation options
   const avatarOptions = {
