@@ -288,6 +288,113 @@ export type Database = {
           },
         ]
       }
+      institution_job_titles: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          title: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          title?: string
+        }
+        Relationships: []
+      }
+      institution_members: {
+        Row: {
+          added_by: string
+          id: string
+          institution_id: string
+          job_title: string
+          joined_at: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          added_by: string
+          id?: string
+          institution_id: string
+          job_title: string
+          joined_at?: string
+          role?: string
+          user_id: string
+        }
+        Update: {
+          added_by?: string
+          id?: string
+          institution_id?: string
+          job_title?: string
+          joined_at?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "institution_members_institution_id_fkey"
+            columns: ["institution_id"]
+            isOneToOne: false
+            referencedRelation: "institutions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      institutions: {
+        Row: {
+          created_at: string
+          created_by: string
+          description: string | null
+          id: string
+          kyb_provider: string | null
+          kyb_status: string
+          kyb_verified_at: string | null
+          logo: string | null
+          name: string
+          private_description: string | null
+          public_description: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          description?: string | null
+          id?: string
+          kyb_provider?: string | null
+          kyb_status?: string
+          kyb_verified_at?: string | null
+          logo?: string | null
+          name: string
+          private_description?: string | null
+          public_description?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          id?: string
+          kyb_provider?: string | null
+          kyb_status?: string
+          kyb_verified_at?: string | null
+          logo?: string | null
+          name?: string
+          private_description?: string | null
+          public_description?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       kyc_verifications: {
         Row: {
           created_at: string | null
@@ -414,6 +521,7 @@ export type Database = {
           description: string | null
           display_name: string
           id: string
+          institution_id: string | null
           is_public: boolean
           kyb_provider: string | null
           kyb_status: Database["public"]["Enums"]["kyb_status"] | null
@@ -439,6 +547,7 @@ export type Database = {
           description?: string | null
           display_name: string
           id: string
+          institution_id?: string | null
           is_public?: boolean
           kyb_provider?: string | null
           kyb_status?: Database["public"]["Enums"]["kyb_status"] | null
@@ -464,6 +573,7 @@ export type Database = {
           description?: string | null
           display_name?: string
           id?: string
+          institution_id?: string | null
           is_public?: boolean
           kyb_provider?: string | null
           kyb_status?: Database["public"]["Enums"]["kyb_status"] | null
@@ -483,7 +593,15 @@ export type Database = {
           updated_at?: string
           wallet_address?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_institution_id_fkey"
+            columns: ["institution_id"]
+            isOneToOne: false
+            referencedRelation: "institutions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       ratings: {
         Row: {
