@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -41,6 +42,7 @@ interface Profile {
 }
 
 export default function ProfileManager() {
+  const navigate = useNavigate();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -515,7 +517,7 @@ export default function ProfileManager() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => window.location.href = '/institution-settings'}
+                      onClick={() => navigate('/institution-settings')}
                       className="h-7 px-2 text-xs"
                     >
                       Edit
@@ -530,7 +532,7 @@ export default function ProfileManager() {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => window.location.href = '/institution-settings'}
+                    onClick={() => navigate('/institution-settings')}
                     className="flex items-center gap-2 mt-2 w-full"
                   >
                     <Building2 className="h-4 w-4" />
