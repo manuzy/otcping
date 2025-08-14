@@ -54,8 +54,21 @@ export default function ProfileManager() {
   const { licenses } = useLicenses();
   const { institution, refetch: refetchInstitution } = useInstitution();
 
+  console.log('🔍 ProfileManager - institution data:', {
+    institution,
+    hasInstitution: !!institution,
+    institutionName: institution?.name,
+    isAdmin: institution?.is_admin
+  });
+
   // Derive trader type from institution presence - institution members are always Institutional
   const effectiveTraderType = institution ? 'Institutional' : (profile?.trader_type || 'Degen');
+
+  console.log('🔍 ProfileManager - UI logic:', {
+    effectiveTraderType,
+    showCreateButton: effectiveTraderType === 'Institutional' && !institution,
+    showEditButton: !!institution && institution.is_admin
+  });
 
 
   // Random avatar generation options

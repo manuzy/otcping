@@ -13,6 +13,13 @@ export const useInstitution = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  console.log('🔍 useInstitution hook called', { 
+    user: user ? { id: user.id } : null,
+    currentInstitution: institution,
+    loading,
+    error 
+  });
+
   const fetchUserInstitution = useCallback(async () => {
     if (!user?.id) return;
 
@@ -58,23 +65,35 @@ export const useInstitution = () => {
 
       console.log('Institution data:', institutionData);
 
-      // Step 2: Fetch members with profiles manually
-      const { data: membersData, error: membersError } = await supabase
-        .from('institution_members')
-        .select(`
-          id,
-          institution_id,
-          user_id,
-          role,
-          job_title,
-          joined_at,
-          added_by
-        `)
-        .eq('institution_id', profile.institution_id);
+      // Step 2: Fetch members with profiles manually (with fallback for RLS issues)
+      let membersData = null;
+      let membersError = null;
+      
+      try {
+        const result = await supabase
+          .from('institution_members')
+          .select(`
+            id,
+            institution_id,
+            user_id,
+            role,
+            job_title,
+            joined_at,
+            added_by
+          `)
+          .eq('institution_id', profile.institution_id);
+        
+        membersData = result.data;
+        membersError = result.error;
+      } catch (err) {
+        console.warn('⚠️ Members fetch failed (likely RLS issue), continuing without members:', err);
+        membersError = err;
+      }
 
       if (membersError) {
-        console.error('Members fetch error:', membersError);
-        throw membersError;
+        console.error('⚠️ Members fetch error, proceeding with institution-only data:', membersError);
+        // Don't throw - continue with institution data only
+        membersData = null;
       }
 
       console.log('Members data (basic):', membersData);
@@ -107,12 +126,24 @@ export const useInstitution = () => {
       // Log data access
       await monitorDataAccess(user.id, 'institution', profile.institution_id, 'read');
 
-      // Check if user is admin
+      // Check if user is admin - fallback to creator check if members unavailable
       const userMember = membersWithProfiles?.find(
         (member: any) => member.user_id === user.id
       );
       
-      console.log('User member data:', userMember);
+      // If members data is unavailable due to RLS, check if user is the creator
+      const isCreator = institutionData.created_by === user.id;
+      const isAdmin = userMember?.role === 'admin' || isCreator;
+      const isMember = !!userMember || isCreator;
+      
+      console.log('User role determination:', {
+        userMember,
+        isCreator,
+        isAdmin,
+        isMember,
+        institutionCreatedBy: institutionData.created_by,
+        currentUserId: user.id
+      });
 
       const enrichedInstitution: InstitutionWithMembers = {
         ...institutionData,
@@ -126,11 +157,12 @@ export const useInstitution = () => {
           user_profile: member.user_profile
         })),
         member_count: membersWithProfiles?.length || 0,
-        is_member: !!userMember,
-        is_admin: userMember?.role === 'admin'
+        is_member: isMember,
+        is_admin: isAdmin
       };
 
-      console.log('Final enriched institution:', enrichedInstitution);
+      console.log('✅ Final enriched institution:', enrichedInstitution);
+      console.log('✅ Setting institution state to:', enrichedInstitution);
       setInstitution(enrichedInstitution);
       logger.info('Institution fetched successfully', { institutionId: institutionData.id });
 
