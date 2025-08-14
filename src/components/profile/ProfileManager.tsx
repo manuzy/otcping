@@ -13,7 +13,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useOnlinePresence } from '@/hooks/useOnlinePresence';
 import { useLicenses } from '@/hooks/useLicenses';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, User, AlertCircle, CheckCircle, Shuffle, X } from 'lucide-react';
+import { Loader2, User, AlertCircle, CheckCircle, Shuffle, X, Building2 } from 'lucide-react';
 import { KycStatusIndicator } from '@/components/kyc/KycStatusIndicator';
 import { KycVerificationModal } from '@/components/kyc/KycVerificationModal';
 import { sanitizeText, validateAvatarUrl, sanitizeDisplayName } from '@/components/ui/input-sanitizer';
@@ -21,6 +21,8 @@ import { FileUpload } from '@/components/ui/file-upload';
 import { logger } from '@/lib/logger';
 import { errorHandler } from '@/lib/errorHandler';
 import { notifications } from '@/lib/notifications';
+import { InstitutionCreationDialog } from '@/components/institution/InstitutionCreationDialog';
+import { useInstitution } from '@/hooks/useInstitution';
 
 interface Profile {
   id: string;
@@ -45,9 +47,11 @@ export default function ProfileManager() {
   const [avatarMode, setAvatarMode] = useState<'url' | 'upload'>('url');
   const [pendingAvatarUrl, setPendingAvatarUrl] = useState<string | null>(null);
   const [showKycModal, setShowKycModal] = useState(false);
+  const [isInstitutionDialogOpen, setIsInstitutionDialogOpen] = useState(false);
   const { user, session } = useAuth();
   const { isUserOnline } = useOnlinePresence();
   const { licenses } = useLicenses();
+  const { institution, refetch: refetchInstitution } = useInstitution();
 
   // Random avatar generation options
   const avatarOptions = {
@@ -436,7 +440,7 @@ export default function ProfileManager() {
             onStartVerification={() => setShowKycModal(true)}
           />
 
-          <div>
+           <div>
             <Label>Trader Type</Label>
             <RadioGroup
               value={profile.trader_type || 'Degen'}
@@ -452,6 +456,38 @@ export default function ProfileManager() {
                 <Label htmlFor="institutional">Institutional</Label>
               </div>
             </RadioGroup>
+            
+            {/* Institution Creation Button */}
+            {profile.trader_type === 'Institutional' && !institution && (
+              <div className="mt-3">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsInstitutionDialogOpen(true)}
+                  className="flex items-center gap-2"
+                >
+                  <Building2 className="h-4 w-4" />
+                  Create Institutional Profile
+                </Button>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Set up your institution profile and manage team members
+                </p>
+              </div>
+            )}
+            
+            {/* Institution Info Display */}
+            {institution && (
+              <div className="mt-3 p-3 bg-muted/50 rounded-lg">
+                <div className="flex items-center gap-2 mb-2">
+                  <Building2 className="h-4 w-4 text-primary" />
+                  <span className="font-medium text-sm">{institution.name}</span>
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  <p>Role: {institution.is_admin ? 'Administrator' : 'Member'}</p>
+                  <p>{institution.member_count} members</p>
+                </div>
+              </div>
+            )}
           </div>
 
           <div>
@@ -554,6 +590,19 @@ export default function ProfileManager() {
           open={showKycModal}
           onOpenChange={setShowKycModal}
           currentKycLevel={profile?.kyc_level}
+        />
+
+        {/* Institution Creation Dialog */}
+        <InstitutionCreationDialog
+          open={isInstitutionDialogOpen}
+          onOpenChange={setIsInstitutionDialogOpen}
+          onSuccess={() => {
+            refetchInstitution();
+            notifications.success({
+              title: "Success",
+              description: "Institution profile created successfully!",
+            });
+          }}
         />
       </CardContent>
     </Card>
