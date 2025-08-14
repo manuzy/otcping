@@ -53,6 +53,9 @@ export default function ProfileManager() {
   const { licenses } = useLicenses();
   const { institution, refetch: refetchInstitution } = useInstitution();
 
+  // Derive trader type from institution presence - institution members are always Institutional
+  const effectiveTraderType = institution ? 'Institutional' : (profile?.trader_type || 'Degen');
+
   // Random avatar generation options
   const avatarOptions = {
     avatarStyle: ["Circle", "Transparent"],
@@ -443,7 +446,7 @@ export default function ProfileManager() {
            <div>
             <Label>Trader Type</Label>
             <RadioGroup
-              value={profile.trader_type || 'Degen'}
+              value={effectiveTraderType}
               onValueChange={(value) => setProfile({ ...profile, trader_type: value as 'Degen' | 'Institutional' })}
               className="flex flex-row gap-6 mt-2"
             >
