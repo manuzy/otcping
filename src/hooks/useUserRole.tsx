@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from './useAuth';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -39,7 +39,7 @@ export function useUserRole() {
     fetchUserRole();
   }, [user?.id]);
 
-  const hasRole = (requiredRole: UserRole) => {
+  const hasRole = useCallback((requiredRole: UserRole) => {
     if (!role || !requiredRole) return false;
     
     const roleHierarchy = {
@@ -49,7 +49,7 @@ export function useUserRole() {
     };
     
     return roleHierarchy[role] >= roleHierarchy[requiredRole];
-  };
+  }, [role]);
   
   return {
     role,

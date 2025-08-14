@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -52,12 +52,26 @@ export function SecurityDashboard() {
   const [error, setError] = useState<string | null>(null);
   const [timeframe, setTimeframe] = useState('24h');
 
-  // Move useEffect after all hook declarations
+  const loadDashboardData = useCallback(async () => {
+    try {
+      setLoading(true);
+      const data = await securityMonitor.getSecurityDashboard(timeframe);
+      setDashboardData(data);
+      setError(null);
+    } catch (err) {
+      setError('Failed to load security dashboard data');
+      console.error('Security dashboard error:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [timeframe]);
+
+  // Move useEffect after loadDashboardData function declaration
   useEffect(() => {
     if (hasRole('moderator')) {
       loadDashboardData();
     }
-  }, [timeframe, hasRole]);
+  }, [hasRole, loadDashboardData]);
 
   // Handle permission check after all hooks are declared
   if (roleLoading) {
@@ -78,20 +92,6 @@ export function SecurityDashboard() {
       </Alert>
     );
   }
-
-  const loadDashboardData = async () => {
-    try {
-      setLoading(true);
-      const data = await securityMonitor.getSecurityDashboard(timeframe);
-      setDashboardData(data);
-      setError(null);
-    } catch (err) {
-      setError('Failed to load security dashboard data');
-      console.error('Security dashboard error:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const formatTimestamp = (timestamp: string) => {
     return new Date(timestamp).toLocaleString();
