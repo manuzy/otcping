@@ -1,7 +1,6 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
-import { createClient } from '@supabase/supabase-js';
 import { useAppKitAccount } from '@reown/appkit/react';
 import CryptoJS from 'crypto-js';
 import { logger } from '@/lib/logger';
@@ -244,49 +243,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         walletAddress: address 
       });
 
-      // Step 4: Enhanced database auth context validation with connection-level testing
-      logger.authEvent('Validating database auth context with connection-level testing', { 
+      // Step 4: Validate authentication context using main client
+      logger.authEvent('Validating database auth context', { 
         component: 'useAuth',
         walletAddress: address 
       });
       
       // Wait for token propagation
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise(resolve => setTimeout(resolve, 500));
       
-      // Create a dedicated client with explicit auth headers for testing
-      const testClient = createClient(
-        'https://peqqefvohjemxhuyvzbg.supabase.co',
-        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBlcXFlZnZvaGplbXhodXl2emJnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMzNjM1NjAsImV4cCI6MjA2ODkzOTU2MH0.YPJYJrYziXv8b3oy3kyDKnIuK4Gknl_iTP95I4OAO9o',
-        {
-          auth: {
-            storage: localStorage,
-            persistSession: true,
-            autoRefreshToken: true,
-          },
-          global: {
-            headers: {
-              Authorization: `Bearer ${session.access_token}`
-            }
-          }
-        }
-      );
-
-      // Test connection-level auth context
-      const { data: authTest, error: authTestError } = await testClient.rpc('auth_uid_test');
+      // Test auth context using the main client
+      const { data: authTest, error: authTestError } = await supabase.rpc('auth_uid_test');
       if (authTestError || !authTest) {
         const appError = errorHandler.handle(authTestError, false);
-        logger.error('Connection-level database auth context validation failed', { 
+        logger.error('Database auth context validation failed', { 
           component: 'useAuth',
           walletAddress: address 
         }, appError);
-        return { success: false, error: 'Authentication session not properly established at connection level' };
+        return { success: false, error: 'Authentication session not properly established' };
       }
 
-      logger.authEvent('Connection-level database auth context validated successfully', { 
+      logger.authEvent('Database auth context validated successfully', { 
         component: 'useAuth',
         walletAddress: address,
         authUid: authTest 
       });
+      
+      // Notify successful authentication
+      notifications.authSuccess();
       return { success: true };
     } catch (error) {
       const appError = errorHandler.handle(error, false);
@@ -294,6 +278,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         component: 'useAuth',
         walletAddress: address 
       }, appError);
+      notifications.authError();
       return { success: false, error: 'Authentication failed' };
     }
   };
