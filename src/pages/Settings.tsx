@@ -45,7 +45,7 @@ export default function Settings() {
       userId: user.id 
     });
 
-    const { data, error } = await apiClient.selectSingle('profiles', `id.eq.${user.id}`, {
+    const { data, error } = await apiClient.selectSingle('profiles', user.id, {
       context: { component: 'Settings', operation: 'fetchProfileData' }
     });
 

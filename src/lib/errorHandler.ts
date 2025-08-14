@@ -59,12 +59,23 @@ export class ErrorHandler {
   }
 
   fromSupabaseError(error: any, context?: LogContext): AppError {
+    // Handle PostgreSQL parsing errors (PGRST100)
+    if (error?.code === 'PGRST100' || error?.message?.includes('unexpected')) {
+      return this.createError(
+        ErrorType.VALIDATION,
+        'Invalid query format',
+        'There was an issue with the data format. Please refresh the page and try again.',
+        error,
+        context
+      );
+    }
+
     // Handle Supabase-specific errors
     if (error?.code === 'PGRST116') {
       return this.createError(
         ErrorType.NOT_FOUND,
         'Resource not found',
-        undefined,
+        'The requested information could not be found.',
         error,
         context
       );
@@ -80,21 +91,31 @@ export class ErrorHandler {
       );
     }
 
-    if (error?.message?.includes('JWT')) {
+    if (error?.code === '42P01') {
       return this.createError(
-        ErrorType.AUTHENTICATION,
-        'Authentication failed',
-        undefined,
+        ErrorType.SERVER,
+        'Database table not found',
+        'There was a database configuration issue. Please contact support.',
         error,
         context
       );
     }
 
-    if (error?.message?.includes('RLS')) {
+    if (error?.message?.includes('JWT') || error?.message?.includes('anonymous')) {
+      return this.createError(
+        ErrorType.AUTHENTICATION,
+        'Authentication failed',
+        'Please sign in to continue.',
+        error,
+        context
+      );
+    }
+
+    if (error?.message?.includes('RLS') || error?.message?.includes('permission')) {
       return this.createError(
         ErrorType.AUTHORIZATION,
         'Permission denied',
-        undefined,
+        'You don\'t have permission to access this resource.',
         error,
         context
       );
@@ -104,7 +125,7 @@ export class ErrorHandler {
       return this.createError(
         ErrorType.NETWORK,
         'Network error',
-        undefined,
+        'Please check your connection and try again.',
         error,
         context
       );
@@ -113,7 +134,7 @@ export class ErrorHandler {
     return this.createError(
       ErrorType.UNKNOWN,
       error?.message || 'Unknown error occurred',
-      undefined,
+      'Something unexpected happened. Please try again or contact support if the problem persists.',
       error,
       context
     );

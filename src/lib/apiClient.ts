@@ -77,17 +77,20 @@ class ApiClient {
 
   async selectSingle<T = any>(
     table: string,
-    query?: string,
+    id?: string,
     options?: ApiOptions
   ): Promise<ApiResponse<T | null>> {
-    const context = { operation: 'selectSingle', metadata: { table, query } };
+    const context = { operation: 'selectSingle', metadata: { table, id } };
     logger.apiCall('SELECT SINGLE', table, context);
 
     return this.withRetry(async () => {
-      const { data, error } = await supabase
-        .from(table as any)
-        .select(query || '*')
-        .maybeSingle();
+      let query = supabase.from(table as any).select('*');
+      
+      if (id) {
+        query = query.eq('id', id);
+      }
+      
+      const { data, error } = await query.maybeSingle();
 
       if (error) throw error;
 
