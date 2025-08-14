@@ -256,7 +256,7 @@ export type Database = {
           review_status: string | null
           sumsub_applicant_id: string | null
           updated_at: string | null
-          user_id: string | null
+          user_id: string
           verification_level: string | null
         }
         Insert: {
@@ -265,7 +265,7 @@ export type Database = {
           review_status?: string | null
           sumsub_applicant_id?: string | null
           updated_at?: string | null
-          user_id?: string | null
+          user_id: string
           verification_level?: string | null
         }
         Update: {
@@ -274,10 +274,18 @@ export type Database = {
           review_status?: string | null
           sumsub_applicant_id?: string | null
           updated_at?: string | null
-          user_id?: string | null
+          user_id?: string
           verification_level?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fk_kyc_verifications_user_id"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       messages: {
         Row: {
