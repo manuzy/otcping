@@ -5,6 +5,15 @@ export function useWalletAuth() {
   const { address, isConnected } = useAppKitAccount();
   const { user, loading } = useAuth();
 
+  // Add detailed logging for authentication state changes
+  console.log('useWalletAuth state:', {
+    address: address?.substring(0, 8) + '...',
+    isConnected,
+    userExists: !!user,
+    userId: user?.id,
+    loading
+  });
+
   return {
     isConnected,
     address,

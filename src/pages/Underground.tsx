@@ -11,23 +11,38 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 export default function Underground() {
   const {
-    isAdmin
+    isAdmin,
+    loading: adminLoading
   } = useIsAdmin();
   const {
     isAuthenticated,
-    user
+    user,
+    loading: authLoading
   } = useWalletAuth();
   const { settings, loading: settingsLoading, updating, updateSkipApproval } = useAdminSettings();
 
-  // Show loading while auth state is being determined
-  if (user === undefined) {
+  // Combined loading state - wait for all auth states to stabilize
+  const isLoading = user === undefined || authLoading || adminLoading;
+
+  console.log('Underground auth state:', {
+    user: user?.id,
+    isAuthenticated,
+    isAdmin,
+    authLoading,
+    adminLoading,
+    isLoading
+  });
+
+  // Show loading while any auth state is being determined
+  if (isLoading) {
     return <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="h-8 w-8 animate-spin" />
       </div>;
   }
 
-  // Redirect if not authenticated or not admin
+  // Only redirect after all loading is complete
   if (!isAuthenticated || !isAdmin) {
+    console.log('Underground redirect triggered:', { isAuthenticated, isAdmin });
     return <Navigate to="/" replace />;
   }
   return <div className="flex flex-col h-screen bg-background">

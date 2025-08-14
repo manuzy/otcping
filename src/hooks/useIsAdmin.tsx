@@ -12,10 +12,14 @@ export function useIsAdmin() {
   useEffect(() => {
     async function checkAdminRole() {
       if (!user?.id) {
+        console.log('useIsAdmin: No user ID, setting admin false');
         setIsAdmin(false);
         setLoading(false);
         return;
       }
+
+      console.log('useIsAdmin: Checking admin role for user:', user.id);
+      setLoading(true);
 
       try {
         const { data, error } = await supabase.rpc('has_role', {
@@ -27,6 +31,7 @@ export function useIsAdmin() {
           console.error('Error checking admin role:', error);
           setIsAdmin(false);
         } else {
+          console.log('useIsAdmin: Admin check result:', data);
           setIsAdmin(data || false);
         }
       } catch (error) {
