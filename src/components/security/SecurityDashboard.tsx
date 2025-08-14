@@ -46,13 +46,28 @@ const SEVERITY_VARIANTS = {
 
 export function SecurityDashboard() {
   const { user } = useAuth();
-  const { hasRole } = useUserRole();
+  const { hasRole, loading: roleLoading } = useUserRole();
   const [dashboardData, setDashboardData] = useState<SecurityDashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [timeframe, setTimeframe] = useState('24h');
 
-  // Only allow admins and moderators to view security dashboard
+  // Move useEffect after all hook declarations
+  useEffect(() => {
+    if (hasRole('moderator')) {
+      loadDashboardData();
+    }
+  }, [timeframe, hasRole]);
+
+  // Handle permission check after all hooks are declared
+  if (roleLoading) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
   if (!hasRole('moderator')) {
     return (
       <Alert>
@@ -63,10 +78,6 @@ export function SecurityDashboard() {
       </Alert>
     );
   }
-
-  useEffect(() => {
-    loadDashboardData();
-  }, [timeframe]);
 
   const loadDashboardData = async () => {
     try {
