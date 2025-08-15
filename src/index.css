@@ -254,15 +254,42 @@ All colors MUST be HSL.
   .z-tooltip { z-index: var(--z-tooltip); }
   
   /* Status Utilities */
-  .status-active { @apply bg-status-active text-status-active-foreground; }
-  .status-pending { @apply bg-status-pending text-status-pending-foreground; }
-  .status-completed { @apply bg-status-completed text-status-completed-foreground; }
-  .status-cancelled { @apply bg-status-cancelled text-status-cancelled-foreground; }
-  .status-expired { @apply bg-status-expired text-status-expired-foreground; }
+  .status-active { 
+    background-color: hsl(var(--status-active)); 
+    color: hsl(var(--status-active-foreground)); 
+  }
+  .status-pending { 
+    background-color: hsl(var(--status-pending)); 
+    color: hsl(var(--status-pending-foreground)); 
+  }
+  .status-completed { 
+    background-color: hsl(var(--status-completed)); 
+    color: hsl(var(--status-completed-foreground)); 
+  }
+  .status-cancelled { 
+    background-color: hsl(var(--status-cancelled)); 
+    color: hsl(var(--status-cancelled-foreground)); 
+  }
+  .status-expired { 
+    background-color: hsl(var(--status-expired)); 
+    color: hsl(var(--status-expired-foreground)); 
+  }
   
   /* Semantic Color Utilities */
-  .bg-success { @apply bg-success text-success-foreground; }
-  .bg-warning { @apply bg-warning text-warning-foreground; }
-  .bg-info { @apply bg-info text-info-foreground; }
-  .bg-error { @apply bg-error text-error-foreground; }
+  .bg-success { 
+    background-color: hsl(var(--success)); 
+    color: hsl(var(--success-foreground)); 
+  }
+  .bg-warning { 
+    background-color: hsl(var(--warning)); 
+    color: hsl(var(--warning-foreground)); 
+  }
+  .bg-info { 
+    background-color: hsl(var(--info)); 
+    color: hsl(var(--info-foreground)); 
+  }
+  .bg-error { 
+    background-color: hsl(var(--error)); 
+    color: hsl(var(--error-foreground)); 
+  }
 }
