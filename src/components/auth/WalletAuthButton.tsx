@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useAppKitAccount, useAppKit } from '@reown/appkit/react';
 import { useAuth } from '@/hooks/useAuth';
-import { Loader2, Wallet, Shield, X } from 'lucide-react';
+import { Wallet, Shield, X } from 'lucide-react';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { useWalletClient } from 'wagmi';
 import { useWalletAuth } from '@/hooks/useWalletAuth';
 import { logger } from '@/lib/logger';
@@ -83,8 +84,8 @@ export default function WalletAuthButton() {
   // Show loading state during auth initialization
   if (authLoading) {
     return (
-      <div className="flex items-center gap-2 px-4 py-2 bg-muted rounded-lg border">
-        <Loader2 className="h-4 w-4 animate-spin" />
+      <div className="flex-gap-2 px-4 py-2 bg-muted rounded-lg border">
+        <LoadingSpinner size="sm" />
         <span className="text-sm text-muted-foreground">
           Initializing...
         </span>
@@ -94,8 +95,8 @@ export default function WalletAuthButton() {
 
   if (user && isConnected) {
     return (
-      <div className="flex items-center gap-2 px-4 py-2 bg-success/10 rounded-lg border border-success/20">
-        <Shield className="h-4 w-4 text-success" />
+      <div className="flex-gap-2 px-4 py-2 bg-success/10 rounded-lg border border-success/20">
+        <Shield className="icon-sm text-success" />
         <span className="text-sm text-success font-medium">
           Authenticated: {address?.slice(0, 6)}...{address?.slice(-4)}
         </span>
@@ -106,16 +107,16 @@ export default function WalletAuthButton() {
   // Show disconnect option if connected but not authenticated
   if (isConnectedButNotAuthenticated) {
     return (
-      <div className="flex items-center gap-2">
+      <div className="flex-gap-2">
         <Button 
           onClick={handleAuthenticate}
           disabled={isAuthenticating}
-          className="flex items-center gap-2"
+          className="flex-gap-2"
         >
           {isAuthenticating ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
+            <LoadingSpinner size="sm" />
           ) : (
-            <Wallet className="h-4 w-4" />
+            <Wallet className="icon-sm" />
           )}
           Authenticate {address?.slice(0, 6)}...{address?.slice(-4)}
         </Button>
@@ -125,7 +126,7 @@ export default function WalletAuthButton() {
           onClick={() => open()}
           title="Switch wallet"
         >
-          <X className="h-4 w-4" />
+          <X className="icon-sm" />
         </Button>
       </div>
     );
@@ -135,12 +136,12 @@ export default function WalletAuthButton() {
     <Button 
       onClick={handleAuthenticate}
       disabled={isAuthenticating}
-      className="flex items-center gap-2"
+      className="flex-gap-2"
     >
       {isAuthenticating ? (
-        <Loader2 className="h-4 w-4 animate-spin" />
+        <LoadingSpinner size="sm" />
       ) : (
-        <Wallet className="h-4 w-4" />
+        <Wallet className="icon-sm" />
       )}
       {isConnected ? 
         `Authenticate ${address?.slice(0, 6)}...${address?.slice(-4)}` : 

@@ -54,7 +54,7 @@ export const ChatListItem = ({ chat, isSelected, onSelect, formatTime }: ChatLis
         </div>
         
         <div className="flex-1 min-w-0">
-          <div className="flex items-center justify-between mb-1">
+          <div className="flex-between mb-1">
             <h3 className="font-medium text-sm truncate">{displayName}</h3>
             <span className="text-xs text-muted-foreground">
               {formatTime(chat.lastActivity)}
@@ -67,7 +67,7 @@ export const ChatListItem = ({ chat, isSelected, onSelect, formatTime }: ChatLis
             </div>
           )}
           
-          <div className="flex items-center justify-between">
+          <div className="flex-between">
             <p className="text-sm text-muted-foreground truncate">
               {chat.lastMessage?.content || "No messages yet"}
             </p>

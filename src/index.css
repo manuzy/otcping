@@ -261,6 +261,27 @@ All colors MUST be HSL.
   .flex-gap-3 { @apply flex items-center gap-3; }
   .flex-gap-4 { @apply flex items-center gap-4; }
   
+  /* Performance Utilities */
+  .flex-center-gap-2 { @apply flex items-center justify-center gap-2; }
+  .flex-center-gap-3 { @apply flex items-center justify-center gap-3; }
+  .flex-between-gap-2 { @apply flex items-center justify-between gap-2; }
+  .flex-between-gap-3 { @apply flex items-center justify-between gap-3; }
+  .flex-col-gap-2 { @apply flex flex-col gap-2; }
+  .flex-col-gap-3 { @apply flex flex-col gap-3; }
+  .flex-col-gap-4 { @apply flex flex-col gap-4; }
+  
+  /* Icon Utilities */
+  .icon-xs { @apply h-3 w-3; }
+  .icon-sm { @apply h-4 w-4; }
+  .icon-md { @apply h-5 w-5; }
+  .icon-lg { @apply h-6 w-6; }
+  .icon-xl { @apply h-8 w-8; }
+  
+  /* Section Utilities */
+  .section-spacing { @apply space-y-4; }
+  .section-spacing-sm { @apply space-y-2; }
+  .section-spacing-lg { @apply space-y-6; }
+  
   /* Container Utilities */
   .container-content { @apply container max-w-6xl mx-auto p-6; }
   .container-narrow { @apply max-w-2xl mx-auto; }
@@ -286,6 +307,14 @@ All colors MUST be HSL.
   
   /* Loading State */
   .loading-state { @apply flex items-center gap-2 text-sm text-muted-foreground; }
+  .loading-spinner { @apply animate-spin text-muted-foreground; }
+  .loading-overlay { @apply absolute inset-0 bg-background/80 backdrop-blur-sm flex-center; }
+  
+  /* Form Section Utilities */
+  .form-section { @apply space-y-4 p-4 border rounded-lg; }
+  .form-section-header { @apply flex-between pb-2 border-b; }
+  .form-field-group { @apply space-y-2; }
+  .form-actions { @apply flex-gap-2 pt-4; }
   
   /* Status Utilities */
   .status-active {

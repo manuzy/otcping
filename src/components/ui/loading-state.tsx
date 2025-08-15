@@ -1,6 +1,6 @@
 import React from 'react';
-import { Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { LoadingSpinner } from './loading-spinner';
 
 interface LoadingStateProps {
   size?: 'sm' | 'md' | 'lg';
@@ -15,12 +15,6 @@ export const LoadingState: React.FC<LoadingStateProps> = ({
   className,
   fullScreen = false
 }) => {
-  const sizeClasses = {
-    sm: 'h-4 w-4',
-    md: 'h-6 w-6',
-    lg: 'h-8 w-8'
-  };
-
   const textSizeClasses = {
     sm: 'text-sm',
     md: 'text-base',
@@ -33,11 +27,11 @@ export const LoadingState: React.FC<LoadingStateProps> = ({
 
   return (
     <div className={cn(
-      'flex items-center justify-center gap-2',
+      'flex-center-gap-2',
       fullScreen ? `${containerClass} flex-col` : '',
       className
     )}>
-      <Loader2 className={cn('animate-spin', sizeClasses[size])} />
+      <LoadingSpinner size={size} />
       {text && (
         <span className={cn('text-muted-foreground', textSizeClasses[size])}>
           {text}
@@ -62,8 +56,8 @@ export const LoadingOverlay: React.FC<LoadingOverlayProps> = ({
     <div className="relative">
       {children}
       {isLoading && (
-        <div className="absolute inset-0 z-10 bg-background/80 backdrop-blur-sm">
-          <LoadingState text={text} className="h-full" />
+        <div className="loading-overlay">
+          <LoadingState text={text} />
         </div>
       )}
     </div>
@@ -82,8 +76,8 @@ export const LoadingButton: React.FC<LoadingButtonProps> = ({
   className
 }) => {
   return (
-    <div className={cn('flex items-center gap-2', className)}>
-      {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
+    <div className={cn('flex-gap-2', className)}>
+      {isLoading && <LoadingSpinner size="sm" />}
       {children}
     </div>
   );

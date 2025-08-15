@@ -4,7 +4,8 @@ import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { Menu, Send, MoreVertical, Loader2, ExternalLink, Clock, TrendingUp, ShoppingCart, Edit } from "lucide-react";
+import { Menu, Send, MoreVertical, ExternalLink, Clock, TrendingUp, ShoppingCart, Edit } from "lucide-react";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { Chat, Message, Trade } from "@/types";
 import { useMessages } from '@/hooks/useMessages';
 import { useChatParticipants } from '@/hooks/useChatParticipants';
@@ -430,7 +431,7 @@ export const ChatView = ({ chat, onMenuClick }: ChatViewProps) => {
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="flex items-center gap-3 p-4 border-b border-border">
+      <div className="flex-gap-3 p-4 border-b border-border">
         <Button 
           variant="ghost" 
           size="icon" 
@@ -448,7 +449,7 @@ export const ChatView = ({ chat, onMenuClick }: ChatViewProps) => {
         </Avatar>
         
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
+          <div className="flex-gap-2">
             <h2 className="font-semibold truncate">{displayName}</h2>
             {chat.isPublic && <Badge variant="secondary" className="text-xs">Public</Badge>}
           </div>
@@ -467,8 +468,8 @@ export const ChatView = ({ chat, onMenuClick }: ChatViewProps) => {
         <div className="p-4 border-b border-border">
           <Card>
             <CardContent className="p-6">
-              <div className="flex items-center gap-3 mb-4">
-                <TrendingUp className="h-8 w-8 text-primary" />
+              <div className="flex-gap-3 mb-4">
+                <TrendingUp className="icon-xl text-primary" />
                  <div className="flex-1">
                    <h3 className="text-lg font-semibold">
                      {formatTradePair(chat.trade)} on {chat.trade.chain}
@@ -689,8 +690,8 @@ export const ChatView = ({ chat, onMenuClick }: ChatViewProps) => {
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4">
         {messagesLoading ? (
-          <div className="flex items-center justify-center py-8">
-            <Loader2 className="h-6 w-6 animate-spin" />
+          <div className="flex-center py-8">
+            <LoadingSpinner size="lg" />
             <span className="ml-2">Loading messages...</span>
           </div>
         ) : messages.length === 0 ? (
@@ -724,9 +725,9 @@ export const ChatView = ({ chat, onMenuClick }: ChatViewProps) => {
             disabled={sending || !message.trim()}
           >
             {sending ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <LoadingSpinner size="sm" />
             ) : (
-              <Send className="h-4 w-4" />
+              <Send className="icon-sm" />
             )}
           </Button>
         </div>
