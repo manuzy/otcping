@@ -7,6 +7,7 @@ import { ShieldCheck, Mail, Settings, AlertTriangle } from "lucide-react";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { EmailTestPanel } from "@/components/debug/EmailTestPanel";
 import { SecurityDashboard } from "@/components/security/SecurityDashboard";
+import { ThemeSwitcher } from "@/components/theme/ThemeSwitcher";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -102,6 +103,9 @@ export default function Underground() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Theme Switcher Section */}
+        <ThemeSwitcher />
 
         {/* Test Email Section */}
         <Card>
