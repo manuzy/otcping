@@ -46,7 +46,7 @@ const Landing = () => {
               The secure platform for over-the-counter cryptocurrency trading with direct peer-to-peer communication
             </p>
 
-            <div className="flex-center-gap-6 flex-col sm:flex-row">
+            <div className="flex items-center justify-center gap-6 flex-col sm:flex-row">
               {isAuthenticated ? <Button size="lg" onClick={() => navigate('/app')} className="text-lg px-8 py-3">
                   Launch App
                   <ArrowRight className="ml-2 h-5 w-5" />
