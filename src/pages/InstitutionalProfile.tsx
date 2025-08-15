@@ -29,6 +29,7 @@ import LegalStatusSection from '@/components/institution/dueDiligence/LegalStatu
 import DeclarationsSection from '@/components/institution/dueDiligence/DeclarationsSection';
 
 const sections = [
+  { id: 'basic-info', title: 'Basic Info', description: 'Basic institution details and branding', required: true },
   { id: 'corporate-profile', title: 'Corporate Profile', description: 'Basic corporate information', required: true },
   { id: 'regulatory-status', title: 'Regulatory Status', description: 'Licenses and regulatory information', required: true },
   { id: 'governance', title: 'Governance', description: 'Board structure and control functions', required: true },
@@ -87,6 +88,30 @@ export default function InstitutionalProfile() {
     }
   }, [institution, loading, navigate]);
 
+  // Calculate basic info completion
+  const getBasicInfoCompletion = () => {
+    if (!formData) return { is_completed: false, completion_percentage: 0 };
+    
+    const requiredFields = ['name'];
+    const optionalFields = ['description', 'logo', 'public_description', 'private_description'];
+    
+    const completedRequired = requiredFields.filter(field => 
+      formData[field as keyof InstitutionCreationData]?.trim()
+    ).length;
+    const completedOptional = optionalFields.filter(field => 
+      formData[field as keyof InstitutionCreationData]?.trim()
+    ).length;
+    
+    const totalFields = requiredFields.length + optionalFields.length;
+    const completedFields = completedRequired + completedOptional;
+    const percentage = Math.round((completedFields / totalFields) * 100);
+    
+    return {
+      is_completed: completedRequired === requiredFields.length && percentage >= 80,
+      completion_percentage: percentage
+    };
+  };
+
   const handleSave = async () => {
     if (!institution?.id) return;
 
@@ -100,6 +125,17 @@ export default function InstitutionalProfile() {
       };
 
       await updateInstitution(institution.id, sanitizedData);
+      
+      // Update basic info completion
+      const basicInfoProgress = getBasicInfoCompletion();
+      const basicInfoCompletion: SectionCompletion = {
+        institution_id: institution.id,
+        section_name: 'basic-info' as DueDiligenceSection,
+        is_completed: basicInfoProgress.is_completed,
+        completion_percentage: basicInfoProgress.completion_percentage,
+        last_updated_at: new Date()
+      };
+      await updateCompletion('basic-info' as DueDiligenceSection, basicInfoCompletion);
       
       notifications.success({
         title: "Success",
@@ -128,7 +164,13 @@ export default function InstitutionalProfile() {
   };
 
   const getSectionIcon = (sectionId: string) => {
-    const completion = getSectionCompletion(sectionId as DueDiligenceSection);
+    let completion;
+    if (sectionId === 'basic-info') {
+      completion = getBasicInfoCompletion();
+    } else {
+      completion = getSectionCompletion(sectionId as DueDiligenceSection);
+    }
+    
     if (completion.is_completed) {
       return <CheckCircle2 className="h-4 w-4 text-green-600" />;
     } else if (completion.completion_percentage > 0) {
@@ -139,14 +181,26 @@ export default function InstitutionalProfile() {
   };
 
   const getSectionStatus = (sectionId: string) => {
-    const completion = getSectionCompletion(sectionId as DueDiligenceSection);
+    let completion;
+    if (sectionId === 'basic-info') {
+      completion = getBasicInfoCompletion();
+    } else {
+      completion = getSectionCompletion(sectionId as DueDiligenceSection);
+    }
+    
     if (completion.is_completed) return 'Complete';
     if (completion.completion_percentage > 0) return 'In Progress';
     return 'Not Started';
   };
 
   const getSectionVariant = (sectionId: string) => {
-    const completion = getSectionCompletion(sectionId as DueDiligenceSection);
+    let completion;
+    if (sectionId === 'basic-info') {
+      completion = getBasicInfoCompletion();
+    } else {
+      completion = getSectionCompletion(sectionId as DueDiligenceSection);
+    }
+    
     if (completion.is_completed) return 'default';
     if (completion.completion_percentage > 0) return 'secondary';
     return 'outline';
@@ -156,6 +210,89 @@ export default function InstitutionalProfile() {
     if (!institution?.id) return null;
 
     switch (activeTab) {
+      case 'basic-info':
+        return (
+          <Card>
+            <CardHeader>
+              <CardTitle>Basic Information</CardTitle>
+              <CardDescription>
+                Manage your institution's basic details and branding
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <Label htmlFor="name">Institution Name *</Label>
+                <Input
+                  id="name"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  placeholder="Enter institution name"
+                  required
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="logo">Logo URL</Label>
+                <Input
+                  id="logo"
+                  value={formData.logo}
+                  onChange={(e) => setFormData({ ...formData, logo: e.target.value })}
+                  placeholder="https://example.com/logo.png"
+                  type="url"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="description">Internal Description</Label>
+                <Textarea
+                  id="description"
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  placeholder="Internal description for your team"
+                  rows={3}
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="public_description">Public Description</Label>
+                <Textarea
+                  id="public_description"
+                  value={formData.public_description}
+                  onChange={(e) => setFormData({ ...formData, public_description: e.target.value })}
+                  placeholder="Public description of your institution"
+                  rows={3}
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="private_description">Private Description</Label>
+                <Textarea
+                  id="private_description"
+                  value={formData.private_description}
+                  onChange={(e) => setFormData({ ...formData, private_description: e.target.value })}
+                  placeholder="Private notes and information for internal use"
+                  rows={3}
+                />
+              </div>
+            </CardContent>
+            <div className="flex justify-end p-6 pt-0">
+              <Button 
+                onClick={handleSave} 
+                disabled={updating || !formData.name.trim()}
+                className="min-w-[120px]"
+              >
+                {updating ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  'Save Changes'
+                )}
+              </Button>
+            </div>
+          </Card>
+        );
       case 'corporate-profile':
         return <CorporateProfileSection institutionId={institution.id} onSectionUpdate={handleSectionUpdate} />;
       case 'regulatory-status':
@@ -258,10 +395,6 @@ export default function InstitutionalProfile() {
       {/* Tabbed Interface */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList className="grid grid-cols-5 lg:grid-cols-10 h-auto p-1">
-          <TabsTrigger value="basic-info" className="text-xs px-2 py-2 flex items-center gap-1">
-            <Circle className="h-4 w-4 text-muted-foreground" />
-            <span className="hidden lg:inline">Basic Info</span>
-          </TabsTrigger>
           {sections.map((section) => (
             <TabsTrigger 
               key={section.id} 
@@ -274,138 +407,60 @@ export default function InstitutionalProfile() {
           ))}
         </TabsList>
 
-        {/* Basic Information Tab */}
-        <TabsContent value="basic-info" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Basic Information</CardTitle>
-              <CardDescription>
-                Manage your institution's basic details and branding
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label htmlFor="name">Institution Name *</Label>
-                <Input
-                  id="name"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="Enter institution name"
-                  required
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="logo">Logo URL</Label>
-                <Input
-                  id="logo"
-                  value={formData.logo}
-                  onChange={(e) => setFormData({ ...formData, logo: e.target.value })}
-                  placeholder="https://example.com/logo.png"
-                  type="url"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="description">Internal Description</Label>
-                <Textarea
-                  id="description"
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  placeholder="Internal description for your team"
-                  rows={3}
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="public_description">Public Description</Label>
-                <Textarea
-                  id="public_description"
-                  value={formData.public_description}
-                  onChange={(e) => setFormData({ ...formData, public_description: e.target.value })}
-                  placeholder="Public description of your institution"
-                  rows={3}
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="private_description">Private Description</Label>
-                <Textarea
-                  id="private_description"
-                  value={formData.private_description}
-                  onChange={(e) => setFormData({ ...formData, private_description: e.target.value })}
-                  placeholder="Private notes and information for internal use"
-                  rows={3}
-                />
-              </div>
-
-              <Button 
-                onClick={handleSave} 
-                disabled={updating || !formData.name.trim()}
-                className="w-full"
-                size="lg"
-              >
-                {updating ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Saving...
-                  </>
-                ) : (
-                  <>
-                    <Save className="mr-2 h-4 w-4" />
-                    Save Basic Information
-                  </>
-                )}
-              </Button>
-            </CardContent>
-          </Card>
-
-          {/* Institution Stats */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Users className="h-5 w-5" />
-                Institution Overview
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-3 gap-4">
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-primary">{institution.member_count}</div>
-                  <div className="text-sm text-muted-foreground">Members</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-blue-600">{institution.kyb_status}</div>
-                  <div className="text-sm text-muted-foreground">KYB Status</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-green-600">
-                    {new Date(institution.created_at).toLocaleDateString()}
-                  </div>
-                  <div className="text-sm text-muted-foreground">Created</div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Render Due Diligence Sections */}
+        {/* Render All Sections */}
         {sections.map((section) => (
           <TabsContent key={section.id} value={section.id} className="space-y-6">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h2 className="text-xl font-semibold flex items-center gap-2">
-                  {getSectionIcon(section.id)}
-                  {section.title}
-                  {section.required && <Badge variant="destructive" className="text-xs">Required</Badge>}
-                </h2>
-                <p className="text-sm text-muted-foreground">{section.description}</p>
+            {section.id !== 'basic-info' && (
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h2 className="text-xl font-semibold flex items-center gap-2">
+                    {getSectionIcon(section.id)}
+                    {section.title}
+                    {section.required && <Badge variant="destructive" className="text-xs">Required</Badge>}
+                  </h2>
+                  <p className="text-sm text-muted-foreground">{section.description}</p>
+                </div>
+                <Badge variant={getSectionVariant(section.id)}>
+                  {getSectionStatus(section.id)}
+                </Badge>
               </div>
-              <Badge variant={getSectionVariant(section.id)}>
-                {getSectionStatus(section.id)}
-              </Badge>
-            </div>
-            {renderSectionContent()}
+            )}
+            
+            {section.id === 'basic-info' && (
+              <>
+                {renderSectionContent()}
+                
+                {/* Institution Stats */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Users className="h-5 w-5" />
+                      Institution Overview
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-3 gap-4">
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-primary">{institution.member_count}</div>
+                        <div className="text-sm text-muted-foreground">Members</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-blue-600">{institution.kyb_status}</div>
+                        <div className="text-sm text-muted-foreground">KYB Status</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-green-600">
+                          {new Date(institution.created_at).toLocaleDateString()}
+                        </div>
+                        <div className="text-sm text-muted-foreground">Created</div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </>
+            )}
+            
+            {section.id !== 'basic-info' && renderSectionContent()}
           </TabsContent>
         ))}
       </Tabs>
