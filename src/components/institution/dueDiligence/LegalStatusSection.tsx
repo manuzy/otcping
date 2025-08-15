@@ -235,16 +235,16 @@ export default function LegalStatusSection({ institutionId, onSectionUpdate }: L
                         <span className={cn(
                           "px-2 py-1 text-xs rounded-full",
                           legalCase.type === 'litigation' 
-                            ? "bg-red-100 text-red-800" 
-                            : "bg-orange-100 text-orange-800"
+                            ? "bg-error text-error-foreground" 
+                            : "bg-warning text-warning-foreground"
                         )}>
                           {legalCase.type === 'litigation' ? 'Litigation' : 'Regulatory Action'}
                         </span>
                         <span className={cn(
                           "px-2 py-1 text-xs rounded-full",
                           legalCase.status === 'ongoing' 
-                            ? "bg-yellow-100 text-yellow-800" 
-                            : "bg-green-100 text-green-800"
+                            ? "bg-warning text-warning-foreground" 
+                            : "bg-success text-success-foreground"
                         )}>
                           {legalCase.status}
                         </span>

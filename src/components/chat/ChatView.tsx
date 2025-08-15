@@ -21,6 +21,7 @@ import { limitOrderService } from '@/lib/limitOrderService';
 import { useWalletClient, useAccount } from 'wagmi';
 import { useTokenAllowance } from '@/hooks/useTokenAllowance';
 import { EditTradeDialog } from './EditTradeDialog';
+import { StatusBadge } from '@/components/ui/status-badge';
 import { logger } from '@/lib/logger';
 import { notifications } from '@/lib/notifications';
 import { errorHandler } from '@/lib/errorHandler';
@@ -326,22 +327,22 @@ export const ChatView = ({ chat, onMenuClick }: ChatViewProps) => {
     return trade.pair || 'Unknown Pair';
   };
 
-  // Badge color helpers matching PublicTrades
-  const getStatusColor = (status: string) => {
+  // Status badge helpers using standardized StatusBadge component
+  const getStatusVariant = (status: string) => {
     switch (status?.toLowerCase()) {
-      case 'active': return 'bg-green-100 text-green-800';
-      case 'completed': return 'bg-blue-100 text-blue-800';
-      case 'cancelled': return 'bg-red-100 text-red-800';
-      case 'expired': return 'bg-gray-100 text-gray-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'active': return 'active';
+      case 'completed': return 'completed';
+      case 'cancelled': return 'cancelled';
+      case 'expired': return 'expired';
+      default: return 'pending';
     }
   };
 
-  const getTypeColor = (type: string) => {
+  const getTypeVariant = (type: string) => {
     switch (type?.toLowerCase()) {
-      case 'buy': return 'bg-green-100 text-green-800';
-      case 'sell': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'buy': return 'buy';
+      case 'sell': return 'sell';
+      default: return 'pending';
     }
   };
 
@@ -473,9 +474,9 @@ export const ChatView = ({ chat, onMenuClick }: ChatViewProps) => {
                      {formatTradePair(chat.trade)} on {chat.trade.chain}
                    </h3>
                  </div>
-                <Badge className={getTypeColor(chat.trade.type)}>
+                <StatusBadge status={getTypeVariant(chat.trade.type)}>
                   {chat.trade.type?.toUpperCase()}
-                </Badge>
+                </StatusBadge>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 text-sm">
@@ -562,14 +563,14 @@ export const ChatView = ({ chat, onMenuClick }: ChatViewProps) => {
                      <p className="font-semibold">{formatNumberWithCommas(chat.trade.limitPrice)}</p>
                    </div>
                  )}
-                 <div>
-                   <span className="text-xs text-muted-foreground">Status</span>
-                   <div>
-                     <Badge className={getStatusColor(chat.trade.status)}>
-                       {chat.trade.status?.toUpperCase()}
-                     </Badge>
-                   </div>
-                 </div>
+                  <div>
+                    <span className="text-xs text-muted-foreground">Status</span>
+                    <div>
+                      <StatusBadge status={getStatusVariant(chat.trade.status)}>
+                        {chat.trade.status?.toUpperCase()}
+                      </StatusBadge>
+                    </div>
+                  </div>
                </div>
 
               <div className="space-y-2 mb-3 text-xs text-muted-foreground">
@@ -660,7 +661,7 @@ export const ChatView = ({ chat, onMenuClick }: ChatViewProps) => {
                          )}
                          {orderState === 'signing' && (
                            <>
-                             <div className="h-3 w-3 animate-pulse rounded-full bg-yellow-500" />
+                             <div className="h-3 w-3 animate-pulse rounded-full bg-warning" />
                              Waiting for Signature
                            </>
                          )}

@@ -346,7 +346,7 @@ export default function ProfileManager() {
                 </AvatarFallback>
               </Avatar>
               {user && isUserOnline(user.id) && (
-                <div className="absolute bottom-0 right-0 h-5 w-5 bg-green-500 rounded-full border-2 border-background" />
+                <div className="absolute bottom-0 right-0 h-5 w-5 bg-success rounded-full border-2 border-background" />
               )}
             </div>
             <div className="flex-1">

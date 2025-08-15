@@ -58,7 +58,7 @@ export const MainLayout = () => {
 
       {/* Mobile Sidebar */}
       <div className={`
-        md:hidden fixed inset-y-16 left-0 z-40 w-80 
+        md:hidden fixed inset-y-16 left-0 z-overlay w-80 
         bg-card border-r border-border
         transform transition-transform duration-300 ease-in-out
         ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
@@ -73,7 +73,7 @@ export const MainLayout = () => {
       {/* Mobile Overlay */}
       {isSidebarOpen && (
         <div 
-          className="md:hidden fixed inset-0 bg-black/50 z-30"
+          className="md:hidden fixed inset-0 bg-overlay-light z-fixed"
           onClick={() => setIsSidebarOpen(false)}
         />
       )}

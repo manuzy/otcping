@@ -31,10 +31,10 @@ interface SecurityDashboardData {
 }
 
 const SEVERITY_COLORS = {
-  low: 'bg-green-500',
-  medium: 'bg-yellow-500',
-  high: 'bg-orange-500',
-  critical: 'bg-red-500'
+  low: 'bg-success',
+  medium: 'bg-warning',
+  high: 'bg-error',
+  critical: 'bg-destructive'
 };
 
 const SEVERITY_VARIANTS = {

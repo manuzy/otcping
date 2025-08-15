@@ -68,7 +68,48 @@ export default {
 					'accent-foreground': 'var(--sidebar-accent-foreground)',
 					border: 'var(--sidebar-border)',
 					ring: 'var(--sidebar-ring)'
-				}
+				},
+				// Semantic Colors
+				success: {
+					DEFAULT: 'var(--success)',
+					foreground: 'var(--success-foreground)'
+				},
+				warning: {
+					DEFAULT: 'var(--warning)',
+					foreground: 'var(--warning-foreground)'
+				},
+				info: {
+					DEFAULT: 'var(--info)',
+					foreground: 'var(--info-foreground)'
+				},
+				error: {
+					DEFAULT: 'var(--error)',
+					foreground: 'var(--error-foreground)'
+				},
+				// Status Colors
+				'status-active': {
+					DEFAULT: 'var(--status-active)',
+					foreground: 'var(--status-active-foreground)'
+				},
+				'status-pending': {
+					DEFAULT: 'var(--status-pending)',
+					foreground: 'var(--status-pending-foreground)'
+				},
+				'status-completed': {
+					DEFAULT: 'var(--status-completed)',
+					foreground: 'var(--status-completed-foreground)'
+				},
+				'status-cancelled': {
+					DEFAULT: 'var(--status-cancelled)',
+					foreground: 'var(--status-cancelled-foreground)'
+				},
+				'status-expired': {
+					DEFAULT: 'var(--status-expired)',
+					foreground: 'var(--status-expired-foreground)'
+				},
+				// Overlay Colors
+				overlay: 'var(--overlay)',
+				'overlay-light': 'var(--overlay-light)'
 			},
 			fontFamily: {
 				sans: 'var(--font-sans)',

@@ -23,14 +23,14 @@ export function KybBadge({
         return {
           text: 'Verified by KYB',
           icon: ShieldCheck,
-          className: 'bg-green-100 text-green-800 border-green-200',
+          className: 'bg-success text-success-foreground border-success',
           tooltip: 'This institution has successfully completed Know Your Business (KYB) verification.'
         };
       case 'pending':
         return {
           text: 'KYB Pending',
           icon: Shield,
-          className: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+          className: 'bg-warning text-warning-foreground border-warning',
           tooltip: 'KYB verification is in progress.'
         };
       case 'not_verified':
@@ -38,7 +38,7 @@ export function KybBadge({
         return {
           text: 'Not KYB Verified',
           icon: AlertTriangle,
-          className: 'bg-red-100 text-red-800 border-red-200',
+          className: 'bg-error text-error-foreground border-error',
           tooltip: 'This institution has not completed KYB verification. Use caution.'
         };
     }
