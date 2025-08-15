@@ -37,7 +37,15 @@ const AdverseMediaMethods = [
 ];
 
 export default function LegalStatusSection({ institutionId, onSectionUpdate }: LegalStatusSectionProps) {
-  const { data, loading, saving, updateData } = useLegalStatus(institutionId);
+  const { data, loading, saving, updateData, saveData } = useLegalStatus(institutionId);
+
+  const handleSave = async () => {
+    try {
+      await saveData(data);
+    } catch (error) {
+      console.error('Error saving legal status data:', error);
+    }
+  };
   const [newCase, setNewCase] = useState<Partial<LocalLegalCase>>({});
   const [showAddCase, setShowAddCase] = useState(false);
 
@@ -337,6 +345,22 @@ export default function LegalStatusSection({ institutionId, onSectionUpdate }: L
           </div>
         </div>
       </CardContent>
+      <div className="flex justify-end p-6 pt-0">
+        <Button 
+          onClick={handleSave} 
+          disabled={saving}
+          className="min-w-[120px]"
+        >
+          {saving ? (
+            <>
+              <span className="animate-spin mr-2">⏳</span>
+              Saving...
+            </>
+          ) : (
+            'Save Changes'
+          )}
+        </Button>
+      </div>
     </Card>
   );
 }

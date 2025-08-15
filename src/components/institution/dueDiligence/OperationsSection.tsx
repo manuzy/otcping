@@ -42,7 +42,15 @@ const ReportingInterfaces = [
 ];
 
 export default function OperationsSection({ institutionId, onSectionUpdate }: OperationsSectionProps) {
-  const { data, loading, saving, updateData } = useOperations(institutionId);
+  const { data, loading, saving, updateData, saveData } = useOperations(institutionId);
+
+  const handleSave = async () => {
+    try {
+      await saveData(data);
+    } catch (error) {
+      console.error('Error saving operations data:', error);
+    }
+  };
 
   useEffect(() => {
     if (!data || !Object.keys(data).length) return;
@@ -289,6 +297,22 @@ export default function OperationsSection({ institutionId, onSectionUpdate }: Op
           </div>
         </div>
       </CardContent>
+      <div className="flex justify-end p-6 pt-0">
+        <Button 
+          onClick={handleSave} 
+          disabled={saving}
+          className="min-w-[120px]"
+        >
+          {saving ? (
+            <>
+              <span className="animate-spin mr-2">⏳</span>
+              Saving...
+            </>
+          ) : (
+            'Save Changes'
+          )}
+        </Button>
+      </div>
     </Card>
   );
 }

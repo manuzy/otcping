@@ -5,6 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Button } from '@/components/ui/button';
 import { useTradingProfile } from '@/hooks/useTradingProfile';
 import type { DueDiligenceSection, SectionCompletion } from '@/types/dueDiligence';
 
@@ -51,7 +52,15 @@ const CustodyModels = [
 ];
 
 export default function TradingProfileSection({ institutionId, onSectionUpdate }: TradingProfileSectionProps) {
-  const { data, loading, saving, updateData } = useTradingProfile(institutionId);
+  const { data, loading, saving, updateData, saveData } = useTradingProfile(institutionId);
+
+  const handleSave = async () => {
+    try {
+      await saveData(data);
+    } catch (error) {
+      console.error('Error saving trading profile data:', error);
+    }
+  };
 
   useEffect(() => {
     if (!data || !Object.keys(data).length) return;
@@ -295,6 +304,22 @@ export default function TradingProfileSection({ institutionId, onSectionUpdate }
           </div>
         </div>
       </CardContent>
+      <div className="flex justify-end p-6 pt-0">
+        <Button 
+          onClick={handleSave} 
+          disabled={saving}
+          className="min-w-[120px]"
+        >
+          {saving ? (
+            <>
+              <span className="animate-spin mr-2">⏳</span>
+              Saving...
+            </>
+          ) : (
+            'Save Changes'
+          )}
+        </Button>
+      </div>
     </Card>
   );
 }
