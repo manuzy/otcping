@@ -5,11 +5,22 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Building2, ArrowLeft, Users, Save, CheckCircle2, Clock, Circle, AlertCircle } from 'lucide-react';
-import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+import { 
+  Sidebar, 
+  SidebarContent, 
+  SidebarGroup, 
+  SidebarGroupContent, 
+  SidebarGroupLabel, 
+  SidebarMenu, 
+  SidebarMenuButton, 
+  SidebarMenuItem, 
+  SidebarProvider,
+  SidebarTrigger,
+  useSidebar 
+} from '@/components/ui/sidebar';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { useInstitution, useInstitutionUpdate } from '@/hooks/useInstitution';
 import { useAuth } from '@/hooks/useAuth';
@@ -57,7 +68,7 @@ export default function InstitutionalProfile() {
     getSectionCompletion 
   } = useSectionCompletion(institution?.id || '');
   
-  const [activeTab, setActiveTab] = useState('basic-info');
+  const [activeSection, setActiveSection] = useState('basic-info');
   const [formData, setFormData] = useState<InstitutionCreationData>({
     name: '',
     description: '',
@@ -211,7 +222,7 @@ export default function InstitutionalProfile() {
   const renderSectionContent = () => {
     if (!institution?.id) return null;
 
-    switch (activeTab) {
+    switch (activeSection) {
       case 'basic-info':
         return (
           <Card>
@@ -284,7 +295,7 @@ export default function InstitutionalProfile() {
                 className="min-w-[120px]"
               >
                  {updating ? (
-                   <div className="flex-center-gap-2">
+                   <div className="flex items-center gap-2">
                      <LoadingSpinner size="sm" />
                      Saving...
                    </div>
@@ -321,7 +332,7 @@ export default function InstitutionalProfile() {
   if (loading) {
     return (
       <div className="container-content">
-        <div className="flex-center min-h-[400px]">
+        <div className="flex justify-center items-center min-h-[400px]">
           <LoadingSpinner size="lg" />
         </div>
       </div>
@@ -343,135 +354,149 @@ export default function InstitutionalProfile() {
   }
 
   return (
-    <div className="container-content">
-      {/* Header */}
-      <div className="flex-gap-4 mb-6">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => navigate('/settings')}
-          className="flex-center-gap-2"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Back to Settings
-        </Button>
-        <div className="flex-center-gap-2">
-          <Building2 className="h-6 w-6 text-primary" />
-          <h1 className="text-2xl font-bold">Institutional Profile</h1>
-        </div>
-      </div>
-
-      {/* Progress Overview */}
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle>Profile Completion</CardTitle>
-          <CardDescription>
-            Complete your institutional profile for regulatory compliance and partner verification
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="space-y-1">
-                <div className="text-sm font-medium">Overall Progress</div>
-                <div className="text-2xl font-bold text-primary">
-                  {progressLoading ? (
-                     <LoadingSpinner size="md" />
-                   ) : (
-                     `${overallProgress}%`
-                   )}
-                </div>
+    <SidebarProvider>
+      <div className="flex h-screen w-full bg-background">
+        <Sidebar className="w-80 border-r">
+          <SidebarContent>
+            {/* Header */}
+            <div className="p-4 border-b">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate('/settings')}
+                className="flex items-center gap-2 w-full justify-start"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                Back to Settings
+              </Button>
+              <div className="flex items-center gap-2 mt-3">
+                <Building2 className="h-6 w-6 text-primary" />
+                <h1 className="text-lg font-bold">Institutional Profile</h1>
               </div>
-              <div className="text-center">
-                <div className="text-sm text-muted-foreground">Completed Sections</div>
-                <div className="text-lg font-semibold">
-                  {progressLoading ? '...' : `${completedSections}/${sections.length}`}
+            </div>
+
+            {/* Progress Overview */}
+            <div className="p-4 border-b">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="text-sm font-medium">Overall Progress</div>
+                  <div className="text-lg font-bold text-primary">
+                    {progressLoading ? (
+                       <LoadingSpinner size="sm" />
+                     ) : (
+                       `${overallProgress}%`
+                     )}
+                  </div>
+                </div>
+                <Progress value={overallProgress} className="w-full" />
+                <div className="text-xs text-muted-foreground">
+                  {progressLoading ? '...' : `${completedSections}/${sections.length} sections completed`}
                 </div>
               </div>
             </div>
-            <Progress value={overallProgress} className="w-full" />
-          </div>
-        </CardContent>
-      </Card>
 
-      {/* Tabbed Interface */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <div className="relative">
-          <ScrollArea className="w-full whitespace-nowrap">
-            <TabsList className="inline-flex h-12 items-center justify-start rounded-lg bg-muted p-1 text-muted-foreground w-max">
-              {sections.map((section) => (
-                <TabsTrigger 
-                  key={section.id} 
-                  value={section.id}
-                  className="inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-2 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm gap-2 min-w-[120px] sm:min-w-[140px]"
-                >
-                  {getSectionIcon(section.id)}
-                  <span className="hidden sm:inline md:hidden lg:inline truncate">{section.title}</span>
-                  <span className="sm:hidden">{section.title.split(' ')[0]}</span>
-                </TabsTrigger>
-              ))}
-            </TabsList>
-            <ScrollBar orientation="horizontal" className="h-2" />
-          </ScrollArea>
-        </div>
+            {/* Navigation Menu */}
+            <SidebarGroup>
+              <SidebarGroupLabel>Due Diligence Sections</SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {sections.map((section) => (
+                    <SidebarMenuItem key={section.id}>
+                      <SidebarMenuButton 
+                        onClick={() => setActiveSection(section.id)}
+                        isActive={activeSection === section.id}
+                        className="w-full justify-start"
+                      >
+                        <div className="flex items-center gap-3 min-w-0 flex-1">
+                          {getSectionIcon(section.id)}
+                          <div className="flex-1 min-w-0">
+                            <div className="font-medium text-sm truncate">{section.title}</div>
+                            <div className="text-xs text-muted-foreground">
+                              {getSectionStatus(section.id)}
+                            </div>
+                          </div>
+                          <Badge variant={getSectionVariant(section.id)} className="text-xs">
+                            {section.id === 'basic-info' 
+                              ? `${getBasicInfoCompletion().completion_percentage}%`
+                              : `${getSectionCompletion(section.id as DueDiligenceSection).completion_percentage}%`
+                            }
+                          </Badge>
+                        </div>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          </SidebarContent>
+        </Sidebar>
 
-        {/* Render All Sections */}
-        {sections.map((section) => (
-          <TabsContent key={section.id} value={section.id} className="space-y-6">
-            {section.id !== 'basic-info' && (
-              <div className="flex items-center justify-between mb-4">
+        {/* Main Content Area */}
+        <div className="flex-1 flex flex-col overflow-hidden">
+          {/* Main Content Header */}
+          <div className="p-6 border-b bg-background">
+            <SidebarTrigger className="md:hidden mb-4" />
+            {activeSection !== 'basic-info' && (
+              <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="text-xl font-semibold flex-center-gap-2">
-                    {getSectionIcon(section.id)}
-                    {section.title}
-                    {section.required && <Badge variant="destructive" className="text-xs">Required</Badge>}
+                  <h2 className="text-2xl font-semibold flex items-center gap-2">
+                    {getSectionIcon(activeSection)}
+                    {sections.find(s => s.id === activeSection)?.title}
                   </h2>
-                  <p className="text-sm text-muted-foreground">{section.description}</p>
+                  <p className="text-muted-foreground">
+                    {sections.find(s => s.id === activeSection)?.description}
+                  </p>
                 </div>
-                <Badge variant={getSectionVariant(section.id)}>
-                  {getSectionStatus(section.id)}
+                <Badge variant={getSectionVariant(activeSection)} className="text-sm">
+                  {getSectionStatus(activeSection)}
                 </Badge>
               </div>
             )}
-            
-            {section.id === 'basic-info' && (
-              <>
-                {renderSectionContent()}
-                
-                {/* Institution Stats */}
-                <Card>
+          </div>
+
+          {/* Scrollable Content */}
+          <div className="flex-1 overflow-y-auto p-6">
+            <div className="max-w-4xl mx-auto">
+              {renderSectionContent()}
+              
+              {/* Institution Overview - Only show on basic-info */}
+              {activeSection === 'basic-info' && (
+                <Card className="mt-6">
                   <CardHeader>
-                    <CardTitle className="flex-center-gap-2">
-                      <Users className="h-5 w-5" />
+                    <CardTitle className="flex items-center gap-2">
+                      <Building2 className="h-5 w-5" />
                       Institution Overview
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="grid grid-cols-3 gap-4">
-                      <div className="text-center">
-                        <div className="text-2xl font-bold text-primary">{institution.member_count}</div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="text-center p-4 border rounded-lg">
+                        <Users className="h-6 w-6 text-muted-foreground mx-auto mb-2" />
+                        <div className="text-2xl font-bold">{institution.member_count || 0}</div>
                         <div className="text-sm text-muted-foreground">Members</div>
                       </div>
-                      <div className="text-center">
-                        <div className="text-2xl font-bold text-blue-600">{institution.kyb_status}</div>
-                        <div className="text-sm text-muted-foreground">KYB Status</div>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-2xl font-bold text-green-600">
-                          {new Date(institution.created_at).toLocaleDateString()}
+                      <div className="text-center p-4 border rounded-lg">
+                        <Building2 className="h-6 w-6 text-muted-foreground mx-auto mb-2" />
+                        <div className="text-sm font-medium">
+                          KYB Status: <Badge variant={institution.kyb_status === 'verified' ? 'default' : 'outline'}>
+                            {institution.kyb_status === 'verified' ? 'Verified' : 'Pending'}
+                          </Badge>
                         </div>
-                        <div className="text-sm text-muted-foreground">Created</div>
+                      </div>
+                      <div className="text-center p-4 border rounded-lg">
+                        <Clock className="h-6 w-6 text-muted-foreground mx-auto mb-2" />
+                        <div className="text-sm text-muted-foreground">
+                          Created {new Date(institution.created_at).toLocaleDateString()}
+                        </div>
                       </div>
                     </div>
                   </CardContent>
                 </Card>
-              </>
-            )}
-            
-            {section.id !== 'basic-info' && renderSectionContent()}
-          </TabsContent>
-        ))}
-      </Tabs>
-    </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </SidebarProvider>
   );
 }
