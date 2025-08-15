@@ -26,19 +26,21 @@ export default function RegulatoryStatusSection({ institutionId, onSectionUpdate
   const { data, loading, saving, error, updateData, saveData } = useRegulatoryStatus(institutionId);
 
   React.useEffect(() => {
-    if (!data || !Object.keys(data).length) return;
+    console.log('🔍 RegulatoryStatus completion calculation:', { data, institutionId });
     
     const totalFields = 5;
     let completedFields = 0;
 
-    if (data.primary_authority) completedFields++;
-    if (data.license_number) completedFields++;
-    if (data.license_categories?.length) completedFields++;
-    if (data.operating_jurisdictions?.length) completedFields++;
-    if (data.initial_issue_date) completedFields++;
+    if (data?.primary_authority) completedFields++;
+    if (data?.license_number) completedFields++;
+    if (data?.license_categories?.length) completedFields++;
+    if (data?.operating_jurisdictions?.length) completedFields++;
+    if (data?.initial_issue_date) completedFields++;
 
     const percentage = Math.round((completedFields / totalFields) * 100);
     const isCompleted = percentage >= 80;
+
+    console.log('🔍 RegulatoryStatus completion result:', { completedFields, totalFields, percentage, isCompleted });
 
     const timeoutId = setTimeout(() => {
       onSectionUpdate('regulatory_status', {

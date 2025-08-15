@@ -21,17 +21,19 @@ export default function GovernanceSection({ institutionId, onSectionUpdate }: Go
   const { data, loading, saving, error, updateData, saveData } = useGovernance(institutionId);
 
   React.useEffect(() => {
-    if (!data || !Object.keys(data).length) return;
+    console.log('🔍 Governance completion calculation:', { data, institutionId });
     
     const totalFields = 3;
     let completedFields = 0;
 
-    if (data.compliance_officer) completedFields++;
-    if (data.risk_officer) completedFields++;
-    if (data.internal_audit_officer) completedFields++;
+    if (data?.compliance_officer) completedFields++;
+    if (data?.risk_officer) completedFields++;
+    if (data?.internal_audit_officer) completedFields++;
 
     const percentage = Math.round((completedFields / totalFields) * 100);
     const isCompleted = percentage >= 80;
+
+    console.log('🔍 Governance completion result:', { completedFields, totalFields, percentage, isCompleted });
 
     const timeoutId = setTimeout(() => {
       onSectionUpdate('governance', {
@@ -46,33 +48,9 @@ export default function GovernanceSection({ institutionId, onSectionUpdate }: Go
     return () => clearTimeout(timeoutId);
   }, [data, onSectionUpdate, institutionId]);
 
-  const calculateCompletionPercentage = () => {
-    const requiredFields = [
-      data.compliance_officer,
-      data.risk_officer,
-      data.internal_audit_officer
-    ];
-    
-    const completedFields = requiredFields.filter(Boolean).length;
-    return Math.round((completedFields / requiredFields.length) * 100);
-  };
-
   const handleSave = async () => {
     try {
       await saveData(data);
-      
-      const completionPercentage = calculateCompletionPercentage();
-      const isCompleted = completionPercentage === 100;
-      
-      const completion: SectionCompletion = {
-        institution_id: institutionId,
-        section_name: 'governance',
-        is_completed: isCompleted,
-        completion_percentage: completionPercentage,
-        last_updated_at: new Date()
-      };
-      
-      onSectionUpdate('governance', completion);
       
       toast({
         title: "Success",

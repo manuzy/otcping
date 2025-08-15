@@ -53,24 +53,26 @@ export default function OperationsSection({ institutionId, onSectionUpdate }: Op
   };
 
   useEffect(() => {
-    if (!data || !Object.keys(data).length) return;
+    console.log('🔍 Operations completion calculation:', { data, institutionId });
     
     const totalFields = 10;
     let completedFields = 0;
 
-    if (data.it_operating_model) completedFields++;
-    if (data.primary_providers?.length) completedFields++;
-    if (data.security_certifications?.length) completedFields++;
-    if (data.last_pentest_date) completedFields++;
-    if (data.bcp_rto_minutes) completedFields++;
-    if (data.bcp_rpo_minutes) completedFields++;
-    if (data.last_bcp_test_date) completedFields++;
-    if (data.emergency_contacts?.length) completedFields++;
-    if (data.reporting_interfaces?.length) completedFields++;
-    if (data.outsourcing_arrangements?.length) completedFields++;
+    if (data?.it_operating_model) completedFields++;
+    if (data?.primary_providers?.length) completedFields++;
+    if (data?.security_certifications?.length) completedFields++;
+    if (data?.last_pentest_date) completedFields++;
+    if (data?.bcp_rto_minutes) completedFields++;
+    if (data?.bcp_rpo_minutes) completedFields++;
+    if (data?.last_bcp_test_date) completedFields++;
+    if (data?.emergency_contacts?.length) completedFields++;
+    if (data?.reporting_interfaces?.length) completedFields++;
+    if (data?.outsourcing_arrangements?.length) completedFields++;
 
     const percentage = Math.round((completedFields / totalFields) * 100);
     const isCompleted = percentage >= 80;
+
+    console.log('🔍 Operations completion result:', { completedFields, totalFields, percentage, isCompleted });
 
     // Use a timeout to debounce rapid updates
     const timeoutId = setTimeout(() => {
