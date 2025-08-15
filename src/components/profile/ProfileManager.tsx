@@ -14,7 +14,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { useOnlinePresence } from '@/hooks/useOnlinePresence';
 import { useLicenses } from '@/hooks/useLicenses';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, User, AlertCircle, CheckCircle, Shuffle, X, Building2 } from 'lucide-react';
+import { Upload, CheckCircle, AlertCircle, ChevronRight, Building2, User, Plus, FileText, Calendar, MapPin, Phone, Mail, Shield, Award, Edit2, X, Camera, Shuffle } from "lucide-react";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { KycStatusIndicator } from '@/components/kyc/KycStatusIndicator';
 import { KycVerificationModal } from '@/components/kyc/KycVerificationModal';
 import { sanitizeText, validateAvatarUrl, sanitizeDisplayName } from '@/components/ui/input-sanitizer';
@@ -303,8 +304,8 @@ export default function ProfileManager() {
     return (
       <Card>
         <CardContent className="pt-6">
-          <div className="flex items-center justify-center">
-            <Loader2 className="h-6 w-6 animate-spin" />
+          <div className="flex-center">
+            <LoadingSpinner size="md" />
           </div>
         </CardContent>
       </Card>
@@ -326,7 +327,7 @@ export default function ProfileManager() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
+        <CardTitle className="flex-center-gap-2">
           <User className="h-5 w-5" />
           Profile Settings
         </CardTitle>
@@ -631,7 +632,7 @@ export default function ProfileManager() {
         >
           {saving ? (
             <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              <LoadingSpinner size="sm" className="mr-2" />
               Saving...
             </>
           ) : (

@@ -8,7 +8,8 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Building2, ArrowLeft, Users, Save, CheckCircle2, Clock, Circle, AlertCircle } from 'lucide-react';
+import { Building2, ArrowLeft, Users, Save, CheckCircle2, Clock, Circle, AlertCircle } from 'lucide-react';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { useInstitution, useInstitutionUpdate } from '@/hooks/useInstitution';
 import { useAuth } from '@/hooks/useAuth';
 import { useSectionCompletion } from '@/hooks/useSectionCompletion';
@@ -281,14 +282,14 @@ export default function InstitutionalProfile() {
                 disabled={updating || !formData.name.trim()}
                 className="min-w-[120px]"
               >
-                {updating ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Saving...
-                  </>
-                ) : (
-                  'Save Changes'
-                )}
+                 {updating ? (
+                   <div className="flex-center-gap-2">
+                     <LoadingSpinner size="sm" />
+                     Saving...
+                   </div>
+                 ) : (
+                   'Save Changes'
+                 )}
               </Button>
             </div>
           </Card>
@@ -319,8 +320,8 @@ export default function InstitutionalProfile() {
   if (loading) {
     return (
       <div className="container-content">
-        <div className="flex items-center justify-center min-h-[400px]">
-          <Loader2 className="h-8 w-8 animate-spin" />
+        <div className="flex-center min-h-[400px]">
+          <LoadingSpinner size="lg" />
         </div>
       </div>
     );
@@ -348,12 +349,12 @@ export default function InstitutionalProfile() {
           variant="outline"
           size="sm"
           onClick={() => navigate('/settings')}
-          className="flex items-center gap-2"
+          className="flex-center-gap-2"
         >
           <ArrowLeft className="h-4 w-4" />
           Back to Settings
         </Button>
-        <div className="flex items-center gap-2">
+        <div className="flex-center-gap-2">
           <Building2 className="h-6 w-6 text-primary" />
           <h1 className="text-2xl font-bold">Institutional Profile</h1>
         </div>
@@ -374,10 +375,10 @@ export default function InstitutionalProfile() {
                 <div className="text-sm font-medium">Overall Progress</div>
                 <div className="text-2xl font-bold text-primary">
                   {progressLoading ? (
-                    <Loader2 className="h-6 w-6 animate-spin" />
-                  ) : (
-                    `${overallProgress}%`
-                  )}
+                     <LoadingSpinner size="md" />
+                   ) : (
+                     `${overallProgress}%`
+                   )}
                 </div>
               </div>
               <div className="text-center">
@@ -413,7 +414,7 @@ export default function InstitutionalProfile() {
             {section.id !== 'basic-info' && (
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <h2 className="text-xl font-semibold flex items-center gap-2">
+                  <h2 className="text-xl font-semibold flex-center-gap-2">
                     {getSectionIcon(section.id)}
                     {section.title}
                     {section.required && <Badge variant="destructive" className="text-xs">Required</Badge>}
@@ -433,7 +434,7 @@ export default function InstitutionalProfile() {
                 {/* Institution Stats */}
                 <Card>
                   <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
+                    <CardTitle className="flex-center-gap-2">
                       <Users className="h-5 w-5" />
                       Institution Overview
                     </CardTitle>

@@ -3,7 +3,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useKycVerification } from "@/hooks/useKycVerification";
-import { Loader2, Shield, FileText, UserCheck } from "lucide-react";
+import { Shield, FileText, UserCheck } from "lucide-react";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { KycBadge } from "./KycBadge";
 import { logger } from '@/lib/logger';
 // @ts-ignore - Sumsub WebSDK types
@@ -169,7 +170,7 @@ export function KycVerificationModal({
               >
                 {isLoading ? (
                   <>
-                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    <LoadingSpinner size="sm" className="mr-2" />
                     Starting...
                   </>
                 ) : (

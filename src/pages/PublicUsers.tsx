@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, Star, TrendingUp, MessageCircle, UserPlus, UserCheck, Loader2, StarIcon } from "lucide-react";
+import { Search, Star, TrendingUp, MessageCircle, UserPlus, UserCheck, StarIcon } from "lucide-react";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -354,7 +355,7 @@ export default function PublicUsers() {
                   </div>
                   
                   <div className="flex-1 min-w-0">
-                     <div className="flex items-center gap-2 mb-2 flex-wrap">
+                     <div className="flex-center-gap-2 mb-2 flex-wrap">
                        <h3 className="font-semibold text-lg">{user.displayName}</h3>
                         <div className="flex items-center">
                           <StarRating rating={user.reputation} size="sm" />
@@ -432,11 +433,11 @@ export default function PublicUsers() {
                         onClick={() => handleMessage(user.id, user.displayName)}
                         disabled={creatingChat[user.id]}
                       >
-                        {creatingChat[user.id] ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <MessageCircle className="h-4 w-4" />
-                        )}
+                         {creatingChat[user.id] ? (
+                           <LoadingSpinner size="sm" />
+                         ) : (
+                           <MessageCircle className="h-4 w-4" />
+                         )}
                         {creatingChat[user.id] ? "Creating..." : "Message"}
                       </Button>
                        <Button 

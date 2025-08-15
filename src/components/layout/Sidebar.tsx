@@ -2,7 +2,8 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, Plus, X, Loader2 } from "lucide-react";
+import { Search, Plus, X } from "lucide-react";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { Chat } from "@/types";
 import { useChats } from '@/hooks/useChats';
 import { useAppKitAccount } from '@reown/appkit/react';
@@ -69,11 +70,11 @@ export const Sidebar = ({ selectedChat, onChatSelect, onClose }: SidebarProps) =
       {/* Chat List */}
       <div className="flex-1 overflow-y-auto">
         <div className="p-2">
-          {loading ? (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-6 w-6 animate-spin" />
-              <span className="ml-2">Loading chats...</span>
-            </div>
+           {loading ? (
+             <div className="flex-center-gap-2 py-8">
+               <LoadingSpinner size="md" />
+               <span>Loading chats...</span>
+             </div>
           ) : filteredChats.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               {chats.length === 0 ? 'No chats yet' : 'No chats match your search'}

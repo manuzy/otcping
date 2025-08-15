@@ -3,7 +3,8 @@ import { useWalletAuth } from "@/hooks/useWalletAuth";
 import { useAdminSettings } from "@/hooks/useAdminSettings";
 import { Navigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ShieldCheck, Mail, Loader2, Settings, AlertTriangle } from "lucide-react";
+import { ShieldCheck, Mail, Settings, AlertTriangle } from "lucide-react";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { EmailTestPanel } from "@/components/debug/EmailTestPanel";
 import { SecurityDashboard } from "@/components/security/SecurityDashboard";
 import { Switch } from "@/components/ui/switch";
@@ -35,8 +36,8 @@ export default function Underground() {
 
   // Show loading while any auth state is being determined
   if (isLoading) {
-    return <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin" />
+    return <div className="flex-center min-h-screen">
+        <LoadingSpinner size="lg" />
       </div>;
   }
 
@@ -48,14 +49,14 @@ export default function Underground() {
   return <div className="flex flex-col h-screen bg-background">
       {/* Header */}
       <div className="border-b border-border p-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
+        <div className="flex-center-gap-3">
           <ShieldCheck className="h-6 w-6 text-primary" />
           <div>
             <h1 className="text-2xl font-bold">Underground - Admin</h1>
             
           </div>
         </div>
-        <div className="flex items-center gap-2 px-3 py-1 bg-primary/10 rounded-lg border border-primary/20">
+        <div className="flex-center-gap-2 px-3 py-1 bg-primary/10 rounded-lg border border-primary/20">
           <ShieldCheck className="h-4 w-4 text-primary" />
           <span className="text-sm text-primary font-medium">Admin Access</span>
         </div>

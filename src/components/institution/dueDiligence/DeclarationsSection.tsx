@@ -5,9 +5,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useDeclarations } from '@/hooks/useDeclarations';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { LoadingState } from '@/components/ui/loading-state';
 import type { DueDiligenceSection, SectionCompletion } from '@/types/dueDiligence';
 
 interface DeclarationsSectionProps {
@@ -56,12 +57,12 @@ export default function DeclarationsSection({ institutionId, onSectionUpdate }: 
   };
 
   if (loading) {
-    return <div className="flex items-center justify-center py-8"><Loader2 className="h-6 w-6 animate-spin" /></div>;
+    return <div className="flex-center py-8"><LoadingSpinner size="md" /></div>;
   }
 
   return (
-    <div className="space-y-6">
-      {saving && <div className="loading-state"><Loader2 className="h-4 w-4 animate-spin" />Saving...</div>}
+    <div className="section-spacing">
+      {saving && <LoadingState size="sm" text="Saving..." />}
       
       <Card>
         <CardHeader>
@@ -128,8 +129,8 @@ export default function DeclarationsSection({ institutionId, onSectionUpdate }: 
       </Card>
 
       <div className="flex justify-end">
-        <Button onClick={handleSave} disabled={saving}>
-          {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+        <Button onClick={handleSave} disabled={saving} className="flex-center-gap-2">
+          {saving && <LoadingSpinner size="sm" />}
           Save Changes
         </Button>
       </div>
