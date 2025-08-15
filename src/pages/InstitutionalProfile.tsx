@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Building2, ArrowLeft, Users, Save, CheckCircle2, Clock, Circle, AlertCircle } from 'lucide-react';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { useInstitution, useInstitutionUpdate } from '@/hooks/useInstitution';
 import { useAuth } from '@/hooks/useAuth';
@@ -395,18 +396,24 @@ export default function InstitutionalProfile() {
 
       {/* Tabbed Interface */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid grid-cols-5 lg:grid-cols-10 h-auto p-1">
-          {sections.map((section) => (
-            <TabsTrigger 
-              key={section.id} 
-              value={section.id}
-              className="text-xs px-2 py-2 flex items-center gap-1"
-            >
-              {getSectionIcon(section.id)}
-              <span className="hidden lg:inline">{section.title}</span>
-            </TabsTrigger>
-          ))}
-        </TabsList>
+        <div className="relative">
+          <ScrollArea className="w-full whitespace-nowrap">
+            <TabsList className="inline-flex h-12 items-center justify-start rounded-lg bg-muted p-1 text-muted-foreground w-max">
+              {sections.map((section) => (
+                <TabsTrigger 
+                  key={section.id} 
+                  value={section.id}
+                  className="inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-2 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm gap-2 min-w-[120px] sm:min-w-[140px]"
+                >
+                  {getSectionIcon(section.id)}
+                  <span className="hidden sm:inline md:hidden lg:inline truncate">{section.title}</span>
+                  <span className="sm:hidden">{section.title.split(' ')[0]}</span>
+                </TabsTrigger>
+              ))}
+            </TabsList>
+            <ScrollBar orientation="horizontal" className="h-2" />
+          </ScrollArea>
+        </div>
 
         {/* Render All Sections */}
         {sections.map((section) => (
