@@ -30,6 +30,26 @@ export default function CorporateProfileSection({ institutionId, onSectionUpdate
   const contacts = data.contacts;
   const ownership = data.ownership;
 
+  // Track progress automatically without notifications
+  React.useEffect(() => {
+    if (!corporateProfile || !Object.keys(corporateProfile).length) return;
+    
+    const percentage = calculateCompletionPercentage();
+    const isCompleted = percentage >= 80;
+
+    const timeoutId = setTimeout(() => {
+      onSectionUpdate('corporate_profile', {
+        institution_id: institutionId,
+        section_name: 'corporate_profile',
+        is_completed: isCompleted,
+        completion_percentage: percentage,
+        last_updated_at: new Date()
+      });
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
+  }, [corporateProfile, contacts, onSectionUpdate, institutionId]);
+
   // Validation
   const validateLEI = (lei: string) => {
     if (!lei) return true; // LEI is optional

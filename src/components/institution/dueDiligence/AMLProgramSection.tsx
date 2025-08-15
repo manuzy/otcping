@@ -18,6 +18,34 @@ export default function AMLProgramSection({ institutionId, onSectionUpdate }: AM
   const { toast } = useToast();
   const { data, loading, saving, error, updateData, saveData } = useAMLProgram(institutionId);
 
+  React.useEffect(() => {
+    if (!data || !Object.keys(data).length) return;
+    
+    const totalFields = 5;
+    let completedFields = 0;
+
+    if (data.aml_policy_url) completedFields++;
+    if (data.screening_tools?.length) completedFields++;
+    if (data.risk_assessment_methodology) completedFields++;
+    if (data.kyc_onboarding_checklist) completedFields++;
+    if (data.kyt_monitoring_tool) completedFields++;
+
+    const percentage = Math.round((completedFields / totalFields) * 100);
+    const isCompleted = percentage >= 80;
+
+    const timeoutId = setTimeout(() => {
+      onSectionUpdate('aml_program', {
+        institution_id: institutionId,
+        section_name: 'aml_program',
+        is_completed: isCompleted,
+        completion_percentage: percentage,
+        last_updated_at: new Date()
+      });
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
+  }, [data, onSectionUpdate, institutionId]);
+
   const handleSave = async () => {
     try {
       await saveData(data);

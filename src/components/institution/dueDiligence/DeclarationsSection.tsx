@@ -19,6 +19,33 @@ export default function DeclarationsSection({ institutionId, onSectionUpdate }: 
   const { toast } = useToast();
   const { data, loading, saving, updateData, saveData } = useDeclarations(institutionId);
 
+  React.useEffect(() => {
+    if (!data || !Object.keys(data).length) return;
+    
+    const totalFields = 4;
+    let completedFields = 0;
+
+    if (data.information_truthful_complete) completedFields++;
+    if (data.notification_obligation_accepted) completedFields++;
+    if (data.signer_name) completedFields++;
+    if (data.signature_date) completedFields++;
+
+    const percentage = Math.round((completedFields / totalFields) * 100);
+    const isCompleted = percentage >= 80;
+
+    const timeoutId = setTimeout(() => {
+      onSectionUpdate('declarations', {
+        institution_id: institutionId,
+        section_name: 'declarations',
+        is_completed: isCompleted,
+        completion_percentage: percentage,
+        last_updated_at: new Date()
+      });
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
+  }, [data, onSectionUpdate, institutionId]);
+
   const handleSave = async () => {
     try {
       await saveData(data);

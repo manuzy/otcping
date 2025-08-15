@@ -25,6 +25,34 @@ export default function RegulatoryStatusSection({ institutionId, onSectionUpdate
   const { toast } = useToast();
   const { data, loading, saving, error, updateData, saveData } = useRegulatoryStatus(institutionId);
 
+  React.useEffect(() => {
+    if (!data || !Object.keys(data).length) return;
+    
+    const totalFields = 5;
+    let completedFields = 0;
+
+    if (data.primary_authority) completedFields++;
+    if (data.license_number) completedFields++;
+    if (data.license_categories?.length) completedFields++;
+    if (data.operating_jurisdictions?.length) completedFields++;
+    if (data.initial_issue_date) completedFields++;
+
+    const percentage = Math.round((completedFields / totalFields) * 100);
+    const isCompleted = percentage >= 80;
+
+    const timeoutId = setTimeout(() => {
+      onSectionUpdate('regulatory_status', {
+        institution_id: institutionId,
+        section_name: 'regulatory_status',
+        is_completed: isCompleted,
+        completion_percentage: percentage,
+        last_updated_at: new Date()
+      });
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
+  }, [data, onSectionUpdate, institutionId]);
+
   const handleSave = async () => {
     try {
       await saveData(data);

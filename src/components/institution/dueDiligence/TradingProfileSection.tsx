@@ -54,6 +54,8 @@ export default function TradingProfileSection({ institutionId, onSectionUpdate }
   const { data, loading, saving, updateData } = useTradingProfile(institutionId);
 
   useEffect(() => {
+    if (!data || !Object.keys(data).length) return;
+    
     const totalFields = 8;
     let completedFields = 0;
 
@@ -69,14 +71,19 @@ export default function TradingProfileSection({ institutionId, onSectionUpdate }
     const percentage = Math.round((completedFields / totalFields) * 100);
     const isCompleted = percentage >= 80;
 
-    onSectionUpdate('trading_profile', {
-      institution_id: institutionId,
-      section_name: 'trading_profile',
-      is_completed: isCompleted,
-      completion_percentage: percentage,
-      last_updated_at: new Date()
-    });
-  }, [data, onSectionUpdate]);
+    // Use a timeout to debounce rapid updates
+    const timeoutId = setTimeout(() => {
+      onSectionUpdate('trading_profile', {
+        institution_id: institutionId,
+        section_name: 'trading_profile',
+        is_completed: isCompleted,
+        completion_percentage: percentage,
+        last_updated_at: new Date()
+      });
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
+  }, [data, onSectionUpdate, institutionId]);
 
   const handleAssetClassChange = (assetClass: string, checked: boolean) => {
     const current = data.asset_classes || [];

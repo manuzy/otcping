@@ -42,6 +42,8 @@ export default function LegalStatusSection({ institutionId, onSectionUpdate }: L
   const [showAddCase, setShowAddCase] = useState(false);
 
   useEffect(() => {
+    if (!data || !Object.keys(data).length) return;
+    
     const totalFields = 4;
     let completedFields = 0;
 
@@ -51,16 +53,20 @@ export default function LegalStatusSection({ institutionId, onSectionUpdate }: L
     if (data.adverse_media_check_date) completedFields++;
 
     const percentage = Math.round((completedFields / totalFields) * 100);
-    const isCompleted = percentage >= 75;
+    const isCompleted = percentage >= 80;
 
-    onSectionUpdate('legal_status', {
-      institution_id: institutionId,
-      section_name: 'legal_status',
-      is_completed: isCompleted,
-      completion_percentage: percentage,
-      last_updated_at: new Date()
-    });
-  }, [data, onSectionUpdate]);
+    const timeoutId = setTimeout(() => {
+      onSectionUpdate('legal_status', {
+        institution_id: institutionId,
+        section_name: 'legal_status',
+        is_completed: isCompleted,
+        completion_percentage: percentage,
+        last_updated_at: new Date()
+      });
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
+  }, [data, onSectionUpdate, institutionId]);
 
   const addCase = () => {
     if (!newCase.title || !newCase.type) return;

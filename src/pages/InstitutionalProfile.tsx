@@ -117,10 +117,7 @@ export default function InstitutionalProfile() {
 
     try {
       await updateCompletion(sectionName, completion);
-      notifications.success({
-        title: "Progress Saved",
-        description: `${sectionName} section updated successfully.`
-      });
+      // Remove automatic progress notifications to prevent toast loops
     } catch (error) {
       console.error('Failed to update section completion:', error);
       notifications.error({
@@ -261,8 +258,9 @@ export default function InstitutionalProfile() {
       {/* Tabbed Interface */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList className="grid grid-cols-5 lg:grid-cols-10 h-auto p-1">
-          <TabsTrigger value="basic-info" className="text-xs px-2 py-2">
-            Basic Info
+          <TabsTrigger value="basic-info" className="text-xs px-2 py-2 flex items-center gap-1">
+            <Circle className="h-4 w-4 text-muted-foreground" />
+            <span className="hidden lg:inline">Basic Info</span>
           </TabsTrigger>
           {sections.map((section) => (
             <TabsTrigger 

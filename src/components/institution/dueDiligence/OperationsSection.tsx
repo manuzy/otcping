@@ -45,6 +45,8 @@ export default function OperationsSection({ institutionId, onSectionUpdate }: Op
   const { data, loading, saving, updateData } = useOperations(institutionId);
 
   useEffect(() => {
+    if (!data || !Object.keys(data).length) return;
+    
     const totalFields = 10;
     let completedFields = 0;
 
@@ -62,14 +64,19 @@ export default function OperationsSection({ institutionId, onSectionUpdate }: Op
     const percentage = Math.round((completedFields / totalFields) * 100);
     const isCompleted = percentage >= 80;
 
-    onSectionUpdate('operations', {
-      institution_id: institutionId,
-      section_name: 'operations',
-      is_completed: isCompleted,
-      completion_percentage: percentage,
-      last_updated_at: new Date()
-    });
-  }, [data, onSectionUpdate]);
+    // Use a timeout to debounce rapid updates
+    const timeoutId = setTimeout(() => {
+      onSectionUpdate('operations', {
+        institution_id: institutionId,
+        section_name: 'operations',
+        is_completed: isCompleted,
+        completion_percentage: percentage,
+        last_updated_at: new Date()
+      });
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
+  }, [data, onSectionUpdate, institutionId]);
 
   const handleCheckboxChange = (certification: string, checked: boolean) => {
     const current = data.security_certifications || [];

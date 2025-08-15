@@ -19,6 +19,34 @@ export default function FinancialsSection({ institutionId, onSectionUpdate }: Fi
   const { toast } = useToast();
   const { data, loading, saving, updateData, saveData } = useFinancials(institutionId);
 
+  React.useEffect(() => {
+    if (!data || !Object.keys(data).length) return;
+    
+    const totalFields = 5;
+    let completedFields = 0;
+
+    if (data.regulatory_capital_amount) completedFields++;
+    if (data.minimum_capital_requirement) completedFields++;
+    if (data.auditor_name) completedFields++;
+    if (data.audit_opinion) completedFields++;
+    if (data.as_of_date) completedFields++;
+
+    const percentage = Math.round((completedFields / totalFields) * 100);
+    const isCompleted = percentage >= 80;
+
+    const timeoutId = setTimeout(() => {
+      onSectionUpdate('financials', {
+        institution_id: institutionId,
+        section_name: 'financials',
+        is_completed: isCompleted,
+        completion_percentage: percentage,
+        last_updated_at: new Date()
+      });
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
+  }, [data, onSectionUpdate, institutionId]);
+
   const handleSave = async () => {
     try {
       await saveData(data);
