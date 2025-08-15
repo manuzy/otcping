@@ -163,9 +163,9 @@ export default function GovernanceSection({ institutionId, onSectionUpdate }: Go
         </CardHeader>
         <CardContent className="space-y-6">
           {/* Compliance Officer */}
-          <div className="border rounded-lg p-4 space-y-4">
+          <div className="card-base">
             <h4 className="font-medium">Compliance Officer</h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid-responsive">
               <div className="space-y-2">
                 <Label htmlFor="compliance_officer">Name *</Label>
                 <Input
@@ -197,9 +197,9 @@ export default function GovernanceSection({ institutionId, onSectionUpdate }: Go
           </div>
 
           {/* Risk Officer */}
-          <div className="border rounded-lg p-4 space-y-4">
+          <div className="card-base">
             <h4 className="font-medium">Risk Officer</h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid-responsive">
               <div className="space-y-2">
                 <Label htmlFor="risk_officer">Name *</Label>
                 <Input
@@ -231,9 +231,9 @@ export default function GovernanceSection({ institutionId, onSectionUpdate }: Go
           </div>
 
           {/* Internal Audit Officer */}
-          <div className="border rounded-lg p-4 space-y-4">
+          <div className="card-base">
             <h4 className="font-medium">Internal Audit Officer</h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid-responsive">
               <div className="space-y-2">
                 <Label htmlFor="internal_audit_officer">Name *</Label>
                 <Input
@@ -276,7 +276,7 @@ export default function GovernanceSection({ institutionId, onSectionUpdate }: Go
         </CardHeader>
         <CardContent className="space-y-4">
           {data.board_committees?.map((committee: any, index: number) => (
-            <div key={index} className="border rounded-lg p-4 space-y-4">
+            <div key={index} className="card-base">
               <div className="flex justify-between items-start">
                 <h4 className="font-medium">Committee {index + 1}</h4>
                 <Button

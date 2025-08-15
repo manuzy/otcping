@@ -61,7 +61,7 @@ export default function DeclarationsSection({ institutionId, onSectionUpdate }: 
 
   return (
     <div className="space-y-6">
-      {saving && <div className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" />Saving...</div>}
+      {saving && <div className="loading-state"><Loader2 className="h-4 w-4 animate-spin" />Saving...</div>}
       
       <Card>
         <CardHeader>

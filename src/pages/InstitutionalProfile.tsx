@@ -318,7 +318,7 @@ export default function InstitutionalProfile() {
 
   if (loading) {
     return (
-      <div className="container max-w-6xl mx-auto p-6">
+      <div className="container-content">
         <div className="flex items-center justify-center min-h-[400px]">
           <Loader2 className="h-8 w-8 animate-spin" />
         </div>
@@ -328,7 +328,7 @@ export default function InstitutionalProfile() {
 
   if (!institution) {
     return (
-      <div className="container max-w-6xl mx-auto p-6">
+      <div className="container-content">
         <Card>
           <CardContent className="pt-6">
             <div className="text-center text-muted-foreground">
@@ -341,9 +341,9 @@ export default function InstitutionalProfile() {
   }
 
   return (
-    <div className="container max-w-6xl mx-auto p-6">
+    <div className="container-content">
       {/* Header */}
-      <div className="flex items-center gap-4 mb-6">
+      <div className="flex-gap-4 mb-6">
         <Button
           variant="outline"
           size="sm"

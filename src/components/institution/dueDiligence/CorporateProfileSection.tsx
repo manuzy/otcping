@@ -223,7 +223,7 @@ export default function CorporateProfileSection({ institutionId, onSectionUpdate
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid-responsive">
             <div className="space-y-2">
               <Label htmlFor="legal_name">Legal Name *</Label>
               <Input
@@ -376,7 +376,7 @@ export default function CorporateProfileSection({ institutionId, onSectionUpdate
             />
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid-responsive-3">
             <div className="space-y-2">
               <Label htmlFor="address_city">City *</Label>
               <Input
@@ -431,7 +431,7 @@ export default function CorporateProfileSection({ institutionId, onSectionUpdate
         </CardHeader>
         <CardContent className="space-y-4">
           {contacts.map((contact, index) => (
-            <div key={index} className="border rounded-lg p-4 space-y-4">
+            <div key={index} className="card-base">
               <div className="flex justify-between items-start">
                 <h4 className="font-medium">Contact {index + 1}</h4>
                 {contacts.length > 1 && (
@@ -445,7 +445,7 @@ export default function CorporateProfileSection({ institutionId, onSectionUpdate
                 )}
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid-responsive">
                 <div className="space-y-2">
                   <Label>Role *</Label>
                   <Select
@@ -512,7 +512,7 @@ export default function CorporateProfileSection({ institutionId, onSectionUpdate
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label>Certificate of Incorporation / Registry Extract</Label>
-            <div className="border-2 border-dashed border-muted rounded-lg p-4 text-center">
+            <div className="card-input">
               <Upload className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
               <p className="text-sm text-muted-foreground">
                 Click to upload or drag and drop<br />
@@ -523,7 +523,7 @@ export default function CorporateProfileSection({ institutionId, onSectionUpdate
           
           <div className="space-y-2">
             <Label>Organizational Chart (Optional)</Label>
-            <div className="border-2 border-dashed border-muted rounded-lg p-4 text-center">
+            <div className="card-input">
               <Upload className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
               <p className="text-sm text-muted-foreground">
                 Click to upload or drag and drop<br />

@@ -415,9 +415,9 @@ const CreateTrade = () => {
 
   return (
     <div className="min-h-screen bg-background p-4">
-      <div className="max-w-2xl mx-auto">
+      <div className="container-narrow">
         {/* Header */}
-        <div className="flex items-center gap-4 mb-6">
+        <div className="flex-gap-4 mb-6">
           <Button variant="ghost" size="icon" onClick={handleBack}>
             <ArrowLeft className="h-4 w-4" />
           </Button>
