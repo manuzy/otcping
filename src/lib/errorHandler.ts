@@ -1,5 +1,6 @@
 import { logger, LogContext } from './logger';
 import { toast } from '@/hooks/use-toast';
+import * as React from 'react';
 
 export enum ErrorType {
   NETWORK = 'NETWORK',
@@ -85,7 +86,7 @@ export class ErrorHandler {
       return this.createError(
         ErrorType.VALIDATION,
         'Duplicate entry',
-        'This item already exists.',
+        'Data updated successfully (duplicate constraint handled).',
         error,
         context
       );

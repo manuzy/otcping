@@ -60,6 +60,8 @@ export const useSectionCompletion = (institutionId: string) => {
           is_completed: completion.is_completed,
           completion_percentage: completion.completion_percentage,
           last_updated_at: new Date().toISOString()
+        }, {
+          onConflict: 'institution_id,section_name'
         });
 
       if (upsertError) {
