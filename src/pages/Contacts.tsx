@@ -5,6 +5,10 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { StatusBadge } from "@/components/ui/status-badge";
+import { PageLayout } from "@/components/layout/PageLayout";
+import { PageHeader } from "@/components/layout/PageHeader";
+import { ContentContainer } from "@/components/layout/ContentContainer";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useContacts } from "@/hooks/useContacts";
 import { useOnlinePresence } from "@/hooks/useOnlinePresence";
@@ -29,10 +33,10 @@ export default function Contacts() {
     contact.description?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const getReputationColor = (reputation: number) => {
-    if (reputation >= 4.5) return "bg-green-100 text-green-800";
-    if (reputation >= 3.5) return "bg-yellow-100 text-yellow-800";
-    return "bg-red-100 text-red-800";
+  const getReputationStatus = (reputation: number) => {
+    if (reputation >= 4.5) return "high";
+    if (reputation >= 3.5) return "medium";
+    return "low";
   };
 
   const handleMessage = async (userId: string, displayName: string) => {
@@ -120,17 +124,16 @@ export default function Contacts() {
   }
 
   return (
-    <div className="flex flex-col h-screen bg-background">
-      {/* Header */}
-      <div className="border-b border-border p-4">
-        <div className="flex items-center justify-between mb-4">
-          <h1 className="text-2xl font-bold">My Contacts</h1>
+    <PageLayout>
+      <PageHeader 
+        title="My Contacts"
+        action={
           <Button size="sm" className="gap-2" onClick={() => navigate('/users')}>
             <UserPlus className="h-4 w-4" />
             Find Users
           </Button>
-        </div>
-        
+        }
+      >
         {/* Search */}
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -141,10 +144,9 @@ export default function Contacts() {
             className="pl-10"
           />
         </div>
-      </div>
+      </PageHeader>
 
-      {/* Contacts List */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-3 pb-20 md:pb-4">
+      <ContentContainer>
         {loading ? (
           <div className="text-center py-8 text-muted-foreground">
             Loading contacts...
@@ -171,9 +173,9 @@ export default function Contacts() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
                       <h3 className="font-semibold truncate">{contact.display_name}</h3>
-                      <Badge variant="secondary" className={getReputationColor(contact.reputation)}>
+                      <StatusBadge status={getReputationStatus(contact.reputation) as any}>
                         ⭐ {contact.reputation.toFixed(1)}
-                      </Badge>
+                      </StatusBadge>
                     </div>
                     
                     <p className="text-sm text-muted-foreground truncate mb-2">
@@ -236,7 +238,7 @@ export default function Contacts() {
             </Card>
           ))
         )}
-      </div>
-    </div>
+      </ContentContainer>
+    </PageLayout>
   );
 }

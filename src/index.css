@@ -273,6 +273,16 @@ All colors MUST be HSL.
   /* Grid Utilities */
   .grid-responsive { @apply grid grid-cols-1 md:grid-cols-2 gap-4; }
   .grid-responsive-3 { @apply grid grid-cols-1 md:grid-cols-3 gap-4; }
+  .grid-responsive-4 { @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3; }
+  
+  /* Form Grid Utilities */
+  .form-grid-1 { @apply grid gap-4; }
+  .form-grid-2 { @apply grid grid-cols-1 md:grid-cols-2 gap-4; }
+  .form-grid-3 { @apply grid grid-cols-1 md:grid-cols-3 gap-4; }
+  
+  /* Card Grid Utilities */
+  .card-grid-mobile { @apply grid grid-cols-1 gap-3; }
+  .card-grid-desktop { @apply grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4; }
   
   /* Loading State */
   .loading-state { @apply flex items-center gap-2 text-sm text-muted-foreground; }

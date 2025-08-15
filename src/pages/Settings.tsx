@@ -16,6 +16,9 @@ import { logger } from "@/lib/logger";
 import { notifications } from "@/lib/notifications";
 import { ErrorBoundary } from "@/components/error/ErrorBoundary";
 import { LoadingState } from "@/components/ui/loading-state";
+import { PageLayout } from "@/components/layout/PageLayout";
+import { PageHeader } from "@/components/layout/PageHeader";
+import { ContentContainer } from "@/components/layout/ContentContainer";
 
 export default function Settings() {
   const { isAuthenticated, address } = useWalletAuth();
@@ -99,24 +102,22 @@ export default function Settings() {
 
   return (
     <ErrorBoundary>
-      <div className="flex flex-col h-screen bg-background">
-      {/* Header */}
-      <div className="border-b border-border p-4 flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Settings</h1>
-        <div className="flex items-center gap-2">
-          {isAuthenticated && address && (
-            <div className="flex items-center gap-2 px-3 py-1 bg-success/10 rounded-lg border border-success/20">
-              <Shield className="h-4 w-4 text-success" />
-              <span className="text-sm text-success font-medium">
-                {address.slice(0, 6)}...{address.slice(-4)}
-              </span>
-            </div>
-          )}
-        </div>
-      </div>
+      <PageLayout>
+        <PageHeader 
+          title="Settings"
+          action={
+            isAuthenticated && address && (
+              <div className="flex items-center gap-2 px-3 py-1 bg-success/10 rounded-lg border border-success/20">
+                <Shield className="h-4 w-4 text-success" />
+                <span className="text-sm text-success font-medium">
+                  {address.slice(0, 6)}...{address.slice(-4)}
+                </span>
+              </div>
+            )
+          }
+        />
 
-      {/* Settings Content */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-6 pb-20 md:pb-4">
+        <ContentContainer spacing="lg">
         
         {/* Profile Settings */}
         <ProfileManager />
@@ -324,8 +325,8 @@ export default function Settings() {
             </Button>
           </CardContent>
         </Card>
-      </div>
-    </div>
+        </ContentContainer>
+      </PageLayout>
     </ErrorBoundary>
   );
 }

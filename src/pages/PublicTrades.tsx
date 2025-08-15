@@ -5,6 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { StatusBadge } from "@/components/ui/status-badge";
+import { PageLayout } from "@/components/layout/PageLayout";
+import { PageHeader } from "@/components/layout/PageHeader";
+import { ContentContainer } from "@/components/layout/ContentContainer";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Combobox, ComboboxOption } from "@/components/ui/combobox";
 import { usePublicTrades } from "@/hooks/usePublicTrades";
@@ -120,18 +124,6 @@ export default function PublicTrades() {
       }
     });
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "active": return "bg-green-100 text-green-800";
-      case "completed": return "bg-blue-100 text-blue-800";
-      case "cancelled": return "bg-red-100 text-red-800";
-      default: return "bg-gray-100 text-gray-800";
-    }
-  };
-
-  const getTypeColor = (type: string) => {
-    return type === "buy" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800";
-  };
 
   // Handle messaging a trader
   const handleMessageTrader = async (traderId: string, traderName: string, event: React.MouseEvent) => {
@@ -197,17 +189,16 @@ export default function PublicTrades() {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-background">
-      {/* Header */}
-      <div className="border-b border-border p-4">
-        <div className="flex items-center justify-between mb-4">
-          <h1 className="text-2xl font-bold">Public Markets</h1>
+    <PageLayout>
+      <PageHeader 
+        title="Public Markets"
+        action={
           <Button size="sm" className="gap-2">
             <Bell className="h-4 w-4" />
             Create Alert
           </Button>
-        </div>
-        
+        }
+      >
         {/* Search and Filters */}
         <div className="space-y-3">
           <div className="relative">
@@ -268,10 +259,9 @@ export default function PublicTrades() {
             </Select>
           </div>
         </div>
-      </div>
+      </PageHeader>
 
-      {/* Trades List */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-3 pb-20 md:pb-4">
+      <ContentContainer>
         {loading ? (
           <div className="text-center py-8 text-muted-foreground">
             Loading trades...
@@ -360,7 +350,7 @@ export default function PublicTrades() {
                   )}
                 </div>
                 
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
+                <div className="grid-responsive-4 mb-3">
                   <div>
                     <p className="text-xs text-muted-foreground">USD Amount</p>
                     <p className="font-semibold">
@@ -379,9 +369,9 @@ export default function PublicTrades() {
                   </div>
                   <div>
                     <p className="text-xs text-muted-foreground">Status</p>
-                    <Badge variant="secondary" className={getStatusColor(chat.trade?.status || "")}>
+                    <StatusBadge status={chat.trade?.status as any}>
                       {chat.trade?.status}
-                    </Badge>
+                    </StatusBadge>
                   </div>
                 </div>
 
@@ -439,7 +429,7 @@ export default function PublicTrades() {
             </Card>
           ))
         )}
-      </div>
-    </div>
+      </ContentContainer>
+    </PageLayout>
   );
 }
