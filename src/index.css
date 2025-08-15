@@ -308,7 +308,7 @@ All colors MUST be HSL.
   /* Loading State */
   .loading-state { @apply flex items-center gap-2 text-sm text-muted-foreground; }
   .loading-spinner { @apply animate-spin text-muted-foreground; }
-  .loading-overlay { @apply absolute inset-0 bg-background/80 backdrop-blur-sm flex-center; }
+  .loading-overlay { @apply absolute inset-0 backdrop-blur-sm flex-center; background-color: hsl(var(--background) / 0.8); }
   
   /* Form Section Utilities */
   .form-section { @apply space-y-4 p-4 border rounded-lg; }
