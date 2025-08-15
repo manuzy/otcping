@@ -30,6 +30,12 @@ const themes = [
     label: "Forest Green",
     description: "Natural green theme with forest aesthetics", 
     preview: "bg-background border"
+  },
+  {
+    name: "etf",
+    label: "ETF Professional",
+    description: "Enterprise ETF theme with premium aesthetics",
+    preview: "bg-background border"
   }
 ];
 
