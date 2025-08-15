@@ -14,6 +14,7 @@ import {
   SidebarGroup, 
   SidebarGroupContent, 
   SidebarGroupLabel, 
+  SidebarInset,
   SidebarMenu, 
   SidebarMenuButton, 
   SidebarMenuItem, 
@@ -355,95 +356,93 @@ export default function InstitutionalProfile() {
 
   return (
     <SidebarProvider>
-      <div className="flex h-screen w-full bg-background">
-        <Sidebar className="w-80 border-r">
-          <SidebarContent>
-            {/* Header */}
-            <div className="p-4 border-b">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => navigate('/settings')}
-                className="flex items-center gap-2 w-full justify-start"
-              >
-                <ArrowLeft className="h-4 w-4" />
-                Back to Settings
-              </Button>
-              <div className="flex items-center gap-2 mt-3">
-                <Building2 className="h-6 w-6 text-primary" />
-                <h1 className="text-lg font-bold">Institutional Profile</h1>
-              </div>
+      <Sidebar>
+        <SidebarContent>
+          {/* Header */}
+          <div className="p-4 border-b">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate('/settings')}
+              className="flex items-center gap-2 w-full justify-start"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back to Settings
+            </Button>
+            <div className="flex items-center gap-2 mt-3">
+              <Building2 className="h-6 w-6 text-primary" />
+              <h1 className="text-lg font-bold">Institutional Profile</h1>
             </div>
+          </div>
 
-            {/* Progress Overview */}
-            <div className="p-4 border-b">
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="text-sm font-medium">Overall Progress</div>
-                  <div className="text-lg font-bold text-primary">
-                    {progressLoading ? (
-                       <LoadingSpinner size="sm" />
-                     ) : (
-                       `${overallProgress}%`
-                     )}
-                  </div>
-                </div>
-                <Progress value={overallProgress} className="w-full" />
-                <div className="text-xs text-muted-foreground">
-                  {progressLoading ? '...' : `${completedSections}/${sections.length} sections completed`}
+          {/* Progress Overview */}
+          <div className="p-4 border-b">
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="text-sm font-medium">Overall Progress</div>
+                <div className="text-lg font-bold text-primary">
+                  {progressLoading ? (
+                     <LoadingSpinner size="sm" />
+                   ) : (
+                     `${overallProgress}%`
+                   )}
                 </div>
               </div>
+              <Progress value={overallProgress} className="w-full" />
+              <div className="text-xs text-muted-foreground">
+                {progressLoading ? '...' : `${completedSections}/${sections.length} sections completed`}
+              </div>
             </div>
+          </div>
 
-            {/* Navigation Menu */}
-            <SidebarGroup>
-              <SidebarGroupLabel>Due Diligence Sections</SidebarGroupLabel>
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  {sections.map((section) => (
-                    <SidebarMenuItem key={section.id}>
-                      <SidebarMenuButton 
-                        onClick={() => setActiveSection(section.id)}
-                        isActive={activeSection === section.id}
-                        className="w-full justify-start"
-                      >
-                        <div className="flex items-center gap-3 min-w-0 flex-1">
-                          {getSectionIcon(section.id)}
-                          <div className="flex-1 min-w-0">
-                            <div className="font-medium text-sm truncate">{section.title}</div>
-                            <div className="text-xs text-muted-foreground">
-                              {getSectionStatus(section.id)}
-                            </div>
+          {/* Navigation Menu */}
+          <SidebarGroup>
+            <SidebarGroupLabel>Due Diligence Sections</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {sections.map((section) => (
+                  <SidebarMenuItem key={section.id}>
+                    <SidebarMenuButton 
+                      onClick={() => setActiveSection(section.id)}
+                      isActive={activeSection === section.id}
+                      className="w-full justify-start"
+                    >
+                      <div className="flex items-center gap-3 min-w-0 flex-1">
+                        {getSectionIcon(section.id)}
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium text-sm truncate">{section.title}</div>
+                          <div className="text-xs text-muted-foreground">
+                            {getSectionStatus(section.id)}
                           </div>
-                          <Badge variant={getSectionVariant(section.id)} className="text-xs">
-                            {section.id === 'basic-info' 
-                              ? `${getBasicInfoCompletion().completion_percentage}%`
-                              : `${getSectionCompletion(section.id as DueDiligenceSection).completion_percentage}%`
-                            }
-                          </Badge>
                         </div>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  ))}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
-          </SidebarContent>
-        </Sidebar>
+                        <Badge variant={getSectionVariant(section.id)} className="text-xs">
+                          {section.id === 'basic-info' 
+                            ? `${getBasicInfoCompletion().completion_percentage}%`
+                            : `${getSectionCompletion(section.id as DueDiligenceSection).completion_percentage}%`
+                          }
+                        </Badge>
+                      </div>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        </SidebarContent>
+      </Sidebar>
 
-        {/* Main Content Area */}
-        <div className="flex-1 flex flex-col overflow-hidden">
-          {/* Main Content Header */}
-          <div className="p-6 border-b bg-background">
-            <SidebarTrigger className="md:hidden mb-4" />
+      <SidebarInset>
+        <header className="flex h-16 shrink-0 items-center gap-2 px-4">
+          <SidebarTrigger className="-ml-1" />
+          <div className="flex-1">
             {activeSection !== 'basic-info' && (
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="text-2xl font-semibold flex items-center gap-2">
+                  <h2 className="text-xl font-semibold flex items-center gap-2">
                     {getSectionIcon(activeSection)}
                     {sections.find(s => s.id === activeSection)?.title}
                   </h2>
-                  <p className="text-muted-foreground">
+                  <p className="text-sm text-muted-foreground">
                     {sections.find(s => s.id === activeSection)?.description}
                   </p>
                 </div>
@@ -453,50 +452,49 @@ export default function InstitutionalProfile() {
               </div>
             )}
           </div>
+        </header>
 
-          {/* Scrollable Content */}
-          <div className="flex-1 overflow-y-auto p-6">
-            <div className="max-w-4xl mx-auto">
-              {renderSectionContent()}
-              
-              {/* Institution Overview - Only show on basic-info */}
-              {activeSection === 'basic-info' && (
-                <Card className="mt-6">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Building2 className="h-5 w-5" />
-                      Institution Overview
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div className="text-center p-4 border rounded-lg">
-                        <Users className="h-6 w-6 text-muted-foreground mx-auto mb-2" />
-                        <div className="text-2xl font-bold">{institution.member_count || 0}</div>
-                        <div className="text-sm text-muted-foreground">Members</div>
-                      </div>
-                      <div className="text-center p-4 border rounded-lg">
-                        <Building2 className="h-6 w-6 text-muted-foreground mx-auto mb-2" />
-                        <div className="text-sm font-medium">
-                          KYB Status: <Badge variant={institution.kyb_status === 'verified' ? 'default' : 'outline'}>
-                            {institution.kyb_status === 'verified' ? 'Verified' : 'Pending'}
-                          </Badge>
-                        </div>
-                      </div>
-                      <div className="text-center p-4 border rounded-lg">
-                        <Clock className="h-6 w-6 text-muted-foreground mx-auto mb-2" />
-                        <div className="text-sm text-muted-foreground">
-                          Created {new Date(institution.created_at).toLocaleDateString()}
-                        </div>
+        <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
+          <div className="max-w-4xl mx-auto w-full">
+            {renderSectionContent()}
+            
+            {/* Institution Overview - Only show on basic-info */}
+            {activeSection === 'basic-info' && (
+              <Card className="mt-6">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Building2 className="h-5 w-5" />
+                    Institution Overview
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="text-center p-4 border rounded-lg">
+                      <Users className="h-6 w-6 text-muted-foreground mx-auto mb-2" />
+                      <div className="text-2xl font-bold">{institution.member_count || 0}</div>
+                      <div className="text-sm text-muted-foreground">Members</div>
+                    </div>
+                    <div className="text-center p-4 border rounded-lg">
+                      <Building2 className="h-6 w-6 text-muted-foreground mx-auto mb-2" />
+                      <div className="text-sm font-medium">
+                        KYB Status: <Badge variant={institution.kyb_status === 'verified' ? 'default' : 'outline'}>
+                          {institution.kyb_status === 'verified' ? 'Verified' : 'Pending'}
+                        </Badge>
                       </div>
                     </div>
-                  </CardContent>
-                </Card>
-              )}
-            </div>
+                    <div className="text-center p-4 border rounded-lg">
+                      <Clock className="h-6 w-6 text-muted-foreground mx-auto mb-2" />
+                      <div className="text-sm text-muted-foreground">
+                        Created {new Date(institution.created_at).toLocaleDateString()}
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </div>
         </div>
-      </div>
+      </SidebarInset>
     </SidebarProvider>
   );
 }
