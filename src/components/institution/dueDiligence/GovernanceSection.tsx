@@ -5,7 +5,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Plus, Trash2, Loader2 } from 'lucide-react';
+import { Plus, Trash2 } from 'lucide-react';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { LoadingState } from '@/components/ui/loading-state';
+import { FormSection } from '@/components/layout/FormSection';
 import { useToast } from '@/hooks/use-toast';
 import { useGovernance } from '@/hooks/useGovernance';
 import { Badge } from '@/components/ui/badge';
@@ -96,21 +99,12 @@ export default function GovernanceSection({ institutionId, onSectionUpdate }: Go
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-8">
-        <Loader2 className="h-6 w-6 animate-spin" />
-      </div>
-    );
+    return <LoadingState size="lg" text="Loading governance data..." />;
   }
 
   return (
     <div className="space-y-6">
-      {saving && (
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Loader2 className="h-4 w-4 animate-spin" />
-          Saving...
-        </div>
-      )}
+      {saving && <LoadingState size="sm" text="Saving..." />}
       
       {error && (
         <Badge variant="destructive" className="mb-4">
@@ -409,7 +403,7 @@ export default function GovernanceSection({ institutionId, onSectionUpdate }: Go
 
       <div className="flex justify-end">
         <Button onClick={handleSave} disabled={saving}>
-          {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+          {saving && <LoadingSpinner size="sm" className="mr-2" />}
           Save Changes
         </Button>
       </div>

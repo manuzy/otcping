@@ -7,7 +7,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, Plus, Trash2, Upload, Loader2 } from 'lucide-react';
+import { CalendarIcon, Plus, Trash2, Upload } from 'lucide-react';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { LoadingState } from '@/components/ui/loading-state';
+import { FormSection } from '@/components/layout/FormSection';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
@@ -192,22 +195,13 @@ export default function CorporateProfileSection({ institutionId, onSectionUpdate
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-8">
-        <Loader2 className="h-6 w-6 animate-spin" />
-      </div>
-    );
+    return <LoadingState size="lg" text="Loading corporate profile..." />;
   }
 
   return (
     <div className="space-y-6">
       {/* Auto-save indicator */}
-      {saving && (
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Loader2 className="h-4 w-4 animate-spin" />
-          Saving...
-        </div>
-      )}
+      {saving && <LoadingState size="sm" text="Saving..." />}
       
       {error && (
         <Badge variant="destructive" className="mb-4">

@@ -417,7 +417,7 @@ const CreateTrade = () => {
     <div className="min-h-screen bg-background p-4">
       <div className="container-narrow">
         {/* Header */}
-        <div className="flex-gap-4 mb-6">
+        <div className="flex-center-gap-4 mb-6">
           <Button variant="ghost" size="icon" onClick={handleBack}>
             <ArrowLeft className="h-4 w-4" />
           </Button>
@@ -425,11 +425,11 @@ const CreateTrade = () => {
         </div>
 
         {/* Progress Steps */}
-        <div className="flex items-center justify-center mb-8">
+        <div className="flex-center mb-8">
           {(preSelectedUser ? [1, 3] : [1, 2, 3]).map((step, index) => (
             <div key={step} className="flex items-center">
               <div className={`
-                w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium
+                w-8 h-8 rounded-full flex-center text-sm font-medium
                 ${currentStep >= step ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}
               `}>
                 {currentStep > step ? <Check className="h-4 w-4" /> : (preSelectedUser ? index + 1 : step)}

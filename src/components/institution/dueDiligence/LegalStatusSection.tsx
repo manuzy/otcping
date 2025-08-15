@@ -11,6 +11,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { useLegalStatus } from '@/hooks/useLegalStatus';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import type { DueDiligenceSection, SectionCompletion } from '@/types/dueDiligence';
 
 interface LegalStatusSectionProps {
@@ -351,14 +352,8 @@ export default function LegalStatusSection({ institutionId, onSectionUpdate }: L
           disabled={saving}
           className="min-w-[120px]"
         >
-          {saving ? (
-            <>
-              <span className="animate-spin mr-2">⏳</span>
-              Saving...
-            </>
-          ) : (
-            'Save Changes'
-          )}
+          {saving && <LoadingSpinner size="sm" className="mr-2" />}
+          Save Changes
         </Button>
       </div>
     </Card>

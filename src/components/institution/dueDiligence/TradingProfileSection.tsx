@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import { useTradingProfile } from '@/hooks/useTradingProfile';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import type { DueDiligenceSection, SectionCompletion } from '@/types/dueDiligence';
 
 interface TradingProfileSectionProps {
@@ -310,14 +311,8 @@ export default function TradingProfileSection({ institutionId, onSectionUpdate }
           disabled={saving}
           className="min-w-[120px]"
         >
-          {saving ? (
-            <>
-              <span className="animate-spin mr-2">⏳</span>
-              Saving...
-            </>
-          ) : (
-            'Save Changes'
-          )}
+          {saving && <LoadingSpinner size="sm" className="mr-2" />}
+          Save Changes
         </Button>
       </div>
     </Card>

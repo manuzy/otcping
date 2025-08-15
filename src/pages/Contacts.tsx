@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Search, UserPlus, MessageCircle, TrendingUp, Trash2, Loader2 } from "lucide-react";
+import { Search, UserPlus, MessageCircle, TrendingUp, Trash2 } from "lucide-react";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -197,13 +198,13 @@ export default function Contacts() {
                        className="gap-1"
                        onClick={() => handleMessage(contact.id, contact.display_name)}
                        disabled={creatingChat[contact.id]}
-                     >
-                       {creatingChat[contact.id] ? (
-                         <Loader2 className="h-4 w-4 animate-spin" />
-                       ) : (
-                         <MessageCircle className="h-4 w-4" />
-                       )}
-                     </Button>
+                      >
+                        {creatingChat[contact.id] ? (
+                          <LoadingSpinner size="sm" />
+                        ) : (
+                          <MessageCircle className="h-4 w-4" />
+                        )}
+                      </Button>
                     <Button size="sm" variant="outline" className="gap-1">
                       <TrendingUp className="h-4 w-4" />
                     </Button>

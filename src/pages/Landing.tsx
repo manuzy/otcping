@@ -46,7 +46,7 @@ const Landing = () => {
               The secure platform for over-the-counter cryptocurrency trading with direct peer-to-peer communication
             </p>
 
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <div className="flex-center-gap-4 flex-col sm:flex-row">
               {isAuthenticated ? <Button size="lg" onClick={() => navigate('/app')} className="text-lg px-8 py-3">
                   Launch App
                   <ArrowRight className="ml-2 h-5 w-5" />
@@ -77,7 +77,7 @@ const Landing = () => {
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
             {features.map((feature, index) => <Card key={index} className="text-center border-0 bg-background/50 backdrop-blur-sm">
                 <CardHeader>
-                  <div className="mx-auto w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
+                  <div className="mx-auto w-12 h-12 bg-primary/10 rounded-lg flex-center mb-4">
                     <feature.icon className="w-6 h-6 text-primary" />
                   </div>
                   <CardTitle className="text-xl">{feature.title}</CardTitle>
@@ -107,7 +107,7 @@ const Landing = () => {
           <div className="max-w-4xl mx-auto">
             <div className="grid md:grid-cols-3 gap-8">
               <div className="text-center">
-                <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center mx-auto mb-6">
+                <div className="w-16 h-16 bg-primary rounded-full flex-center mx-auto mb-6">
                   <Lock className="w-8 h-8 text-primary-foreground" />
                 </div>
                 <h3 className="text-xl font-semibold mb-3">1. Connect Wallet</h3>
@@ -117,7 +117,7 @@ const Landing = () => {
               </div>
 
               <div className="text-center">
-                <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center mx-auto mb-6">
+                <div className="w-16 h-16 bg-primary rounded-full flex-center mx-auto mb-6">
                   <TrendingUp className="w-8 h-8 text-primary-foreground" />
                 </div>
                 <h3 className="text-xl font-semibold mb-3">2. Create or Find Trades</h3>
@@ -127,7 +127,7 @@ const Landing = () => {
               </div>
 
               <div className="text-center">
-                <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center mx-auto mb-6">
+                <div className="w-16 h-16 bg-primary rounded-full flex-center mx-auto mb-6">
                   <MessageSquare className="w-8 h-8 text-primary-foreground" />
                 </div>
                 <h3 className="text-xl font-semibold mb-3">3. Trade & Communicate</h3>
@@ -154,7 +154,7 @@ const Landing = () => {
                 </p>
                 
                 <div className="space-y-4">
-                  {benefits.map((benefit, index) => <div key={index} className="flex items-center gap-3">
+                  {benefits.map((benefit, index) => <div key={index} className="flex-center-gap-3">
                       <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
                       <span className="text-lg">{benefit}</span>
                     </div>)}

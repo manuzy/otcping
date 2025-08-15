@@ -225,7 +225,7 @@ export const InstitutionCreationDialog: React.FC<InstitutionCreationDialogProps>
 
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+                <CardTitle className="flex-center-gap-2">
                   <Building2 className="h-5 w-5" />
                   {formData.name}
                 </CardTitle>
@@ -279,7 +279,7 @@ export const InstitutionCreationDialog: React.FC<InstitutionCreationDialogProps>
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
+            <DialogTitle className="flex-center-gap-2">
               <Building2 className="h-5 w-5" />
               Create Institutional Profile
             </DialogTitle>
@@ -298,7 +298,7 @@ export const InstitutionCreationDialog: React.FC<InstitutionCreationDialogProps>
                 }`}
               >
                 <div
-                  className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                 className={`w-8 h-8 rounded-full flex-center text-sm font-medium ${
                     step.id <= currentStep
                       ? 'bg-primary text-primary-foreground'
                       : 'bg-muted text-muted-foreground'

@@ -12,6 +12,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { useOperations } from '@/hooks/useOperations';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import type { DueDiligenceSection, SectionCompletion } from '@/types/dueDiligence';
 
 interface OperationsSectionProps {
@@ -305,14 +306,8 @@ export default function OperationsSection({ institutionId, onSectionUpdate }: Op
           disabled={saving}
           className="min-w-[120px]"
         >
-          {saving ? (
-            <>
-              <span className="animate-spin mr-2">⏳</span>
-              Saving...
-            </>
-          ) : (
-            'Save Changes'
-          )}
+          {saving && <LoadingSpinner size="sm" className="mr-2" />}
+          Save Changes
         </Button>
       </div>
     </Card>
