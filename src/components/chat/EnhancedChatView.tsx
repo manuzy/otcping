@@ -8,7 +8,7 @@ import { Separator } from "@/components/ui/separator";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { 
   Menu, Send, MoreVertical, Reply, Smile, 
-  MessageSquare, Search, Hash, AtSign, Bell, Users, Bookmark
+  MessageSquare, Search, Hash, AtSign, Bell, Users, Bookmark, BookmarkCheck
 } from "lucide-react";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { Chat } from "@/types";
@@ -56,7 +56,7 @@ export const EnhancedChatView = ({ chat, onMenuClick }: EnhancedChatViewProps) =
   const { pinnedMessages, pinMessage, unpinMessage, isMessagePinned } = usePinnedMessages(chat.id);
   const { draft, saveDraft, clearDraft } = useMessageDrafts(chat.id);
   const { isUserOnline } = useOnlinePresence();
-  const { addBookmark } = useMessageBookmarks(chat.id);
+  const { addBookmark, removeBookmark, isMessageBookmarked } = useMessageBookmarks(chat.id);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -162,9 +162,14 @@ export const EnhancedChatView = ({ chat, onMenuClick }: EnhancedChatViewProps) =
 
   const handleBookmarkMessage = async (messageId: string) => {
     try {
-      await addBookmark(messageId, chat.id, 'general');
+      const isBookmarked = isMessageBookmarked(messageId);
+      if (isBookmarked) {
+        await removeBookmark(messageId);
+      } else {
+        await addBookmark(messageId, chat.id, 'general');
+      }
     } catch (error) {
-      console.error('Failed to bookmark message:', error);
+      console.error('Failed to toggle bookmark message:', error);
     }
   };
 
@@ -323,13 +328,19 @@ export const EnhancedChatView = ({ chat, onMenuClick }: EnhancedChatViewProps) =
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="h-6 w-6 p-0"
+                        className={`h-6 w-6 p-0 ${isMessageBookmarked(msg.id) ? 'text-yellow-500 hover:text-yellow-600' : ''}`}
                         onClick={() => handleBookmarkMessage(msg.id)}
                       >
-                        <Bookmark className="h-3 w-3" />
+                        {isMessageBookmarked(msg.id) ? (
+                          <BookmarkCheck className="h-3 w-3" />
+                        ) : (
+                          <Bookmark className="h-3 w-3" />
+                        )}
                       </Button>
                     </TooltipTrigger>
-                    <TooltipContent>Bookmark</TooltipContent>
+                    <TooltipContent>
+                      {isMessageBookmarked(msg.id) ? 'Remove bookmark' : 'Bookmark'}
+                    </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
                 
