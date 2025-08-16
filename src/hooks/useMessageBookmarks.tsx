@@ -30,6 +30,7 @@ export const useMessageBookmarks = (chatId?: string) => {
 
     setLoading(true);
     try {
+      // First, fetch the bookmarks
       let query = supabase
         .from('message_bookmarks')
         .select('*')
@@ -39,32 +40,64 @@ export const useMessageBookmarks = (chatId?: string) => {
         query = query.eq('chat_id', chatId);
       }
 
-      const { data, error } = await query.order('created_at', { ascending: false });
+      const { data: bookmarkData, error } = await query.order('created_at', { ascending: false });
 
       if (error) throw error;
 
-      // Get sender profiles for all bookmarked messages
-      const senderIds = [...new Set(data?.map(b => b.messages.sender_id) || [])];
+      if (!bookmarkData || bookmarkData.length === 0) {
+        setBookmarks([]);
+        return;
+      }
+
+      // Get unique message IDs and chat IDs
+      const messageIds = [...new Set(bookmarkData.map(b => b.message_id))];
+      const chatIds = [...new Set(bookmarkData.map(b => b.chat_id))];
+
+      // Fetch messages data
+      const { data: messagesData } = await supabase
+        .from('messages')
+        .select('id, content, sender_id, created_at')
+        .in('id', messageIds);
+
+      // Fetch chats data
+      const { data: chatsData } = await supabase
+        .from('chats')
+        .select('id, name')
+        .in('id', chatIds);
+
+      // Get unique sender IDs
+      const senderIds = [...new Set(messagesData?.map(m => m.sender_id) || [])];
+
+      // Fetch sender profiles
       const { data: profiles } = await supabase
         .from('profiles')
         .select('id, display_name')
         .in('id', senderIds);
 
+      // Create lookup maps
+      const messageMap = new Map(messagesData?.map(m => [m.id, m]) || []);
+      const chatMap = new Map(chatsData?.map(c => [c.id, c]) || []);
       const profileMap = new Map(profiles?.map(p => [p.id, p.display_name]) || []);
 
-      const transformedBookmarks: BookmarkedMessage[] = data?.map(bookmark => ({
-        id: bookmark.id,
-        userId: bookmark.user_id,
-        messageId: bookmark.message_id,
-        chatId: bookmark.chat_id,
-        category: bookmark.category,
-        notes: bookmark.notes,
-        createdAt: new Date(bookmark.created_at),
-        messageContent: bookmark.messages.content,
-        senderName: profileMap.get(bookmark.messages.sender_id) || 'Unknown User',
-        chatName: bookmark.chats.name,
-        messageTimestamp: new Date(bookmark.messages.created_at),
-      })) || [];
+      // Transform the data
+      const transformedBookmarks: BookmarkedMessage[] = bookmarkData.map(bookmark => {
+        const message = messageMap.get(bookmark.message_id);
+        const chat = chatMap.get(bookmark.chat_id);
+        
+        return {
+          id: bookmark.id,
+          userId: bookmark.user_id,
+          messageId: bookmark.message_id,
+          chatId: bookmark.chat_id,
+          category: bookmark.category,
+          notes: bookmark.notes,
+          createdAt: new Date(bookmark.created_at),
+          messageContent: message?.content || 'Message not found',
+          senderName: message ? (profileMap.get(message.sender_id) || 'Unknown User') : 'Unknown User',
+          chatName: chat?.name || 'Chat not found',
+          messageTimestamp: message ? new Date(message.created_at) : new Date(),
+        };
+      });
 
       setBookmarks(transformedBookmarks);
     } catch (error) {
