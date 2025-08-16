@@ -7,6 +7,22 @@ All colors MUST be HSL.
 */
 
 @layer base {
+  /* Drag and Drop Styles */
+  .chat-drag-preview {
+    opacity: 0.6;
+    transform: rotate(2deg);
+  }
+  
+  .folder-drop-zone {
+    transition: all 0.2s ease;
+  }
+  
+  .folder-drop-zone.drag-over {
+    background-color: var(--accent);
+    border-color: var(--primary);
+    transform: scale(1.02);
+  }
+
   :root {
     --background: oklch(0.99 0 0);
     --foreground: oklch(0.35 0.02 165.48);
