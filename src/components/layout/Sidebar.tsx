@@ -63,6 +63,7 @@ export const Sidebar = ({ selectedChat, onChatSelect, onClose }: SidebarProps) =
               className="pl-9"
             />
           </div>
+          <p className="text-xs text-muted-foreground mt-1">Press Ctrl+K for advanced search</p>
           <Button className="w-full" size="sm" onClick={() => navigate("/create-trade")}>
             <Plus className="h-4 w-4 mr-2" />
             New Trade

@@ -210,6 +210,7 @@ export default function PublicTrades() {
               className="pl-10"
             />
           </div>
+          <p className="text-xs text-muted-foreground mt-1">Press Ctrl+K for advanced search</p>
           
           <div className="flex gap-2 overflow-x-auto">
             <Select value={filterChain} onValueChange={(value) => {
