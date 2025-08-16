@@ -19,6 +19,7 @@ import { format } from 'date-fns';
 import { EnhancedMessage } from '@/types/chat';
 import { MessageThread } from './MessageThread';
 import { MessageReactions } from './MessageReactions';
+import { InChatSearch } from '@/components/search/InChatSearch';
 
 interface EnhancedChatViewProps {
   chat: Chat;
@@ -30,6 +31,7 @@ export const EnhancedChatView = ({ chat, onMenuClick }: EnhancedChatViewProps) =
   const [replyToMessage, setReplyToMessage] = useState<EnhancedMessage | null>(null);
   const [showThreads, setShowThreads] = useState(false);
   const [selectedThread, setSelectedThread] = useState<string | null>(null);
+  const [showInChatSearch, setShowInChatSearch] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
   const { user } = useAuth();
@@ -122,7 +124,7 @@ export const EnhancedChatView = ({ chat, onMenuClick }: EnhancedChatViewProps) =
     }
 
     return (
-      <div key={msg.id} className="group relative">
+      <div key={msg.id} id={`message-${msg.id}`} className="group relative">
         <div className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'} mb-2`}>
           <div className={`max-w-[70%] ${hasMentions ? 'ring-2 ring-yellow-400/50' : ''}`}>
             {/* Reply indicator */}
@@ -302,7 +304,12 @@ export const EnhancedChatView = ({ chat, onMenuClick }: EnhancedChatViewProps) =
           >
             <MessageSquare className="h-5 w-5" />
           </Button>
-          <Button variant="ghost" size="icon">
+          <Button 
+            variant="ghost" 
+            size="icon"
+            onClick={() => setShowInChatSearch(!showInChatSearch)}
+            className={showInChatSearch ? 'bg-muted' : ''}
+          >
             <Search className="h-5 w-5" />
           </Button>
           <Button variant="ghost" size="icon">
@@ -310,6 +317,18 @@ export const EnhancedChatView = ({ chat, onMenuClick }: EnhancedChatViewProps) =
           </Button>
         </div>
       </div>
+
+      {/* In-Chat Search */}
+      <InChatSearch
+        messages={messages}
+        isOpen={showInChatSearch}
+        onClose={() => setShowInChatSearch(false)}
+        onMessageNavigate={(messageId) => {
+          // Scroll to message with ID
+          const element = document.getElementById(`message-${messageId}`);
+          element?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }}
+      />
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">

@@ -14,6 +14,7 @@ import {
 import { useWalletAuth } from "@/hooks/useWalletAuth";
 import { useAuth } from "@/hooks/useAuth";
 import WalletAuthButton from "@/components/auth/WalletAuthButton";
+import { SearchButton } from "@/components/search/SearchButton";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
@@ -141,9 +142,12 @@ export const Header = () => {
                  )}
                </nav>
              )}
-           </div>
+          </div>
 
           <div className="flex items-center space-x-4">
+            {isAuthenticated && (
+              <SearchButton />
+            )}
             {isAuthenticated && address ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
