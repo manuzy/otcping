@@ -16,8 +16,26 @@ export const usePinnedMessages = (chatId: string) => {
       const { data, error } = await supabase
         .from('pinned_messages')
         .select(`
-          *,
-          messages (
+          id,
+          message_id,
+          pinned_at,
+          pinned_by
+        `)
+        .eq('chat_id', chatId)
+        .order('pinned_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching pinned messages:', error);
+        return;
+      }
+
+      // Fetch the actual messages
+      if (data && data.length > 0) {
+        const messageIds = data.map(pm => pm.message_id);
+        
+        const { data: messagesData, error: messagesError } = await supabase
+          .from('messages')
+          .select(`
             *,
             profiles:sender_id (
               id,
@@ -34,19 +52,15 @@ export const usePinnedMessages = (chatId: string) => {
               id,
               mentioned_user_id
             )
-          )
-        `)
-        .eq('chat_id', chatId)
-        .order('pinned_at', { ascending: false });
+          `)
+          .in('id', messageIds);
 
-      if (error) {
-        console.error('Error fetching pinned messages:', error);
-        return;
-      }
+        if (messagesError) {
+          console.error('Error fetching message details:', messagesError);
+          return;
+        }
 
-      const messages = data?.map(item => {
-        const message = item.messages;
-        return {
+        const messages = messagesData?.map(message => ({
           id: message.id,
           chatId: message.chat_id,
           senderId: message.sender_id,
@@ -65,10 +79,12 @@ export const usePinnedMessages = (chatId: string) => {
           })) || [],
           senderName: message.profiles?.display_name || 'Unknown User',
           senderAvatar: message.profiles?.avatar,
-        };
-      }) || [];
+        })) || [];
 
-      setPinnedMessages(messages);
+        setPinnedMessages(messages);
+      } else {
+        setPinnedMessages([]);
+      }
     } catch (error) {
       console.error('Unexpected error fetching pinned messages:', error);
     } finally {

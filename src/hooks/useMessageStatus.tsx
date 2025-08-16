@@ -31,6 +31,19 @@ export const useMessageStatus = (chatId: string) => {
         userId: targetUserId || user.id
       })));
 
+      // Save to database for persistence
+      const { error } = await supabase
+        .from('message_status')
+        .upsert({
+          message_id: messageId,
+          user_id: user.id,
+          status,
+        });
+
+      if (error) {
+        console.error('Error persisting message status:', error);
+      }
+
       // Broadcast status update to other users
       const channel = supabase.channel(`message-status:${chatId}`);
       channel.subscribe((channelStatus) => {
