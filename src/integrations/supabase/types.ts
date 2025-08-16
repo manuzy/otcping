@@ -1242,6 +1242,69 @@ export type Database = {
           },
         ]
       }
+      message_attachments: {
+        Row: {
+          created_at: string
+          file_name: string
+          file_size: number
+          file_type: string
+          file_url: string
+          id: string
+          message_id: string
+          thumbnail_url: string | null
+        }
+        Insert: {
+          created_at?: string
+          file_name: string
+          file_size: number
+          file_type: string
+          file_url: string
+          id?: string
+          message_id: string
+          thumbnail_url?: string | null
+        }
+        Update: {
+          created_at?: string
+          file_name?: string
+          file_size?: number
+          file_type?: string
+          file_url?: string
+          id?: string
+          message_id?: string
+          thumbnail_url?: string | null
+        }
+        Relationships: []
+      }
+      message_drafts: {
+        Row: {
+          chat_id: string
+          content: string
+          created_at: string
+          id: string
+          mentions: string[] | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          chat_id: string
+          content: string
+          created_at?: string
+          id?: string
+          mentions?: string[] | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          chat_id?: string
+          content?: string
+          created_at?: string
+          id?: string
+          mentions?: string[] | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       message_mentions: {
         Row: {
           created_at: string
@@ -1302,6 +1365,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      message_status: {
+        Row: {
+          id: string
+          message_id: string
+          status: string
+          timestamp: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          message_id: string
+          status: string
+          timestamp?: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          message_id?: string
+          status?: string
+          timestamp?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       messages: {
         Row: {
@@ -1404,6 +1491,30 @@ export type Database = {
           id?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      pinned_messages: {
+        Row: {
+          chat_id: string
+          id: string
+          message_id: string
+          pinned_at: string
+          pinned_by: string
+        }
+        Insert: {
+          chat_id: string
+          id?: string
+          message_id: string
+          pinned_at?: string
+          pinned_by: string
+        }
+        Update: {
+          chat_id?: string
+          id?: string
+          message_id?: string
+          pinned_at?: string
+          pinned_by?: string
         }
         Relationships: []
       }
