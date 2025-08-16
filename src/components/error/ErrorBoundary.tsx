@@ -2,8 +2,63 @@ import React, { Component, ReactNode } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { AlertTriangle, RefreshCw } from 'lucide-react';
+import { AlertTriangle, RefreshCw, Copy, Check } from 'lucide-react';
 import { logger } from '@/lib/logger';
+import { useState } from 'react';
+
+interface ErrorDetailsSectionProps {
+  error: Error;
+  errorInfo?: string;
+}
+
+function ErrorDetailsSection({ error, errorInfo }: ErrorDetailsSectionProps) {
+  const [copied, setCopied] = useState(false);
+
+  const copyErrorDetails = async () => {
+    const errorText = `Error: ${error.message}${errorInfo ? `\n\nComponent Stack:\n${errorInfo}` : ''}`;
+    
+    try {
+      await navigator.clipboard.writeText(errorText);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy error details:', err);
+    }
+  };
+
+  return (
+    <details className="text-sm">
+      <summary className="cursor-pointer font-medium mb-2 flex items-center justify-between">
+        Error Details
+        <Button
+          onClick={copyErrorDetails}
+          variant="ghost"
+          size="sm"
+          className="h-6 px-2"
+        >
+          {copied ? (
+            <Check className="h-3 w-3" />
+          ) : (
+            <Copy className="h-3 w-3" />
+          )}
+        </Button>
+      </summary>
+      <div className="bg-muted p-3 rounded text-xs font-mono overflow-auto max-h-32">
+        <div className="mb-2">
+          <strong>Error:</strong> {error.message}
+        </div>
+        {errorInfo && (
+          <div>
+            <strong>Component Stack:</strong>
+            <pre className="whitespace-pre-wrap mt-1">
+              {errorInfo}
+            </pre>
+          </div>
+        )}
+      </div>
+    </details>
+  );
+}
 
 interface Props {
   children: ReactNode;
@@ -76,24 +131,7 @@ export class ErrorBoundary extends Component<Props, State> {
               </Alert>
 
               {this.props.showDetails && this.state.error && (
-                <details className="text-sm">
-                  <summary className="cursor-pointer font-medium mb-2">
-                    Error Details
-                  </summary>
-                  <div className="bg-muted p-3 rounded text-xs font-mono overflow-auto max-h-32">
-                    <div className="mb-2">
-                      <strong>Error:</strong> {this.state.error.message}
-                    </div>
-                    {this.state.errorInfo && (
-                      <div>
-                        <strong>Component Stack:</strong>
-                        <pre className="whitespace-pre-wrap mt-1">
-                          {this.state.errorInfo}
-                        </pre>
-                      </div>
-                    )}
-                  </div>
-                </details>
+                <ErrorDetailsSection error={this.state.error} errorInfo={this.state.errorInfo} />
               )}
 
               <div className="flex gap-2">
