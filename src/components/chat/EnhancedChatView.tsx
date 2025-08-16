@@ -8,18 +8,26 @@ import { Separator } from "@/components/ui/separator";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { 
   Menu, Send, MoreVertical, Reply, Smile, 
-  MessageSquare, Search, Hash, AtSign, Bell
+  MessageSquare, Search, Hash, AtSign, Bell, Users
 } from "lucide-react";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { Chat } from "@/types";
 import { useEnhancedMessages } from '@/hooks/useEnhancedMessages';
 import { useChatParticipants } from '@/hooks/useChatParticipants';
 import { useAuth } from '@/hooks/useAuth';
+import { useTypingIndicator } from '@/hooks/useTypingIndicator';
+import { useMessageStatus } from '@/hooks/useMessageStatus';
+import { useOnlinePresence } from '@/hooks/useOnlinePresence';
 import { format } from 'date-fns';
 import { EnhancedMessage } from '@/types/chat';
 import { MessageThread } from './MessageThread';
 import { MessageReactions } from './MessageReactions';
+import { MessageActionsMenu } from './MessageActionsMenu';
+import { MessageStatusIndicator } from './MessageStatusIndicator';
+import { TypingIndicator } from './TypingIndicator';
+import { RichMessageInput } from './RichMessageInput';
 import { InChatSearch } from '@/components/search/InChatSearch';
+import { EmojiPicker } from '@/components/ui/emoji-picker';
 
 interface EnhancedChatViewProps {
   chat: Chat;
@@ -37,25 +45,30 @@ export const EnhancedChatView = ({ chat, onMenuClick }: EnhancedChatViewProps) =
   const { user } = useAuth();
   const { messages, loading, sending, sendMessage, addReaction, removeReaction } = useEnhancedMessages(chat.id);
   const { participants } = useChatParticipants(chat.id);
+  const { typingUsers, startTyping, stopTyping } = useTypingIndicator(chat.id);
+  const { getMessageStatus, markMessageAsRead } = useMessageStatus(chat.id);
+  const { isUserOnline } = useOnlinePresence();
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  const handleSendMessage = async () => {
-    if (!message.trim() || sending) return;
+  const handleSendMessage = async (content: string, attachments?: File[]) => {
+    if (!content.trim() || sending) return false;
     
     const success = await sendMessage(
-      message.trim(), 
+      content.trim(), 
       replyToMessage?.id,
-      extractMentions(message)
+      extractMentions(content)
     );
     
     if (success) {
-      setMessage("");
       setReplyToMessage(null);
+      stopTyping();
     }
+    
+    return success;
   };
 
   const extractMentions = (content: string): string[] => {
@@ -80,11 +93,18 @@ export const EnhancedChatView = ({ chat, onMenuClick }: EnhancedChatViewProps) =
     setMessage(prev => prev + "🔔 ALERT: ");
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSendMessage();
+  const handleMessageChange = (value: string) => {
+    setMessage(value);
+    
+    // Start typing indicator when user starts typing
+    if (value.length > 0) {
+      startTyping();
+    } else {
+      stopTyping();
     }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Escape') {
       setReplyToMessage(null);
     }
@@ -170,9 +190,14 @@ export const EnhancedChatView = ({ chat, onMenuClick }: EnhancedChatViewProps) =
               )}
               
               <div className="flex items-center justify-between mt-1">
-                <p className={`text-xs ${isOwnMessage ? 'text-primary-foreground/70' : 'text-muted-foreground'}`}>
-                  {format(msg.timestamp, 'HH:mm')}
-                </p>
+                <div className="flex items-center gap-2">
+                  <p className={`text-xs ${isOwnMessage ? 'text-primary-foreground/70' : 'text-muted-foreground'}`}>
+                    {format(msg.timestamp, 'HH:mm')}
+                  </p>
+                  {isOwnMessage && (
+                    <MessageStatusIndicator status={getMessageStatus(msg.id)} />
+                  )}
+                </div>
                 
                 {/* Thread count */}
                 {!isInThread && threadReplies.length > 0 && (
@@ -208,21 +233,20 @@ export const EnhancedChatView = ({ chat, onMenuClick }: EnhancedChatViewProps) =
                   </Tooltip>
                 </TooltipProvider>
                 
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-6 w-6 p-0"
-                        onClick={() => addReaction(msg.id, '👍')}
-                      >
-                        <Smile className="h-3 w-3" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>React</TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
+                <EmojiPicker onEmojiSelect={(emoji) => addReaction(msg.id, emoji)}>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 w-6 p-0"
+                  >
+                    <Smile className="h-3 w-3" />
+                  </Button>
+                </EmojiPicker>
+                
+                <MessageActionsMenu
+                  message={msg}
+                  onReply={setReplyToMessage}
+                />
               </div>
             </div>
           </div>
@@ -289,9 +313,17 @@ export const EnhancedChatView = ({ chat, onMenuClick }: EnhancedChatViewProps) =
           <div className="flex items-center gap-2">
             <h2 className="font-semibold truncate">{displayName}</h2>
             {chat.isPublic && <Badge variant="secondary" className="text-xs">Public</Badge>}
+            {isDirectMessage && otherParticipant && (
+              <div className={`w-2 h-2 rounded-full ${
+                isUserOnline(otherParticipant.id) ? 'bg-green-500' : 'bg-gray-400'
+              }`} />
+            )}
           </div>
           <p className="text-sm text-muted-foreground">
-            {participants.length} participant{participants.length !== 1 ? 's' : ''}
+            {isDirectMessage 
+              ? (isUserOnline(otherParticipant?.id || '') ? 'Online' : 'Offline')
+              : `${participants.length} participant${participants.length !== 1 ? 's' : ''}`
+            }
           </p>
         </div>
         
@@ -311,6 +343,9 @@ export const EnhancedChatView = ({ chat, onMenuClick }: EnhancedChatViewProps) =
             className={showInChatSearch ? 'bg-muted' : ''}
           >
             <Search className="h-5 w-5" />
+          </Button>
+          <Button variant="ghost" size="icon">
+            <Users className="h-5 w-5" />
           </Button>
           <Button variant="ghost" size="icon">
             <MoreVertical className="h-5 w-5" />
@@ -342,84 +377,23 @@ export const EnhancedChatView = ({ chat, onMenuClick }: EnhancedChatViewProps) =
             <div ref={messagesEndRef} />
           </>
         )}
+        
+        {/* Typing indicator */}
+        <TypingIndicator typingUserIds={typingUsers} chatId={chat.id} />
       </div>
 
-      {/* Reply indicator */}
-      {replyToMessage && (
-        <div className="px-4 py-2 bg-muted/50 border-t">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Reply className="h-4 w-4" />
-              Replying to: {replyToMessage.content.slice(0, 50)}...
-            </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setReplyToMessage(null)}
-            >
-              ✕
-            </Button>
-          </div>
-        </div>
-      )}
-
-      {/* Message input */}
+      {/* Rich Message Input */}
       <div className="p-4 border-t border-border">
-        <div className="flex items-end gap-2">
-          <div className="flex-1">
-            {/* Quick actions bar */}
-            <div className="flex gap-1 mb-2">
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => insertAtMention('')}
-                      className="h-8 px-2"
-                    >
-                      <AtSign className="h-4 w-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>Mention someone</TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-              
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={insertBellAlert}
-                      className="h-8 px-2"
-                    >
-                      <Bell className="h-4 w-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>Alert everyone</TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </div>
-            
-            <Input
-              placeholder="Type a message..."
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              onKeyDown={handleKeyDown}
-              disabled={sending}
-              className="min-h-[40px]"
-            />
-          </div>
-          
-          <Button 
-            onClick={handleSendMessage}
-            disabled={!message.trim() || sending}
-            size="icon"
-          >
-            {sending ? <LoadingSpinner size="sm" /> : <Send className="h-4 w-4" />}
-          </Button>
-        </div>
+        <RichMessageInput
+          value={message}
+          onChange={handleMessageChange}
+          onSend={handleSendMessage}
+          onKeyDown={handleKeyDown}
+          replyToMessage={replyToMessage}
+          onCancelReply={() => setReplyToMessage(null)}
+          disabled={sending}
+          placeholder="Type a message..."
+        />
       </div>
     </div>
   );
