@@ -156,22 +156,26 @@ export const useChatFolders = () => {
     if (!user) return false;
 
     try {
-      const { error } = await supabase
+      console.log('Assigning chat to folder:', { chatId, folderId });
+      
+      const { data, error } = await supabase
         .from('chat_folder_assignments')
         .upsert({
           chat_id: chatId,
           folder_id: folderId,
           user_id: user.id
-        });
+        })
+        .select()
+        .single();
 
       if (error) throw error;
 
       const newAssignment: ChatFolderAssignment = {
-        id: '', // Will be set by DB
-        chatId,
-        folderId,
-        userId: user.id,
-        createdAt: new Date()
+        id: data.id,
+        chatId: data.chat_id,
+        folderId: data.folder_id,
+        userId: data.user_id,
+        createdAt: new Date(data.created_at)
       };
 
       setAssignments(prev => [
@@ -179,17 +183,26 @@ export const useChatFolders = () => {
         newAssignment
       ]);
 
+      console.log('Chat assigned successfully:', newAssignment);
+      notifications.success({ description: 'Chat added to folder' });
+      
+      // Refetch to ensure data consistency
+      setTimeout(() => fetchFolders(), 100);
+      
       return true;
     } catch (error) {
       logger.error('Failed to assign chat to folder', { chatId, folderId }, error as Error);
+      notifications.error({ description: 'Failed to add chat to folder' });
       return false;
     }
-  }, [user]);
+  }, [user, fetchFolders]);
 
   const removeChatFromFolder = useCallback(async (chatId: string): Promise<boolean> => {
     if (!user) return false;
 
     try {
+      console.log('Removing chat from folder:', { chatId });
+      
       const { error } = await supabase
         .from('chat_folder_assignments')
         .delete()
@@ -199,12 +212,20 @@ export const useChatFolders = () => {
       if (error) throw error;
 
       setAssignments(prev => prev.filter(assignment => assignment.chatId !== chatId));
+      
+      console.log('Chat removed from folder successfully');
+      notifications.success({ description: 'Chat removed from folder' });
+      
+      // Refetch to ensure data consistency
+      setTimeout(() => fetchFolders(), 100);
+      
       return true;
     } catch (error) {
       logger.error('Failed to remove chat from folder', { chatId }, error as Error);
+      notifications.error({ description: 'Failed to remove chat from folder' });
       return false;
     }
-  }, [user]);
+  }, [user, fetchFolders]);
 
   const getChatFolder = useCallback((chatId: string): ChatFolder | null => {
     const assignment = assignments.find(a => a.chatId === chatId);

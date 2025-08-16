@@ -32,10 +32,14 @@ export const ChatFoldersSection = ({
   );
 
   const handleDrop = async (chatId: string, folderId: string | null) => {
+    console.log('Drop event in ChatFoldersSection:', { chatId, folderId });
+    
     if (folderId) {
-      await assignChatToFolder(chatId, folderId);
+      const success = await assignChatToFolder(chatId, folderId);
+      console.log('Assignment result:', success);
     } else {
-      await removeChatFromFolder(chatId);
+      const success = await removeChatFromFolder(chatId);
+      console.log('Removal result:', success);
     }
   };
 
