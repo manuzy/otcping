@@ -22,7 +22,10 @@ export const useMessageTemplates = () => {
   const [loading, setLoading] = useState(false);
 
   const fetchTemplates = useCallback(async () => {
-    if (!user) return;
+    if (!user) {
+      setTemplates([]);
+      return;
+    }
 
     setLoading(true);
     try {
@@ -32,7 +35,16 @@ export const useMessageTemplates = () => {
         .or(`user_id.eq.${user.id},is_public.eq.true`)
         .order('usage_count', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error fetching templates:', error);
+        // If table doesn't exist, just set empty array and don't show error
+        if (error.message?.includes('relation "message_templates" does not exist')) {
+          console.warn('message_templates table does not exist yet');
+          setTemplates([]);
+          return;
+        }
+        throw error;
+      }
 
       const transformedTemplates = data?.map(template => ({
         id: template.id,
@@ -48,9 +60,14 @@ export const useMessageTemplates = () => {
       })) || [];
 
       setTemplates(transformedTemplates);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching templates:', error);
-      notifications.error({ description: 'Failed to load templates' });
+      setTemplates([]);
+      
+      // Don't show notifications for missing table errors
+      if (!error?.message?.includes('relation "message_templates" does not exist')) {
+        notifications.error({ description: 'Failed to load templates' });
+      }
     } finally {
       setLoading(false);
     }

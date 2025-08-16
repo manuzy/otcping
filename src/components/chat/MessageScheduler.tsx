@@ -25,33 +25,48 @@ export const MessageScheduler: React.FC<MessageSchedulerProps> = ({ chatId, trig
   const [selectedTemplate, setSelectedTemplate] = useState('');
 
   const { scheduleMessage } = useScheduledMessages(chatId);
-  const { templates, parseTemplate } = useMessageTemplates();
+  const { templates = [], parseTemplate } = useMessageTemplates();
 
   const handleSchedule = async () => {
-    if (!content.trim() || !scheduledDate || !scheduledTime) return;
+    if (!content.trim() || !scheduledDate || !scheduledTime) {
+      console.warn('Missing required fields for scheduling message');
+      return;
+    }
 
-    const scheduledFor = new Date(`${scheduledDate}T${scheduledTime}`);
-    
-    const success = await scheduleMessage(chatId, content, scheduledFor, {
-      timezone,
-      recurringPattern: recurringPattern || undefined,
-    });
+    try {
+      const scheduledFor = new Date(`${scheduledDate}T${scheduledTime}`);
+      
+      if (isNaN(scheduledFor.getTime())) {
+        console.error('Invalid date/time for scheduling');
+        return;
+      }
 
-    if (success) {
-      setOpen(false);
-      setContent('');
-      setScheduledDate('');
-      setScheduledTime('');
-      setRecurringPattern('');
-      setSelectedTemplate('');
+      console.log('Scheduling message:', { chatId, content: content.substring(0, 50) + '...', scheduledFor });
+      
+      const success = await scheduleMessage(chatId, content, scheduledFor, {
+        timezone,
+        recurringPattern: recurringPattern || undefined,
+      });
+
+      if (success) {
+        setOpen(false);
+        setContent('');
+        setScheduledDate('');
+        setScheduledTime('');
+        setRecurringPattern('');
+        setSelectedTemplate('');
+      }
+    } catch (error) {
+      console.error('Error in handleSchedule:', error);
     }
   };
 
   const handleTemplateSelect = (templateId: string) => {
+    if (!templateId || !Array.isArray(templates)) return;
+    
     const template = templates.find(t => t.id === templateId);
     if (template) {
-      // For now, just use the template content as-is
-      // In a full implementation, we'd show a form for variable replacement
+      console.log('Selected template:', template.name);
       setContent(template.content);
       setSelectedTemplate(templateId);
     }
@@ -86,7 +101,7 @@ export const MessageScheduler: React.FC<MessageSchedulerProps> = ({ chatId, trig
 
         <div className="space-y-4">
           {/* Template Selection */}
-          {templates.length > 0 && (
+          {Array.isArray(templates) && templates.length > 0 && (
             <div className="space-y-2">
               <Label>Use Template (Optional)</Label>
               <Select value={selectedTemplate} onValueChange={handleTemplateSelect}>

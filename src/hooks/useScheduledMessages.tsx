@@ -79,9 +79,26 @@ export const useScheduledMessages = (chatId?: string) => {
       mentions?: string[];
     }
   ): Promise<boolean> => {
-    if (!user) return false;
+    if (!user) {
+      console.error('User not authenticated for scheduling message');
+      notifications.error({ description: 'You must be logged in to schedule messages' });
+      return false;
+    }
+
+    if (!chatId || !content || !scheduledFor) {
+      console.error('Missing required parameters for scheduling message');
+      notifications.error({ description: 'Missing required information for scheduling' });
+      return false;
+    }
 
     try {
+      console.log('Attempting to schedule message:', {
+        chatId,
+        userId: user.id,
+        scheduledFor: scheduledFor.toISOString(),
+        timezone: options?.timezone || 'UTC'
+      });
+
       const { error } = await supabase
         .from('scheduled_messages')
         .insert({
@@ -90,19 +107,34 @@ export const useScheduledMessages = (chatId?: string) => {
           content,
           scheduled_for: scheduledFor.toISOString(),
           timezone: options?.timezone || 'UTC',
-          recurring_pattern: options?.recurringPattern,
-          template_id: options?.templateId,
-          mentions: options?.mentions,
+          recurring_pattern: options?.recurringPattern || null,
+          template_id: options?.templateId || null,
+          mentions: options?.mentions || null,
         });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error scheduling message:', error);
+        throw error;
+      }
 
+      console.log('Message scheduled successfully');
       notifications.success({ description: 'Message scheduled successfully' });
       await fetchScheduledMessages();
       return true;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error scheduling message:', error);
-      notifications.error({ description: 'Failed to schedule message' });
+      
+      // Provide more specific error messages
+      let errorMessage = 'Failed to schedule message';
+      if (error?.message?.includes('policy')) {
+        errorMessage = 'You do not have permission to schedule messages in this chat';
+      } else if (error?.message?.includes('foreign key')) {
+        errorMessage = 'Invalid chat or user reference';
+      } else if (error?.message) {
+        errorMessage = error.message;
+      }
+      
+      notifications.error({ description: errorMessage });
       return false;
     }
   };
