@@ -19,6 +19,7 @@ import { Header } from "./components/navigation/Header";
 import { AuthProvider } from "./hooks/useAuth";
 import { AppKitProvider } from "./components/providers/AppKitProvider";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
+import { GlobalSearchProvider } from "./components/search/GlobalSearchProvider";
 
 
 const queryClient = new QueryClient();
@@ -27,17 +28,18 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <AppKitProvider>
       <AuthProvider>
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          themes={["light", "dark", "blue", "green"]}
-          disableTransitionOnChange
-        >
-          <TooltipProvider delayDuration={300}>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter>
+        <GlobalSearchProvider>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            themes={["light", "dark", "blue", "green"]}
+            disableTransitionOnChange
+          >
+            <TooltipProvider delayDuration={300}>
+              <Toaster />
+              <Sonner />
+              <BrowserRouter>
             <div className="relative">
               <Header />
               <Routes>
@@ -56,8 +58,9 @@ const App = () => (
               <BottomTabs />
             </div>
           </BrowserRouter>
-          </TooltipProvider>
-        </ThemeProvider>
+            </TooltipProvider>
+          </ThemeProvider>
+        </GlobalSearchProvider>
       </AuthProvider>
     </AppKitProvider>
   </QueryClientProvider>
