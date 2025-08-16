@@ -136,7 +136,6 @@ export const useMessageBookmarks = (chatId?: string) => {
       }
 
       notifications.success({ description: 'Message bookmarked' });
-      await fetchBookmarks();
       return true;
     } catch (error) {
       console.error('Error adding bookmark:', error);
@@ -158,7 +157,6 @@ export const useMessageBookmarks = (chatId?: string) => {
       if (error) throw error;
 
       notifications.success({ description: 'Bookmark removed' });
-      await fetchBookmarks();
       return true;
     } catch (error) {
       console.error('Error removing bookmark:', error);
@@ -180,7 +178,6 @@ export const useMessageBookmarks = (chatId?: string) => {
       if (error) throw error;
 
       notifications.success({ description: 'Bookmark updated' });
-      await fetchBookmarks();
       return true;
     } catch (error) {
       console.error('Error updating bookmark:', error);
@@ -225,7 +222,7 @@ export const useMessageBookmarks = (chatId?: string) => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user, fetchBookmarks]);
+  }, [user]);
 
   return {
     bookmarks,
