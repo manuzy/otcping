@@ -9,6 +9,7 @@ import { useWalletAuth } from '@/hooks/useWalletAuth';
 import { logger } from '@/lib/logger';
 import { notifications } from '@/lib/notifications';
 import { errorHandler } from '@/lib/errorHandler';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 export default function WalletAuthButton() {
   const [isAuthenticating, setIsAuthenticating] = useState(false);
@@ -17,6 +18,8 @@ export default function WalletAuthButton() {
   const { user, createWalletChallenge, authenticateWallet } = useAuth();
   const { data: walletClient } = useWalletClient();
   const { isConnectedButNotAuthenticated, loading: authLoading } = useWalletAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const handleAuthenticate = async () => {
     if (!isConnected || !address) {
@@ -66,6 +69,13 @@ export default function WalletAuthButton() {
       if (result.success) {
         logger.authEvent('Wallet authentication successful', { walletAddress: address });
         notifications.authSuccess();
+        
+        // Redirect to app if not already there
+        if (location.pathname !== '/app') {
+          setTimeout(() => {
+            navigate('/app');
+          }, 1000); // Small delay to show success notification
+        }
       } else {
         throw new Error(result.error || 'Authentication failed');
       }
