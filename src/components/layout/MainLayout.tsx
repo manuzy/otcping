@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Sidebar } from "./Sidebar";
-import { ChatView } from "../chat/ChatView";
+import { EnhancedChatView } from "../chat/EnhancedChatView";
 import { WelcomeView } from "../chat/WelcomeView";
 import { Chat } from "@/types";
 import { useChats } from "@/hooks/useChats";
@@ -81,7 +81,7 @@ export const MainLayout = () => {
       {/* Main Content */}
       <div className="flex-1 flex flex-col">
         {selectedChat ? (
-          <ChatView 
+          <EnhancedChatView 
             chat={selectedChat}
             onMenuClick={() => setIsSidebarOpen(true)}
           />
