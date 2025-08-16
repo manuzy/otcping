@@ -51,7 +51,7 @@ export default function WalletAuthButton() {
       }
 
       notifications.info({
-        description: "Please sign the message in your wallet to authenticate."
+        description: "Please sign the message in your wallet to sign in."
       });
 
       // Get real signature from wallet
@@ -98,7 +98,7 @@ export default function WalletAuthButton() {
       <div className="flex-gap-2 px-4 py-2 bg-success/10 rounded-lg border border-success/20">
         <Shield className="icon-sm text-success" />
         <span className="text-sm text-success font-medium">
-          Authenticated: {address?.slice(0, 6)}...{address?.slice(-4)}
+          Signed in: {address?.slice(0, 6)}...{address?.slice(-4)}
         </span>
       </div>
     );
@@ -118,7 +118,7 @@ export default function WalletAuthButton() {
           ) : (
             <Wallet className="icon-sm" />
           )}
-          Authenticate {address?.slice(0, 6)}...{address?.slice(-4)}
+          Sign in {address?.slice(0, 6)}...{address?.slice(-4)}
         </Button>
         <Button 
           variant="outline" 
@@ -144,7 +144,7 @@ export default function WalletAuthButton() {
         <Wallet className="icon-sm" />
       )}
       {isConnected ? 
-        `Authenticate ${address?.slice(0, 6)}...${address?.slice(-4)}` : 
+        `Sign in ${address?.slice(0, 6)}...${address?.slice(-4)}` : 
         'Connect Wallet'
       }
     </Button>

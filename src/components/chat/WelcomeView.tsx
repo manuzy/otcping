@@ -34,7 +34,7 @@ export const WelcomeView = ({ onMenuClick }: WelcomeViewProps) => {
                   Secure peer-to-peer cryptocurrency trading platform
                 </p>
                 <p className="text-muted-foreground mt-2">
-                  Connect and authenticate your wallet to start trading.
+                  Connect and sign in with your wallet to start trading.
                 </p>
               </div>
               <WalletAuthButton />
@@ -45,7 +45,7 @@ export const WelcomeView = ({ onMenuClick }: WelcomeViewProps) => {
                 <MessageSquare className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
                 <h2 className="text-2xl font-bold mb-2">Welcome back!</h2>
                 <p className="text-muted-foreground">
-                  Your wallet is authenticated and ready for trading.
+                  You're signed in and ready for trading.
                 </p>
                 <p className="text-muted-foreground mt-2">
                   Start by creating a new trade or selecting an existing chat from the sidebar.

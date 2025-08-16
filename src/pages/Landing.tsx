@@ -112,7 +112,7 @@ const Landing = () => {
                 </div>
                 <h3 className="text-xl font-semibold mb-3">1. Connect Wallet</h3>
                 <p className="text-muted-foreground">
-                  Securely connect your crypto wallet to authenticate and start trading
+                  Securely connect your crypto wallet to sign in and start trading
                 </p>
               </div>
 

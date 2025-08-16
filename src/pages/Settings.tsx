@@ -313,7 +313,7 @@ export default function Settings() {
                 <div className="space-y-0.5">
                   <Label>Authenticated</Label>
                   <p className="text-sm text-muted-foreground">
-                    Your wallet is authenticated and profile is active
+                    You're signed in and your profile is active
                   </p>
                 </div>
                 <div className="h-2 w-2 bg-green-500 rounded-full" />
