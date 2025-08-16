@@ -77,6 +77,87 @@ export type Database = {
         }
         Relationships: []
       }
+      blast_messages: {
+        Row: {
+          content: string
+          created_at: string
+          failed_sends: number | null
+          id: string
+          scheduled_for: string | null
+          sender_id: string
+          sent_at: string | null
+          status: string
+          successful_sends: number | null
+          title: string
+          total_recipients: number | null
+          updated_at: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          failed_sends?: number | null
+          id?: string
+          scheduled_for?: string | null
+          sender_id: string
+          sent_at?: string | null
+          status?: string
+          successful_sends?: number | null
+          title: string
+          total_recipients?: number | null
+          updated_at?: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          failed_sends?: number | null
+          id?: string
+          scheduled_for?: string | null
+          sender_id?: string
+          sent_at?: string | null
+          status?: string
+          successful_sends?: number | null
+          title?: string
+          total_recipients?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      blast_recipients: {
+        Row: {
+          blast_message_id: string
+          created_at: string
+          error_message: string | null
+          id: string
+          opened_at: string | null
+          recipient_id: string
+          recipient_type: string
+          sent_at: string | null
+          status: string
+        }
+        Insert: {
+          blast_message_id: string
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          opened_at?: string | null
+          recipient_id: string
+          recipient_type: string
+          sent_at?: string | null
+          status?: string
+        }
+        Update: {
+          blast_message_id?: string
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          opened_at?: string | null
+          recipient_id?: string
+          recipient_type?: string
+          sent_at?: string | null
+          status?: string
+        }
+        Relationships: []
+      }
       chat_folder_assignments: {
         Row: {
           chat_id: string
@@ -1242,6 +1323,30 @@ export type Database = {
           },
         ]
       }
+      message_acknowledgments: {
+        Row: {
+          acknowledged_at: string
+          id: string
+          message_id: string
+          notes: string | null
+          user_id: string
+        }
+        Insert: {
+          acknowledged_at?: string
+          id?: string
+          message_id: string
+          notes?: string | null
+          user_id: string
+        }
+        Update: {
+          acknowledged_at?: string
+          id?: string
+          message_id?: string
+          notes?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       message_attachments: {
         Row: {
           created_at: string
@@ -1282,6 +1387,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      message_bookmarks: {
+        Row: {
+          category: string | null
+          chat_id: string
+          created_at: string
+          id: string
+          message_id: string
+          notes: string | null
+          user_id: string
+        }
+        Insert: {
+          category?: string | null
+          chat_id: string
+          created_at?: string
+          id?: string
+          message_id: string
+          notes?: string | null
+          user_id: string
+        }
+        Update: {
+          category?: string | null
+          chat_id?: string
+          created_at?: string
+          id?: string
+          message_id?: string
+          notes?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       message_drafts: {
         Row: {
@@ -1350,6 +1485,33 @@ export type Database = {
           },
         ]
       }
+      message_priorities: {
+        Row: {
+          created_at: string
+          deadline: string | null
+          id: string
+          message_id: string
+          priority_level: string
+          requires_acknowledgment: boolean | null
+        }
+        Insert: {
+          created_at?: string
+          deadline?: string | null
+          id?: string
+          message_id: string
+          priority_level?: string
+          requires_acknowledgment?: boolean | null
+        }
+        Update: {
+          created_at?: string
+          deadline?: string | null
+          id?: string
+          message_id?: string
+          priority_level?: string
+          requires_acknowledgment?: boolean | null
+        }
+        Relationships: []
+      }
       message_reactions: {
         Row: {
           created_at: string
@@ -1413,6 +1575,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      message_templates: {
+        Row: {
+          category: string | null
+          content: string
+          created_at: string
+          id: string
+          is_public: boolean | null
+          name: string
+          updated_at: string
+          usage_count: number | null
+          user_id: string
+          variables: Json | null
+        }
+        Insert: {
+          category?: string | null
+          content: string
+          created_at?: string
+          id?: string
+          is_public?: boolean | null
+          name: string
+          updated_at?: string
+          usage_count?: number | null
+          user_id: string
+          variables?: Json | null
+        }
+        Update: {
+          category?: string | null
+          content?: string
+          created_at?: string
+          id?: string
+          is_public?: boolean | null
+          name?: string
+          updated_at?: string
+          usage_count?: number | null
+          user_id?: string
+          variables?: Json | null
+        }
+        Relationships: []
       }
       messages: {
         Row: {
@@ -1675,6 +1876,54 @@ export type Database = {
           rater_id?: string
           rating_value?: number
           trade_id?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      scheduled_messages: {
+        Row: {
+          chat_id: string
+          content: string
+          created_at: string
+          id: string
+          mentions: string[] | null
+          recurring_pattern: string | null
+          scheduled_for: string
+          sender_id: string
+          sent_at: string | null
+          status: string
+          template_id: string | null
+          timezone: string | null
+          updated_at: string
+        }
+        Insert: {
+          chat_id: string
+          content: string
+          created_at?: string
+          id?: string
+          mentions?: string[] | null
+          recurring_pattern?: string | null
+          scheduled_for: string
+          sender_id: string
+          sent_at?: string | null
+          status?: string
+          template_id?: string | null
+          timezone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          chat_id?: string
+          content?: string
+          created_at?: string
+          id?: string
+          mentions?: string[] | null
+          recurring_pattern?: string | null
+          scheduled_for?: string
+          sender_id?: string
+          sent_at?: string | null
+          status?: string
+          template_id?: string | null
+          timezone?: string | null
           updated_at?: string
         }
         Relationships: []
