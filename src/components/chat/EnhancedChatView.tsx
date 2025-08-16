@@ -17,17 +17,20 @@ import { useChatParticipants } from '@/hooks/useChatParticipants';
 import { useAuth } from '@/hooks/useAuth';
 import { useTypingIndicator } from '@/hooks/useTypingIndicator';
 import { useMessageStatus } from '@/hooks/useMessageStatus';
+import { useFileUpload } from '@/hooks/useFileUpload';
+import { usePinnedMessages } from '@/hooks/usePinnedMessages';
+import { useMessageDrafts } from '@/hooks/useMessageDrafts';
 import { useOnlinePresence } from '@/hooks/useOnlinePresence';
 import { format } from 'date-fns';
 import { EnhancedMessage } from '@/types/chat';
 import { MessageThread } from './MessageThread';
 import { MessageReactions } from './MessageReactions';
 import { MessageActionsMenu } from './MessageActionsMenu';
-import { MessageStatusIndicator } from './MessageStatusIndicator';
-import { TypingIndicator } from './TypingIndicator';
-import { RichMessageInput } from './RichMessageInput';
 import { InChatSearch } from '@/components/search/InChatSearch';
 import { EmojiPicker } from '@/components/ui/emoji-picker';
+import { RichMessageInput } from './RichMessageInput';
+import { MessageStatusIndicator } from './MessageStatusIndicator';
+import { TypingIndicator } from './TypingIndicator';
 
 interface EnhancedChatViewProps {
   chat: Chat;
@@ -47,6 +50,9 @@ export const EnhancedChatView = ({ chat, onMenuClick }: EnhancedChatViewProps) =
   const { participants } = useChatParticipants(chat.id);
   const { typingUsers, startTyping, stopTyping } = useTypingIndicator(chat.id);
   const { getMessageStatus, markMessageAsRead } = useMessageStatus(chat.id);
+  const { uploadFile, uploading } = useFileUpload();
+  const { pinnedMessages, pinMessage, unpinMessage, isMessagePinned } = usePinnedMessages(chat.id);
+  const { draft, saveDraft, clearDraft } = useMessageDrafts(chat.id);
   const { isUserOnline } = useOnlinePresence();
 
   // Auto-scroll to bottom when new messages arrive
@@ -55,20 +61,39 @@ export const EnhancedChatView = ({ chat, onMenuClick }: EnhancedChatViewProps) =
   }, [messages]);
 
   const handleSendMessage = async (content: string, attachments?: File[]) => {
-    if (!content.trim() || sending) return false;
+    if ((!content.trim() && (!attachments || attachments.length === 0)) || sending) return false;
     
-    const success = await sendMessage(
-      content.trim(), 
-      replyToMessage?.id,
-      extractMentions(content)
-    );
-    
-    if (success) {
-      setReplyToMessage(null);
-      stopTyping();
+    try {
+      // First send the message
+      const result = await sendMessage(
+        content.trim(), 
+        replyToMessage?.id,
+        extractMentions(content)
+      );
+      
+      if (result.success && result.messageId && attachments && attachments.length > 0) {
+        console.log('Uploading attachments for message:', result.messageId, attachments);
+        
+        // Upload each file and associate with the message
+        for (const file of attachments) {
+          const uploadedFile = await uploadFile(file, chat.id, result.messageId);
+          if (!uploadedFile) {
+            console.error('Failed to upload file:', file.name);
+          }
+        }
+      }
+      
+      if (result.success) {
+        setReplyToMessage(null);
+        stopTyping();
+        clearDraft(); // Clear any saved draft
+      }
+      
+      return result.success;
+    } catch (error) {
+      console.error('Error sending message with attachments:', error);
+      return false;
     }
-    
-    return success;
   };
 
   const extractMentions = (content: string): string[] => {
@@ -259,7 +284,10 @@ export const EnhancedChatView = ({ chat, onMenuClick }: EnhancedChatViewProps) =
             replies={threadReplies}
             participants={participants}
             currentUser={user}
-            onSendReply={(content) => sendMessage(content, msg.id)}
+            onSendReply={async (content) => {
+              const result = await sendMessage(content, msg.id);
+              return result.success;
+            }}
           />
         )}
       </div>

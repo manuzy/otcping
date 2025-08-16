@@ -63,8 +63,8 @@ export const useEnhancedMessages = (chatId: string) => {
     content: string, 
     parentMessageId?: string,
     mentions?: string[]
-  ): Promise<boolean> => {
-    if (!user || !content.trim()) return false;
+  ): Promise<{ success: boolean; messageId?: string }> => {
+    if (!user || !content.trim()) return { success: false };
 
     setSending(true);
     
@@ -119,11 +119,11 @@ export const useEnhancedMessages = (chatId: string) => {
       // Refresh messages
       await fetchMessages();
       
-      return true;
+      return { success: true, messageId: messageData.id };
     } catch (error) {
       logger.error('Failed to send enhanced message', { chatId }, error as Error);
       notifications.error({ description: 'Failed to send message' });
-      return false;
+      return { success: false };
     } finally {
       setSending(false);
     }
