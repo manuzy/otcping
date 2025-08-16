@@ -21,7 +21,7 @@ export const MessageScheduler: React.FC<MessageSchedulerProps> = ({ chatId, trig
   const [scheduledDate, setScheduledDate] = useState('');
   const [scheduledTime, setScheduledTime] = useState('');
   const [timezone, setTimezone] = useState('UTC');
-  const [recurringPattern, setRecurringPattern] = useState('');
+  const [recurringPattern, setRecurringPattern] = useState('none');
   const [selectedTemplate, setSelectedTemplate] = useState('');
 
   const { scheduleMessage } = useScheduledMessages(chatId);
@@ -45,7 +45,7 @@ export const MessageScheduler: React.FC<MessageSchedulerProps> = ({ chatId, trig
       
       const success = await scheduleMessage(chatId, content, scheduledFor, {
         timezone,
-        recurringPattern: recurringPattern || undefined,
+        recurringPattern: recurringPattern === 'none' ? undefined : recurringPattern || undefined,
       });
 
       if (success) {
@@ -53,7 +53,7 @@ export const MessageScheduler: React.FC<MessageSchedulerProps> = ({ chatId, trig
         setContent('');
         setScheduledDate('');
         setScheduledTime('');
-        setRecurringPattern('');
+        setRecurringPattern('none');
         setSelectedTemplate('');
       }
     } catch (error) {
@@ -184,7 +184,7 @@ export const MessageScheduler: React.FC<MessageSchedulerProps> = ({ chatId, trig
                 <SelectValue placeholder="No recurrence" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">No recurrence</SelectItem>
+                <SelectItem value="none">No recurrence</SelectItem>
                 <SelectItem value="0 9 * * *">Daily at 9 AM</SelectItem>
                 <SelectItem value="0 9 * * 1">Weekly on Monday at 9 AM</SelectItem>
                 <SelectItem value="0 9 1 * *">Monthly on 1st at 9 AM</SelectItem>
