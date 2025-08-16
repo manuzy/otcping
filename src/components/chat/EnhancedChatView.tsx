@@ -8,7 +8,7 @@ import { Separator } from "@/components/ui/separator";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { 
   Menu, Send, MoreVertical, Reply, Smile, 
-  MessageSquare, Search, Hash, AtSign, Bell, Users
+  MessageSquare, Search, Hash, AtSign, Bell, Users, Bookmark
 } from "lucide-react";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { Chat } from "@/types";
@@ -31,6 +31,8 @@ import { EmojiPicker } from '@/components/ui/emoji-picker';
 import { RichMessageInput } from './RichMessageInput';
 import { MessageStatusIndicator } from './MessageStatusIndicator';
 import { TypingIndicator } from './TypingIndicator';
+import { BloombergToolbar } from './BloombergToolbar';
+import { useMessageBookmarks } from '@/hooks/useMessageBookmarks';
 
 interface EnhancedChatViewProps {
   chat: Chat;
@@ -54,6 +56,7 @@ export const EnhancedChatView = ({ chat, onMenuClick }: EnhancedChatViewProps) =
   const { pinnedMessages, pinMessage, unpinMessage, isMessagePinned } = usePinnedMessages(chat.id);
   const { draft, saveDraft, clearDraft } = useMessageDrafts(chat.id);
   const { isUserOnline } = useOnlinePresence();
+  const { addBookmark } = useMessageBookmarks(chat.id);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -133,6 +136,52 @@ export const EnhancedChatView = ({ chat, onMenuClick }: EnhancedChatViewProps) =
     if (e.key === 'Escape') {
       setReplyToMessage(null);
     }
+    
+    // Bloomberg Terminal keyboard shortcuts
+    if (e.ctrlKey || e.metaKey) {
+      switch (e.key) {
+        case 't':
+          e.preventDefault();
+          // Template manager will be opened via toolbar
+          break;
+        case 's':
+          e.preventDefault();
+          // Message scheduler will be opened via toolbar
+          break;
+        case 'b':
+          e.preventDefault();
+          // Blast composer will be opened via toolbar
+          break;
+        case 'e':
+          e.preventDefault();
+          handleExportChat();
+          break;
+      }
+    }
+  };
+
+  const handleBookmarkMessage = async (messageId: string) => {
+    try {
+      await addBookmark(messageId, chat.id, 'general');
+    } catch (error) {
+      console.error('Failed to bookmark message:', error);
+    }
+  };
+
+  const handleExportChat = () => {
+    // Create CSV export of chat messages
+    const csvContent = messages.map(msg => {
+      const sender = participants.find(p => p.id === msg.senderId);
+      return `"${msg.timestamp.toISOString()}","${sender?.displayName || 'Unknown'}","${msg.content.replace(/"/g, '""')}"`;
+    }).join('\n');
+    
+    const blob = new Blob([`Date,Sender,Message\n${csvContent}`], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `chat-${chat.name}-${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   // Group messages into threads
@@ -268,6 +317,22 @@ export const EnhancedChatView = ({ chat, onMenuClick }: EnhancedChatViewProps) =
                   </Button>
                 </EmojiPicker>
                 
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 w-6 p-0"
+                        onClick={() => handleBookmarkMessage(msg.id)}
+                      >
+                        <Bookmark className="h-3 w-3" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Bookmark</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+                
                 <MessageActionsMenu
                   message={msg}
                   onReply={setReplyToMessage}
@@ -391,6 +456,14 @@ export const EnhancedChatView = ({ chat, onMenuClick }: EnhancedChatViewProps) =
           const element = document.getElementById(`message-${messageId}`);
           element?.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }}
+      />
+
+      {/* Bloomberg Terminal Toolbar */}
+      <BloombergToolbar 
+        chatId={chat.id}
+        onBookmark={() => {}}
+        onExport={handleExportChat}
+        onShortcuts={() => {}}
       />
 
       {/* Messages */}

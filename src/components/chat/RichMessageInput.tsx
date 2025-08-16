@@ -130,12 +130,15 @@ export const RichMessageInput = ({
       handleSend();
     }
     
-    // Toggle formatting shortcuts
+    // Toggle formatting shortcuts (only if not handled by parent)
     if (e.ctrlKey || e.metaKey) {
       switch (e.key) {
         case 'b':
-          e.preventDefault();
-          handleFormat('bold');
+          // Only handle bold if not handled by parent Bloomberg shortcuts
+          if (!['t', 's', 'e'].includes(e.key)) {
+            e.preventDefault();
+            handleFormat('bold');
+          }
           break;
         case 'i':
           e.preventDefault();
