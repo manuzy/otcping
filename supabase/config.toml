@@ -41,3 +41,6 @@ verify_jwt = true
 
 [functions.send-blast-message]
 verify_jwt = true
+
+[functions.process-scheduled-messages]
+verify_jwt = false
