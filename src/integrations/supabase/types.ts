@@ -2036,6 +2036,33 @@ export type Database = {
         }
         Relationships: []
       }
+      security_rate_limits: {
+        Row: {
+          action_type: string
+          attempt_count: number
+          created_at: string
+          id: string
+          user_id: string
+          window_start: string
+        }
+        Insert: {
+          action_type: string
+          attempt_count?: number
+          created_at?: string
+          id?: string
+          user_id: string
+          window_start?: string
+        }
+        Update: {
+          action_type?: string
+          attempt_count?: number
+          created_at?: string
+          id?: string
+          user_id?: string
+          window_start?: string
+        }
+        Relationships: []
+      }
       trades: {
         Row: {
           buy_asset: string | null
@@ -2202,6 +2229,14 @@ export type Database = {
         Args: { user_id: string }
         Returns: undefined
       }
+      check_rate_limit: {
+        Args: {
+          action_type_param: string
+          max_attempts?: number
+          window_minutes?: number
+        }
+        Returns: boolean
+      }
       cleanup_expired_sessions: {
         Args: Record<PropertyKey, never>
         Returns: undefined
@@ -2235,6 +2270,14 @@ export type Database = {
       }
       increment_unread_count: {
         Args: { chat_id: string; sender_id: string }
+        Returns: undefined
+      }
+      log_sensitive_data_access: {
+        Args: {
+          metadata_param?: Json
+          resource_id_param: string
+          resource_type_param: string
+        }
         Returns: undefined
       }
       user_is_chat_member: {
