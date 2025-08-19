@@ -29,9 +29,9 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <AppKitProvider>
       <AuthProvider>
-        <BetaGate>
-          <GlobalSearchProvider>
-            <GlobalThemeProvider>
+        <GlobalThemeProvider>
+          <BetaGate>
+            <GlobalSearchProvider>
             <TooltipProvider delayDuration={300}>
               <Toaster />
               <Sonner />
@@ -55,9 +55,9 @@ const App = () => (
             </div>
           </BrowserRouter>
             </TooltipProvider>
-            </GlobalThemeProvider>
           </GlobalSearchProvider>
         </BetaGate>
+      </GlobalThemeProvider>
       </AuthProvider>
     </AppKitProvider>
   </QueryClientProvider>
