@@ -11,6 +11,7 @@ import { ThemeSwitcher } from "@/components/theme/ThemeSwitcher";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { BetaManagement } from "@/components/admin/BetaManagement";
 export default function Underground() {
   const {
     isAdmin,
@@ -101,6 +102,22 @@ export default function Underground() {
                 disabled={settingsLoading || updating}
               />
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Beta Phase Management Section */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <ShieldCheck className="h-5 w-5" />
+              Beta Phase Management
+            </CardTitle>
+            <CardDescription>
+              Control beta phase access and manage beta users
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <BetaManagement />
           </CardContent>
         </Card>
 

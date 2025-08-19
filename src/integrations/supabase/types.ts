@@ -77,6 +77,69 @@ export type Database = {
         }
         Relationships: []
       }
+      beta_settings: {
+        Row: {
+          created_at: string
+          id: string
+          is_beta_active: boolean
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_beta_active?: boolean
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_beta_active?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      beta_users: {
+        Row: {
+          approved_by: string | null
+          created_at: string
+          display_name: string
+          email: string | null
+          id: string
+          is_active: boolean
+          referral_name: string | null
+          telegram: string | null
+          updated_at: string
+          user_id: string | null
+          wallet_address: string
+        }
+        Insert: {
+          approved_by?: string | null
+          created_at?: string
+          display_name: string
+          email?: string | null
+          id?: string
+          is_active?: boolean
+          referral_name?: string | null
+          telegram?: string | null
+          updated_at?: string
+          user_id?: string | null
+          wallet_address: string
+        }
+        Update: {
+          approved_by?: string | null
+          created_at?: string
+          display_name?: string
+          email?: string | null
+          id?: string
+          is_active?: boolean
+          referral_name?: string | null
+          telegram?: string | null
+          updated_at?: string
+          user_id?: string | null
+          wallet_address?: string
+        }
+        Relationships: []
+      }
       blast_messages: {
         Row: {
           content: string
@@ -2148,9 +2211,17 @@ export type Database = {
         Args: { wallet_addr: string }
         Returns: Json
       }
+      get_beta_settings: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       get_user_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
+      }
+      has_beta_access: {
+        Args: { check_user_id: string }
+        Returns: boolean
       }
       has_role: {
         Args: {
