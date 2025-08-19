@@ -7,7 +7,7 @@ import { ShieldCheck, Mail, Settings, AlertTriangle, Palette, Wrench } from "luc
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { EmailTestPanel } from "@/components/debug/EmailTestPanel";
 import { SecurityDashboard } from "@/components/security/SecurityDashboard";
-import { ThemeSwitcher } from "@/components/theme/ThemeSwitcher";
+import { GlobalThemeSwitcher } from "@/components/theme/GlobalThemeSwitcher";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -185,7 +185,7 @@ export default function Underground() {
         return <SecurityDashboard />;
 
       case 'theme-settings':
-        return <ThemeSwitcher />;
+        return <GlobalThemeSwitcher />;
 
       case 'future-tools':
         return (

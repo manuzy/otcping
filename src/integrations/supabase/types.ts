@@ -17,6 +17,7 @@ export type Database = {
       admin_settings: {
         Row: {
           created_at: string
+          global_theme: string | null
           id: string
           skip_approval: boolean
           updated_at: string
@@ -24,6 +25,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          global_theme?: string | null
           id?: string
           skip_approval?: boolean
           updated_at?: string
@@ -31,6 +33,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          global_theme?: string | null
           id?: string
           skip_approval?: boolean
           updated_at?: string

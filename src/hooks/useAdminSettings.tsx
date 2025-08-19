@@ -7,12 +7,13 @@ import { notifications } from '@/lib/notifications';
 
 interface AdminSettings {
   skip_approval: boolean;
+  global_theme: string;
 }
 
 export function useAdminSettings() {
   const { user } = useAuth();
   const { isAdmin, loading: adminLoading } = useIsAdmin();
-  const [settings, setSettings] = useState<AdminSettings>({ skip_approval: false });
+  const [settings, setSettings] = useState<AdminSettings>({ skip_approval: false, global_theme: 'system' });
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
 
@@ -29,7 +30,7 @@ export function useAdminSettings() {
       setLoading(true);
       const { data, error } = await supabase
         .from('admin_settings')
-        .select('skip_approval')
+        .select('skip_approval, global_theme')
         .eq('user_id', user?.id)
         .single();
 
@@ -42,7 +43,10 @@ export function useAdminSettings() {
       }
 
       if (data) {
-        setSettings({ skip_approval: data.skip_approval });
+        setSettings({ 
+          skip_approval: data.skip_approval,
+          global_theme: data.global_theme || 'system'
+        });
       } else {
         // Create default settings if none exist
         await createDefaultSettings();
@@ -63,8 +67,13 @@ export function useAdminSettings() {
         .from('admin_settings')
         .insert({
           user_id: user?.id,
-          skip_approval: false
+          skip_approval: false,
+          global_theme: 'system'
         });
+      
+      if (!error) {
+        setSettings({ skip_approval: false, global_theme: 'system' });
+      }
 
       if (error) {
         logger.error('Error creating default admin settings', {
@@ -89,7 +98,8 @@ export function useAdminSettings() {
         .from('admin_settings')
         .upsert({
           user_id: user.id,
-          skip_approval: skipApproval
+          skip_approval: skipApproval,
+          global_theme: settings.global_theme
         }, {
           onConflict: 'user_id'
         });
@@ -123,11 +133,60 @@ export function useAdminSettings() {
     }
   };
 
+  const updateGlobalTheme = async (theme: string) => {
+    if (!user || !isAdmin || adminLoading) return;
+
+    try {
+      setUpdating(true);
+      const { error } = await supabase
+        .from('admin_settings')
+        .upsert({
+          user_id: user.id,
+          skip_approval: settings.skip_approval,
+          global_theme: theme
+        }, {
+          onConflict: 'user_id'
+        });
+
+      if (error) {
+        logger.error('Error updating global theme', {
+          operation: 'update_global_theme',
+          userId: user.id,
+          metadata: { theme }
+        }, error as Error);
+        notifications.updateError('global theme');
+        return;
+      }
+
+      setSettings(prev => ({ ...prev, global_theme: theme }));
+      notifications.updateSuccess('global theme');
+      
+      // Dispatch custom event to notify theme provider
+      window.dispatchEvent(new CustomEvent('globalThemeChanged', { detail: theme }));
+      
+      logger.info('Global theme updated successfully', {
+        operation: 'update_global_theme',
+        userId: user.id,
+        metadata: { theme }
+      });
+    } catch (error) {
+      logger.error('Error in updateGlobalTheme', {
+        operation: 'update_global_theme',
+        userId: user?.id,
+        metadata: { theme }
+      }, error as Error);
+      notifications.updateError('global theme');
+    } finally {
+      setUpdating(false);
+    }
+  };
+
   return {
     settings,
     loading,
     updating,
     updateSkipApproval,
+    updateGlobalTheme,
     refreshSettings: fetchSettings
   };
 }

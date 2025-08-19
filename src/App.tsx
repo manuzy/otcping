@@ -3,7 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { ThemeProvider } from "next-themes";
+import { GlobalThemeProvider } from "@/components/providers/GlobalThemeProvider";
 import Index from "./pages/Index";
 import AppPage from "./pages/App";
 import NotFound from "./pages/NotFound";
@@ -31,13 +31,7 @@ const App = () => (
       <AuthProvider>
         <BetaGate>
           <GlobalSearchProvider>
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="system"
-            enableSystem
-            themes={["light", "dark", "blue", "green"]}
-            disableTransitionOnChange
-          >
+            <GlobalThemeProvider>
             <TooltipProvider delayDuration={300}>
               <Toaster />
               <Sonner />
@@ -61,7 +55,7 @@ const App = () => (
             </div>
           </BrowserRouter>
             </TooltipProvider>
-          </ThemeProvider>
+            </GlobalThemeProvider>
           </GlobalSearchProvider>
         </BetaGate>
       </AuthProvider>
