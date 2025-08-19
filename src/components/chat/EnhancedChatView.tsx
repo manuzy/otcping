@@ -234,7 +234,7 @@ export const EnhancedChatView = ({ chat, onMenuClick }: EnhancedChatViewProps) =
               </div>
             )}
             
-            <div className={`
+            <div className={`relative
               p-3 rounded-2xl
               ${isOwnMessage 
                 ? 'bg-primary text-primary-foreground' 
@@ -291,69 +291,81 @@ export const EnhancedChatView = ({ chat, onMenuClick }: EnhancedChatViewProps) =
                   </Button>
                 )}
               </div>
-            </div>
-            
-            {/* Quick actions - positioned below message */}
-            <div className={`mt-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 ${
-              isOwnMessage ? 'text-right' : 'text-left'
-            }`}>
-              <div className={`inline-flex gap-1 bg-background/95 border rounded-lg p-1 shadow-sm backdrop-blur-sm ${
-                isOwnMessage ? '' : ''
-              }`}>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-7 w-7 p-0 hover:bg-muted"
-                        onClick={() => setReplyToMessage(msg)}
-                      >
-                        <Reply className="h-3.5 w-3.5" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>Reply</TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-                
-                <EmojiPicker onEmojiSelect={(emoji) => addReaction(msg.id, emoji)}>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-7 w-7 p-0 hover:bg-muted"
-                  >
-                    <Smile className="h-3.5 w-3.5" />
-                  </Button>
-                </EmojiPicker>
-                
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className={`h-7 w-7 p-0 hover:bg-muted ${
-                          isMessageBookmarked(msg.id) ? 'text-yellow-500 hover:text-yellow-600' : ''
-                        }`}
-                        onClick={() => handleBookmarkMessage(msg.id)}
-                      >
-                        {isMessageBookmarked(msg.id) ? (
-                          <BookmarkCheck className="h-3.5 w-3.5" />
-                        ) : (
-                          <Bookmark className="h-3.5 w-3.5" />
-                        )}
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      {isMessageBookmarked(msg.id) ? 'Remove bookmark' : 'Bookmark'}
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-                
-                <MessageActionsMenu
-                  message={msg}
-                  onReply={setReplyToMessage}
-                />
+              
+              {/* Quick actions - positioned inside message bubble */}
+              <div className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                <div className={`flex gap-1 rounded-lg p-1 shadow-sm backdrop-blur-sm ${
+                  isOwnMessage 
+                    ? 'bg-primary-foreground/20 hover:bg-primary-foreground/30' 
+                    : 'bg-background/90 hover:bg-background/95'
+                }`}>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className={`h-6 w-6 p-0 ${
+                            isOwnMessage 
+                              ? 'hover:bg-primary-foreground/20 text-primary-foreground/80 hover:text-primary-foreground' 
+                              : 'hover:bg-muted'
+                          }`}
+                          onClick={() => setReplyToMessage(msg)}
+                        >
+                          <Reply className="h-3 w-3" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Reply</TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                  
+                  <EmojiPicker onEmojiSelect={(emoji) => addReaction(msg.id, emoji)}>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className={`h-6 w-6 p-0 ${
+                        isOwnMessage 
+                          ? 'hover:bg-primary-foreground/20 text-primary-foreground/80 hover:text-primary-foreground' 
+                          : 'hover:bg-muted'
+                      }`}
+                    >
+                      <Smile className="h-3 w-3" />
+                    </Button>
+                  </EmojiPicker>
+                  
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className={`h-6 w-6 p-0 ${
+                            isOwnMessage 
+                              ? 'hover:bg-primary-foreground/20 text-primary-foreground/80 hover:text-primary-foreground' 
+                              : 'hover:bg-muted'
+                          } ${
+                            isMessageBookmarked(msg.id) ? 'text-yellow-500 hover:text-yellow-600' : ''
+                          }`}
+                          onClick={() => handleBookmarkMessage(msg.id)}
+                        >
+                          {isMessageBookmarked(msg.id) ? (
+                            <BookmarkCheck className="h-3 w-3" />
+                          ) : (
+                            <Bookmark className="h-3 w-3" />
+                          )}
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        {isMessageBookmarked(msg.id) ? 'Remove bookmark' : 'Bookmark'}
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                  
+                  <MessageActionsMenu
+                    message={msg}
+                    onReply={setReplyToMessage}
+                  />
+                </div>
               </div>
             </div>
           </div>
