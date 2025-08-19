@@ -20,6 +20,7 @@ import { AuthProvider } from "./hooks/useAuth";
 import { AppKitProvider } from "./components/providers/AppKitProvider";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import { GlobalSearchProvider } from "./components/search/GlobalSearchProvider";
+import { BetaGate } from "./components/beta/BetaGate";
 
 
 const queryClient = new QueryClient();
@@ -28,7 +29,8 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <AppKitProvider>
       <AuthProvider>
-        <GlobalSearchProvider>
+        <BetaGate>
+          <GlobalSearchProvider>
           <ThemeProvider
             attribute="class"
             defaultTheme="system"
@@ -60,7 +62,8 @@ const App = () => (
           </BrowserRouter>
             </TooltipProvider>
           </ThemeProvider>
-        </GlobalSearchProvider>
+          </GlobalSearchProvider>
+        </BetaGate>
       </AuthProvider>
     </AppKitProvider>
   </QueryClientProvider>
