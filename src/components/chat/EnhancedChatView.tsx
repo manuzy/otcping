@@ -293,19 +293,23 @@ export const EnhancedChatView = ({ chat, onMenuClick }: EnhancedChatViewProps) =
               </div>
             </div>
             
-            {/* Quick actions on hover */}
-            <div className="absolute right-0 top-0 opacity-0 group-hover:opacity-100 transition-opacity">
-              <div className="flex gap-1 bg-background border rounded-lg p-1 shadow-sm">
+            {/* Quick actions - positioned below message */}
+            <div className={`mt-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 ${
+              isOwnMessage ? 'text-right' : 'text-left'
+            }`}>
+              <div className={`inline-flex gap-1 bg-background/95 border rounded-lg p-1 shadow-sm backdrop-blur-sm ${
+                isOwnMessage ? '' : ''
+              }`}>
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="h-6 w-6 p-0"
+                        className="h-7 w-7 p-0 hover:bg-muted"
                         onClick={() => setReplyToMessage(msg)}
                       >
-                        <Reply className="h-3 w-3" />
+                        <Reply className="h-3.5 w-3.5" />
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent>Reply</TooltipContent>
@@ -316,9 +320,9 @@ export const EnhancedChatView = ({ chat, onMenuClick }: EnhancedChatViewProps) =
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-6 w-6 p-0"
+                    className="h-7 w-7 p-0 hover:bg-muted"
                   >
-                    <Smile className="h-3 w-3" />
+                    <Smile className="h-3.5 w-3.5" />
                   </Button>
                 </EmojiPicker>
                 
@@ -328,13 +332,15 @@ export const EnhancedChatView = ({ chat, onMenuClick }: EnhancedChatViewProps) =
                       <Button
                         variant="ghost"
                         size="sm"
-                        className={`h-6 w-6 p-0 ${isMessageBookmarked(msg.id) ? 'text-yellow-500 hover:text-yellow-600' : ''}`}
+                        className={`h-7 w-7 p-0 hover:bg-muted ${
+                          isMessageBookmarked(msg.id) ? 'text-yellow-500 hover:text-yellow-600' : ''
+                        }`}
                         onClick={() => handleBookmarkMessage(msg.id)}
                       >
                         {isMessageBookmarked(msg.id) ? (
-                          <BookmarkCheck className="h-3 w-3" />
+                          <BookmarkCheck className="h-3.5 w-3.5" />
                         ) : (
-                          <Bookmark className="h-3 w-3" />
+                          <Bookmark className="h-3.5 w-3.5" />
                         )}
                       </Button>
                     </TooltipTrigger>
