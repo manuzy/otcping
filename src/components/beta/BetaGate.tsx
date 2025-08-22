@@ -20,6 +20,7 @@ export function BetaGate({ children }: BetaGateProps) {
   }
 
   // If beta is active and user doesn't have access, show beta page
+  // But allow authenticated users to proceed if they have access
   if (isBetaActive && !hasAccess) {
     return <BetaAccessPage />;
   }

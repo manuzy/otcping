@@ -2,11 +2,14 @@ import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Shield, Users, Zap, ArrowRight, CheckCircle } from 'lucide-react';
+import { Shield, Users, Zap, ArrowRight, CheckCircle, LogIn } from 'lucide-react';
 import { BetaApplicationModal } from './BetaApplicationModal';
+import WalletAuthButton from '@/components/auth/WalletAuthButton';
+import { useWalletAuth } from '@/hooks/useWalletAuth';
 
 export function BetaAccessPage() {
   const [showApplicationModal, setShowApplicationModal] = useState(false);
+  const { isAuthenticated } = useWalletAuth();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
@@ -33,6 +36,30 @@ export function BetaAccessPage() {
 
           {/* Main Content */}
           <div className="grid md:grid-cols-2 gap-8 mb-12">
+            
+            {/* Login Section for Approved Users */}
+            {!isAuthenticated && (
+              <Card className="border-2 border-green-500/20 bg-green-500/5 md:col-span-2 mb-8">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <LogIn className="h-5 w-5 text-green-600" />
+                    Already Approved for Beta?
+                  </CardTitle>
+                  <CardDescription>
+                    If you've already been approved for beta access, connect your wallet to sign in
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <p className="text-muted-foreground">
+                    Beta users who have already been approved can connect their wallet 
+                    to access the platform immediately.
+                  </p>
+                  <div className="flex justify-center">
+                    <WalletAuthButton />
+                  </div>
+                </CardContent>
+              </Card>
+            )}
             {/* Beta Info Card */}
             <Card className="border-2">
               <CardHeader>
