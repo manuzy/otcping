@@ -36,6 +36,31 @@ export const messageContentSchema = z.string()
   .min(1, 'Message cannot be empty')
   .max(2000, 'Message must be 2000 characters or less');
 
+// Contact form validation schemas
+export const contactFormSchema = z.object({
+  name: z.string()
+    .min(1, 'Name is required')
+    .max(100, 'Name must be 100 characters or less')
+    .regex(/^[a-zA-Z\s.-]+$/, 'Name contains invalid characters'),
+  
+  subject: z.string()
+    .min(1, 'Subject is required')
+    .max(200, 'Subject must be 200 characters or less'),
+  
+  message: z.string()
+    .min(10, 'Message must be at least 10 characters')
+    .max(2000, 'Message must be 2000 characters or less'),
+  
+  contact: z.string()
+    .min(1, 'Email or Telegram handle is required')
+    .refine((val) => {
+      // Check if it's an email or telegram handle
+      const isEmail = emailSchema.safeParse(val).success;
+      const isTelegram = /^@[a-zA-Z0-9_]{5,32}$/.test(val);
+      return isEmail || isTelegram;
+    }, 'Please provide a valid email address or Telegram handle (e.g., @username)')
+});
+
 // XSS Protection
 export function sanitizeHtml(input: string): string {
   return DOMPurify.sanitize(input, {

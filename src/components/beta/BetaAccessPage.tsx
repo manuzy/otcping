@@ -2,13 +2,15 @@ import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Shield, Users, Zap, ArrowRight, CheckCircle, LogIn } from 'lucide-react';
+import { Shield, Users, Zap, ArrowRight, CheckCircle, LogIn, Mail } from 'lucide-react';
 import { BetaApplicationModal } from './BetaApplicationModal';
+import { ContactFormModal } from '@/components/contact/ContactFormModal';
 import WalletAuthButton from '@/components/auth/WalletAuthButton';
 import { useWalletAuth } from '@/hooks/useWalletAuth';
 
 export function BetaAccessPage() {
   const [showApplicationModal, setShowApplicationModal] = useState(false);
+  const [showContactModal, setShowContactModal] = useState(false);
   const { isAuthenticated } = useWalletAuth();
 
   return (
@@ -188,12 +190,17 @@ export function BetaAccessPage() {
 
           {/* Footer */}
           <div className="text-center mt-12 pt-8 border-t border-border">
-            <p className="text-muted-foreground">
-              Questions about our beta program?{" "}
-              <a href="mailto:beta@otcping.com" className="text-primary hover:underline">
-                Contact our team
-              </a>
+            <p className="text-muted-foreground mb-4">
+              Questions about our beta program?
             </p>
+            <Button 
+              variant="outline" 
+              onClick={() => setShowContactModal(true)}
+              className="gap-2"
+            >
+              <Mail className="h-4 w-4" />
+              Contact our team
+            </Button>
           </div>
         </div>
       </div>
@@ -202,6 +209,12 @@ export function BetaAccessPage() {
       <BetaApplicationModal 
         open={showApplicationModal}
         onOpenChange={setShowApplicationModal}
+      />
+
+      {/* Contact Form Modal */}
+      <ContactFormModal 
+        open={showContactModal}
+        onOpenChange={setShowContactModal}
       />
     </div>
   );
