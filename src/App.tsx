@@ -30,34 +30,34 @@ const App = () => (
     <AppKitProvider>
       <AuthProvider>
         <GlobalThemeProvider>
-          <BetaGate>
-            <GlobalSearchProvider>
+          <GlobalSearchProvider>
             <TooltipProvider delayDuration={300}>
               <Toaster />
               <Sonner />
               <BrowserRouter>
-            <div className="relative">
-              <Header />
-              <Routes>
-                <Route path="/" element={<Index />} />
-                <Route path="/app" element={<ProtectedRoute><AppPage /></ProtectedRoute>} />
-                <Route path="/contacts" element={<ProtectedRoute><Contacts /></ProtectedRoute>} />
-                <Route path="/public-trades" element={<ProtectedRoute><PublicTrades /></ProtectedRoute>} />
-                <Route path="/users" element={<ProtectedRoute><PublicUsers /></ProtectedRoute>} />
-                <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
-                <Route path="/institutional-profile" element={<ProtectedRoute><InstitutionalProfile /></ProtectedRoute>} />
-                <Route path="/create-trade" element={<ProtectedRoute><CreateTrade /></ProtectedRoute>} />
-                <Route path="/underground" element={<ProtectedRoute><Underground /></ProtectedRoute>} />
-                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-              <BottomTabs />
-            </div>
-          </BrowserRouter>
+                <div className="relative">
+                  <Header />
+                  <BetaGate>
+                    <Routes>
+                      <Route path="/" element={<Index />} />
+                      <Route path="/app" element={<ProtectedRoute><AppPage /></ProtectedRoute>} />
+                      <Route path="/contacts" element={<ProtectedRoute><Contacts /></ProtectedRoute>} />
+                      <Route path="/public-trades" element={<ProtectedRoute><PublicTrades /></ProtectedRoute>} />
+                      <Route path="/users" element={<ProtectedRoute><PublicUsers /></ProtectedRoute>} />
+                      <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+                      <Route path="/institutional-profile" element={<ProtectedRoute><InstitutionalProfile /></ProtectedRoute>} />
+                      <Route path="/create-trade" element={<ProtectedRoute><CreateTrade /></ProtectedRoute>} />
+                      <Route path="/underground" element={<ProtectedRoute><Underground /></ProtectedRoute>} />
+                      {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                      <Route path="*" element={<NotFound />} />
+                    </Routes>
+                  </BetaGate>
+                  <BottomTabs />
+                </div>
+              </BrowserRouter>
             </TooltipProvider>
           </GlobalSearchProvider>
-        </BetaGate>
-      </GlobalThemeProvider>
+        </GlobalThemeProvider>
       </AuthProvider>
     </AppKitProvider>
   </QueryClientProvider>
