@@ -3,13 +3,20 @@ import { Resend } from "npm:resend@2.0.0";
 import { EdgeLogger } from "../_shared/logger.ts";
 import { EdgeErrorHandler } from "../_shared/errorHandler.ts";
 import { ResponseBuilder, defaultCorsHeaders } from "../_shared/responseUtils.ts";
-import { sanitizeEdgeFunctionInput } from "../../../src/lib/security/enhancedValidation.ts";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 const logger = new EdgeLogger("send-contact-email");
 const errorHandler = new EdgeErrorHandler(logger, defaultCorsHeaders);
 const startTime = Date.now();
 const responseBuilder = new ResponseBuilder(defaultCorsHeaders, startTime);
+
+// Basic input sanitization for edge functions
+function sanitizeInput(input: string): string {
+  return input
+    .replace(/[<>]/g, '') // Remove potential HTML tags
+    .trim()
+    .substring(0, 2000); // Limit length
+}
 
 interface ContactFormData {
   name: string;
@@ -48,8 +55,10 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     // Sanitize input data
-    const sanitizedData = sanitizeEdgeFunctionInput(bodyValidation.data) as ContactFormData;
-    const { name, subject, message, contact } = sanitizedData;
+    const name = sanitizeInput(bodyValidation.data.name);
+    const subject = sanitizeInput(bodyValidation.data.subject);
+    const message = sanitizeInput(bodyValidation.data.message);
+    const contact = sanitizeInput(bodyValidation.data.contact);
 
     // Additional validation
     if (!name?.trim() || !subject?.trim() || !message?.trim() || !contact?.trim()) {
